@@ -8,5 +8,5 @@ func TestHelloWorld(t *testing.T) {
 		t.Errorf("Expected 'Hello, World!', got '%s'", result)
 	}
 
-	t.Logf("Test passed: %s", Hello())
+	t.Logf("Test passed: %s", result)
 }
