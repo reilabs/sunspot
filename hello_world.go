@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"nr-groth16/acir_decoder"
 	"os"
 )
 
@@ -17,7 +18,7 @@ func main() {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-	var acirFile ACIRFile
+	var acirFile acir_decoder.ACIRFile
 	if err := json.Unmarshal(data, &acirFile); err != nil {
 		fmt.Println("Error unmarshalling JSON:", err)
 		return
