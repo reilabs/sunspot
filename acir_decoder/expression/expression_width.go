@@ -32,7 +32,7 @@ func (e *ExpressionWidth) UnmarshalReader(r io.Reader) error {
 			return err
 		}
 	default:
-		return fmt.Errorf("unknown ExpressionWidthKind: %d", e.ExpressionWidthKind)
+		return fmt.Errorf("unknown ExpressionWidth Kind: %d", e.Kind)
 	}
 
 	return nil
