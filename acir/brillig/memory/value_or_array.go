@@ -52,3 +52,20 @@ func (v *ValueOrArray) UnmarshalReader(r io.Reader) error {
 		return fmt.Errorf("invalid ValueOrArrayKind: %d", v.Kind)
 	}
 }
+
+func (v *ValueOrArray) Equals(other ValueOrArray) bool {
+	if v.Kind != other.Kind {
+		return false
+	}
+
+	switch v.Kind {
+	case ACIRBrilligValueOrArrayKindMemoryAddress:
+		return v.MemoryAddress.Equals(*other.MemoryAddress)
+	case ACIRBrilligValueOrArrayKindHeapArray:
+		return v.HeapArray.Equals(*other.HeapArray)
+	case ACIRBrilligValueOrArrayKindHeapVector:
+		return v.HeapVector.Equals(*other.HeapVector)
+	default:
+		return false
+	}
+}

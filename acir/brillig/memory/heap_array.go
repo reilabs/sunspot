@@ -7,7 +7,7 @@ import (
 
 type HeapArray struct {
 	Pointer MemoryAddress
-	Length  uint64
+	Size    uint64
 }
 
 func (h *HeapArray) UnmarshalReader(r io.Reader) error {
@@ -15,9 +15,16 @@ func (h *HeapArray) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	if err := binary.Read(r, binary.LittleEndian, &h.Length); err != nil {
+	if err := binary.Read(r, binary.LittleEndian, &h.Size); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (h HeapArray) Equals(other HeapArray) bool {
+	if !h.Pointer.Equals(other.Pointer) {
+		return false
+	}
+	return h.Size == other.Size
 }

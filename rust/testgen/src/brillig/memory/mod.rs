@@ -2,8 +2,6 @@ mod bitsize;
 mod heap_array;
 mod heap_value_type;
 mod heap_vector;
-mod integer_bit_size;
-mod label;
 mod memory_address;
 mod value_or_array;
 
@@ -16,8 +14,6 @@ pub fn generate_tests(directory: &str) {
     heap_array::generate_tests(&directory);
     heap_value_type::generate_tests(&directory);
     heap_vector::generate_tests(&directory);
-    integer_bit_size::generate_tests(&directory);
-    label::generate_tests(&directory);
     memory_address::generate_tests(&directory);
     value_or_array::generate_tests(&directory);
 }

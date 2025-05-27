@@ -18,3 +18,7 @@ func (hv *HeapVector) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (hv *HeapVector) Equals(other HeapVector) bool {
+	return hv.Pointer.Equals(other.Pointer) && hv.Size.Equals(other.Size)
+}

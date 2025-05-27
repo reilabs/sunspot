@@ -37,3 +37,16 @@ func (b *BitSize) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (b BitSize) Equals(other BitSize) bool {
+	if b.Kind != other.Kind {
+		return false
+	}
+	if b.Kind == BitSizeKindInteger {
+		if b.IntegerBitSize == nil || other.IntegerBitSize == nil {
+			return false
+		}
+		return *b.IntegerBitSize == *other.IntegerBitSize
+	}
+	return true
+}

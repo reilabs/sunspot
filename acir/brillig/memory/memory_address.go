@@ -33,3 +33,10 @@ func (m *MemoryAddress) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (m MemoryAddress) Equals(other MemoryAddress) bool {
+	if m.Kind != other.Kind {
+		return false
+	}
+	return m.Value == other.Value
+}

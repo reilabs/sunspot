@@ -44,13 +44,15 @@ func (h *HeapValueType) UnmarshalReader(r io.Reader) error {
 		h.Simple = &BitSize{}
 		return h.Simple.UnmarshalReader(r)
 	case ACIRBrilligHeapValueTypeKindArray:
-		var arraySize uint32
+		var arraySize uint64
 		if err := binary.Read(r, binary.LittleEndian, &arraySize); err != nil {
 			return err
 		}
+		fmt.Printf("Array size: %d\n", arraySize)
 
 		h.ArrayValueTypes = &[]HeapValueType{}
-		for i := uint32(0); i < arraySize; i++ {
+		for i := uint64(0); i < arraySize; i++ {
+			fmt.Printf("Reading value type %d\n", i)
 			var valueType HeapValueType
 			if err := valueType.UnmarshalReader(r); err != nil {
 				return err
@@ -58,17 +60,21 @@ func (h *HeapValueType) UnmarshalReader(r io.Reader) error {
 			*h.ArrayValueTypes = append(*h.ArrayValueTypes, valueType)
 		}
 
-		if err := binary.Read(r, binary.LittleEndian, &h.ArraySize); err != nil {
+		var arraySize64 uint64
+		if err := binary.Read(r, binary.LittleEndian, &arraySize64); err != nil {
 			return err
 		}
+		fmt.Printf("Array size (64-bit): %d\n", arraySize64)
+
+		h.ArraySize = &arraySize64
 	case ACIRBrilligHeapValueTypeKindVector:
-		var arraySize uint32
+		var arraySize uint64
 		if err := binary.Read(r, binary.LittleEndian, &arraySize); err != nil {
 			return err
 		}
 
 		h.VectorValueTypes = &[]HeapValueType{}
-		for i := uint32(0); i < arraySize; i++ {
+		for i := uint64(0); i < arraySize; i++ {
 			var valueType HeapValueType
 			if err := valueType.UnmarshalReader(r); err != nil {
 				return err
@@ -80,4 +86,47 @@ func (h *HeapValueType) UnmarshalReader(r io.Reader) error {
 	}
 
 	return nil
+}
+
+func (h HeapValueType) Equals(other HeapValueType) bool {
+	if h.Kind != other.Kind {
+		fmt.Printf("HeapValueTypeKind does not match: %d != %d\n", h.Kind, other.Kind)
+		return false
+	}
+
+	switch h.Kind {
+	case ACIRBrilligHeapValueTypeKindSimple:
+		if h.Simple == nil || other.Simple == nil {
+			return h.Simple == other.Simple
+		}
+		return h.Simple.Equals(*other.Simple)
+	case ACIRBrilligHeapValueTypeKindArray:
+		if h.ArraySize == nil || other.ArraySize == nil || *h.ArraySize != *other.ArraySize {
+			fmt.Println("Array sizes do not match: ", *h.ArraySize, *other.ArraySize)
+			return false
+		}
+		if len(*h.ArrayValueTypes) != len(*other.ArrayValueTypes) {
+			fmt.Println("Array value types lengths do not match")
+			return false
+		}
+		for i := range *h.ArrayValueTypes {
+			if !(*h.ArrayValueTypes)[i].Equals((*other.ArrayValueTypes)[i]) {
+				fmt.Printf("Array value types at index %d do not match\n", i)
+				return false
+			}
+		}
+	case ACIRBrilligHeapValueTypeKindVector:
+		if len(*h.VectorValueTypes) != len(*other.VectorValueTypes) {
+			return false
+		}
+		for i := range *h.VectorValueTypes {
+			if !(*h.VectorValueTypes)[i].Equals((*other.VectorValueTypes)[i]) {
+				return false
+			}
+		}
+	default:
+		return false
+	}
+
+	return true
 }
