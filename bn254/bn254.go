@@ -28,7 +28,7 @@ func (b *BN254Field) One() *BN254Field {
 
 func (b *BN254Field) UnmarshalReader(r io.Reader) error {
 	// Implement the unmarshalling logic here
-	bn254Bytes := make([]byte, 32)
+	bn254Bytes := make([]byte, 72)
 	if err := binary.Read(r, binary.LittleEndian, bn254Bytes); err != nil {
 		return err
 	}
