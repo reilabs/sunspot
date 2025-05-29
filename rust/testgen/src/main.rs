@@ -3,6 +3,7 @@ use clap::Parser;
 mod acir_field;
 mod black_box_func;
 mod brillig;
+mod expression;
 mod shared;
 
 #[derive(Parser, Debug)]
@@ -29,6 +30,7 @@ fn main() {
     shared::generate_tests(params.target_dir.as_str());
     brillig::generate_tests(params.target_dir.as_str());
     acir_field::generate_tests(params.target_dir.as_str());
+    expression::generate_tests(params.target_dir.as_str());
 
     println!("Hello, world!");
 }

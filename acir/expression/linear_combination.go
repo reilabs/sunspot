@@ -21,3 +21,15 @@ func (lc *LinearCombination[T]) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (lc *LinearCombination[T]) Equals(other *LinearCombination[T]) bool {
+	if !lc.Term.Equals(other.Term) {
+		return false
+	}
+
+	if !lc.Witness.Equals(&other.Witness) {
+		return false
+	}
+
+	return true
+}

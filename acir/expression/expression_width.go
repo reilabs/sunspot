@@ -37,3 +37,19 @@ func (e *ExpressionWidth) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (e *ExpressionWidth) Equals(other *ExpressionWidth) bool {
+	if e.Kind != other.Kind {
+		return false
+	}
+
+	if e.Width == nil && other.Width == nil {
+		return true
+	}
+
+	if e.Width == nil || other.Width == nil {
+		return false
+	}
+
+	return *e.Width == *other.Width
+}

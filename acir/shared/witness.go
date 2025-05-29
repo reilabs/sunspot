@@ -25,3 +25,10 @@ func (w Witness) Less(other btree.Item) bool {
 	}
 	return w < otherWitness
 }
+
+func (w *Witness) Equals(other *Witness) bool {
+	if other == nil {
+		return false
+	}
+	return *w == *other
+}

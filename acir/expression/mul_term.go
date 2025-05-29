@@ -6,7 +6,7 @@ import (
 )
 
 type MulTerm[T shr.ACIRField] struct {
-	Term         shr.ACIRField
+	Term         T
 	WitnessLeft  shr.Witness
 	WitnessRight shr.Witness
 }
@@ -25,4 +25,20 @@ func (mt *MulTerm[T]) UnmarshalReader(r io.Reader) error {
 	}
 
 	return nil
+}
+
+func (mt *MulTerm[T]) Equals(other *MulTerm[T]) bool {
+	if !mt.Term.Equals(other.Term) {
+		return false
+	}
+
+	if !mt.WitnessLeft.Equals(&other.WitnessLeft) {
+		return false
+	}
+
+	if !mt.WitnessRight.Equals(&other.WitnessRight) {
+		return false
+	}
+
+	return true
 }
