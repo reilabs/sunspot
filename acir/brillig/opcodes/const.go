@@ -27,3 +27,9 @@ func (c *Const[T]) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (c *Const[T]) Equals(other Const[T]) bool {
+	return c.Destination.Equals(other.Destination) &&
+		c.BitSize.Equals(other.BitSize) &&
+		c.Value.Equals(other.Value)
+}

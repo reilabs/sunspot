@@ -26,3 +26,9 @@ func (c *Cast) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (c *Cast) Equals(other Cast) bool {
+	return c.Destination.Equals(other.Destination) &&
+		c.Source.Equals(other.Source) &&
+		c.BitSize.Equals(other.BitSize)
+}

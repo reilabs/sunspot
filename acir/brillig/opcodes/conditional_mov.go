@@ -31,3 +31,10 @@ func (c *ConditionalMov) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (c *ConditionalMov) Equals(other ConditionalMov) bool {
+	return c.Destination.Equals(other.Destination) &&
+		c.SourceA.Equals(other.SourceA) &&
+		c.SourceB.Equals(other.SourceB) &&
+		c.Condition.Equals(other.Condition)
+}

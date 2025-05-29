@@ -7,7 +7,7 @@ fn generate_zero_field(path: &str) {
     let file_name = format!("{}/zero_field.bin", path);
 
     // Check if the file already exists
-     if std::path::Path::new(&file_name).exists() {
+    if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
     }
 
@@ -23,7 +23,9 @@ fn generate_zero_field(path: &str) {
 
     trace!(
         "Generated test file: {} for zero field with bytes {:?} len {}",
-        file_name, data, data.len()
+        file_name,
+        data,
+        data.len()
     );
 }
 

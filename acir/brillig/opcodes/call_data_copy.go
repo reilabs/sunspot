@@ -26,3 +26,9 @@ func (c *CallDataCopy) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (c *CallDataCopy) Equals(other CallDataCopy) bool {
+	return c.DestinationAddress.Equals(other.DestinationAddress) &&
+		c.SizeAddress.Equals(other.SizeAddress) &&
+		c.OffsetAddress.Equals(other.OffsetAddress)
+}

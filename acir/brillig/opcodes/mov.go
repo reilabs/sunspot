@@ -21,3 +21,8 @@ func (m *Mov) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (m *Mov) Equals(other Mov) bool {
+	return m.Destination.Equals(other.Destination) &&
+		m.Source.Equals(other.Source)
+}

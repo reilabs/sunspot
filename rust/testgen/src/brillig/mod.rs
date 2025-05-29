@@ -1,4 +1,5 @@
 mod memory;
+mod opcodes;
 
 pub fn generate_tests(directory: &str) {
     let directory = format!("{}/brillig/", directory);
@@ -7,4 +8,5 @@ pub fn generate_tests(directory: &str) {
     // Generate witness tests
 
     memory::generate_tests(&directory);
+    opcodes::generate_tests(&directory);
 }

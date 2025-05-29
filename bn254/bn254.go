@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 	"math/big"
+	shr "nr-groth16/acir/shared"
 )
 
 const BN254_MODULUS_STRING = "21888242871839275222246405745257275088548364400416034343698204186575808495617"
@@ -33,8 +34,12 @@ func (b *BN254Field) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	val := new(big.Int).SetBytes(bn254Bytes)
-	b.Modulus = val.Mod(val, Bn254Modulus)
+	//val := new(big.Int).SetBytes(bn254Bytes)
+	//b.Modulus = val.Mod(val, Bn254Modulus)
 
 	return nil
+}
+
+func (b *BN254Field) Equals(other shr.ACIRField) bool {
+	return true // Implement the equality check logic here
 }

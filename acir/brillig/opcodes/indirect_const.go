@@ -27,3 +27,9 @@ func (c *IndirectConst[T]) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (c *IndirectConst[T]) Equals(other IndirectConst[T]) bool {
+	return c.DestinationPointer.Equals(other.DestinationPointer) &&
+		c.BitSize.Equals(other.BitSize) &&
+		c.Value.Equals(other.Value)
+}

@@ -7,13 +7,17 @@ import (
 )
 
 type Jump struct {
-	location mem.Label
+	Location mem.Label
 }
 
 func (j *Jump) UnmarshalReader(r io.Reader) error {
-	if err := binary.Read(r, binary.LittleEndian, &j.location); err != nil {
+	if err := binary.Read(r, binary.LittleEndian, &j.Location); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (j *Jump) Equals(other Jump) bool {
+	return j.Location == other.Location
 }

@@ -17,3 +17,7 @@ func (c *Call) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (c *Call) Equals(other Call) bool {
+	return c.Location == other.Location
+}

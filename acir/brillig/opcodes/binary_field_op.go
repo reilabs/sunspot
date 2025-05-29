@@ -45,3 +45,10 @@ func (b *BinaryFieldOp) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (b *BinaryFieldOp) Equals(other BinaryFieldOp) bool {
+	return b.Destination.Equals(other.Destination) &&
+		b.Op == other.Op &&
+		b.Lhs.Equals(other.Lhs) &&
+		b.Rhs.Equals(other.Rhs)
+}

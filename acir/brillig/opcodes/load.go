@@ -21,3 +21,8 @@ func (l *Load) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (l *Load) Equals(other Load) bool {
+	return l.Destination.Equals(other.Destination) &&
+		l.SourcePointer.Equals(other.SourcePointer)
+}

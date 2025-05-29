@@ -59,3 +59,11 @@ func (b *BinaryIntOp) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (b *BinaryIntOp) Equals(other BinaryIntOp) bool {
+	return b.Destination.Equals(other.Destination) &&
+		b.Op == other.Op &&
+		b.BitSize == other.BitSize &&
+		b.Lhs.Equals(other.Lhs) &&
+		b.Rhs.Equals(other.Rhs)
+}

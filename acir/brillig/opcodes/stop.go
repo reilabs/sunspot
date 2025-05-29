@@ -16,3 +16,7 @@ func (s *Stop) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (s *Stop) Equals(other Stop) bool {
+	return s.ReturnData.Equals(other.ReturnData)
+}

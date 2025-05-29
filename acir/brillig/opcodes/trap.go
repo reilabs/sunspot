@@ -16,3 +16,7 @@ func (t *Trap) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (t *Trap) Equals(other Trap) bool {
+	return t.RevertData.Equals(other.RevertData)
+}

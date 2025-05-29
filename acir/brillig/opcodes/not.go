@@ -6,23 +6,29 @@ import (
 )
 
 type Not struct {
-	destination mem.MemoryAddress
-	source      mem.MemoryAddress
-	bit_size    mem.IntegerBitSize
+	Destination mem.MemoryAddress
+	Source      mem.MemoryAddress
+	BitSize     mem.IntegerBitSize
 }
 
 func (n *Not) UnmarshalReader(r io.Reader) error {
-	if err := n.destination.UnmarshalReader(r); err != nil {
+	if err := n.Destination.UnmarshalReader(r); err != nil {
 		return err
 	}
 
-	if err := n.source.UnmarshalReader(r); err != nil {
+	if err := n.Source.UnmarshalReader(r); err != nil {
 		return err
 	}
 
-	if err := n.bit_size.UnmarshalReader(r); err != nil {
+	if err := n.BitSize.UnmarshalReader(r); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (n *Not) Equals(other Not) bool {
+	return n.Destination.Equals(other.Destination) &&
+		n.Source.Equals(other.Source) &&
+		n.BitSize == other.BitSize
 }

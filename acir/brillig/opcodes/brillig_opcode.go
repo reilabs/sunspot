@@ -175,3 +175,53 @@ func (b *BrilligOpcode[T]) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (b *BrilligOpcode[T]) Equals(other BrilligOpcode[T]) bool {
+	if b.OpCode != other.OpCode {
+		return false
+	}
+
+	switch b.OpCode {
+	case ACIRBrilligOpcodeBinaryFieldOp:
+		return b.BinaryFieldOp.Equals(*other.BinaryFieldOp)
+	case ACIRBrilligOpcodeBinaryIntOp:
+		return b.BinaryIntOp.Equals(*other.BinaryIntOp)
+	case ACIRBrilligOpcodeNot:
+		return b.Not.Equals(*other.Not)
+	case ACIRBrilligOpcodeCast:
+		return b.Cast.Equals(*other.Cast)
+	case ACIRBrilligOpcodeJumpIfNot:
+		return b.JumpIfNot.Equals(*other.JumpIfNot)
+	case ACIRBrilligOpcodeJumpIf:
+		return b.JumpIf.Equals(*other.JumpIf)
+	case ACIRBrilligOpcodeJump:
+		return b.Jump.Equals(*other.Jump)
+	case ACIRBrilligOpcodeCalldataCopy:
+		return b.CalldataCopy.Equals(*other.CalldataCopy)
+	case ACIRBrilligOpcodeCall:
+		return b.Call.Equals(*other.Call)
+	case ACIRBrilligOpcodeConst:
+		return b.Const.Equals(*other.Const)
+	case ACIRBrilligOpcodeIndirectConst:
+		return b.IndirectConst.Equals(*other.IndirectConst)
+	case ACIRBrilligOpcodeForeignCall:
+		return b.ForeignCall.Equals(*other.ForeignCall)
+	case ACIRBrilligOpcodeMov:
+		return b.Mov.Equals(*other.Mov)
+	case ACIRBrilligOpcodeConditionalMov:
+		return b.ConditionalMov.Equals(*other.ConditionalMov)
+	case ACIRBrilligOpcodeLoad:
+		return b.Load.Equals(*other.Load)
+	case ACIRBrilligOpcodeStore:
+		return b.Store.Equals(*other.Store)
+	case ACIRBrilligOpcodeBlackBoxOp:
+		panic("BlackBoxOp equality not implemented")
+		//return b.BlackBox.Equals(*other.BlackBox)
+	case ACIRBrilligOpcodeTrap:
+		return b.Trap.Equals(*other.Trap)
+	case ACIRBrilligOpcodeStop:
+		return b.Stop.Equals(*other.Stop)
+	default:
+		return false
+	}
+}

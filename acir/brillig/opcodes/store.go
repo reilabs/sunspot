@@ -21,3 +21,8 @@ func (s *Store) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (s *Store) Equals(other Store) bool {
+	return s.DestinationPointer.Equals(other.DestinationPointer) &&
+		s.Source.Equals(other.Source)
+}

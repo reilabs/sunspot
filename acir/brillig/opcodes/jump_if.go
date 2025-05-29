@@ -7,18 +7,23 @@ import (
 )
 
 type JumpIf struct {
-	condition mem.MemoryAddress
-	location  Label
+	Condition mem.MemoryAddress
+	Location  Label
 }
 
 func (j *JumpIf) UnmarshalReader(r io.Reader) error {
-	if err := j.condition.UnmarshalReader(r); err != nil {
+	if err := j.Condition.UnmarshalReader(r); err != nil {
 		return err
 	}
 
-	if err := binary.Read(r, binary.LittleEndian, &j.location); err != nil {
+	if err := binary.Read(r, binary.LittleEndian, &j.Location); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (j *JumpIf) Equals(other JumpIf) bool {
+	return j.Condition.Equals(other.Condition) &&
+		j.Location == other.Location
 }
