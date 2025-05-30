@@ -14,7 +14,7 @@ fn generate_trap_test(path: &str) {
 
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
-    let trap_opcode = Opcode::<FieldElement>::Trap{
+    let trap_opcode = Opcode::<FieldElement>::Trap {
         revert_data: HeapVector {
             pointer: MemoryAddress::Direct(1234),
             size: MemoryAddress::Relative(5678),

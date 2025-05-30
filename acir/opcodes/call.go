@@ -19,7 +19,7 @@ func (c *Call[T]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	var numInputs uint32
+	var numInputs uint64
 	if err := binary.Read(r, binary.LittleEndian, &numInputs); err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func (c *Call[T]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	var numOutputs uint32
+	var numOutputs uint64
 	if err := binary.Read(r, binary.LittleEndian, &numOutputs); err != nil {
 		return err
 	}
@@ -49,4 +49,36 @@ func (c *Call[T]) UnmarshalReader(r io.Reader) error {
 	}
 
 	return nil
+}
+
+func (c *Call[T]) Equals(other *Call[T]) bool {
+	if c.ID != other.ID {
+		return false
+	}
+
+	if len(c.Inputs) != len(other.Inputs) || len(c.Outputs) != len(other.Outputs) {
+		return false
+	}
+
+	for i := range c.Inputs {
+		if c.Inputs[i] != other.Inputs[i] {
+			return false
+		}
+	}
+
+	for i := range c.Outputs {
+		if c.Outputs[i] != other.Outputs[i] {
+			return false
+		}
+	}
+
+	if (c.Predicate == nil) != (other.Predicate == nil) {
+		return false
+	}
+
+	if c.Predicate != nil && !c.Predicate.Equals(other.Predicate) {
+		return false
+	}
+
+	return true
 }

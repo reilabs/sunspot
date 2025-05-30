@@ -1,6 +1,9 @@
 use std::io::Write;
 
-use acir::{native_types::{Expression, Witness}, FieldElement};
+use acir::{
+    FieldElement,
+    native_types::{Expression, Witness},
+};
 use tracing::trace;
 
 fn generate_expression_test_empty(path: &str) {
@@ -11,10 +14,10 @@ fn generate_expression_test_empty(path: &str) {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
     }
 
-    let expression = Expression::<FieldElement>{
+    let expression = Expression::<FieldElement> {
         mul_terms: vec![],
         linear_combinations: vec![],
-        q_c : FieldElement::from(0u32),
+        q_c: FieldElement::from(0u32),
     };
 
     // Create a new file
@@ -43,14 +46,14 @@ fn generate_expression_test_linear_combinations(path: &str) {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
     }
 
-    let expression = Expression::<FieldElement>{
+    let expression = Expression::<FieldElement> {
         mul_terms: vec![],
         linear_combinations: vec![
             (FieldElement::from(1u32), Witness(0)),
             (FieldElement::from(2u32), Witness(1234)),
             (FieldElement::from(3u32), Witness(5678)),
         ],
-        q_c : FieldElement::from(0u32),
+        q_c: FieldElement::from(0u32),
     };
 
     // Create a new file
@@ -79,14 +82,14 @@ fn generate_expression_test_mul_terms(path: &str) {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
     }
 
-    let expression = Expression::<FieldElement>{
+    let expression = Expression::<FieldElement> {
         mul_terms: vec![
             (FieldElement::from(1u32), Witness(0), Witness(1)),
             (FieldElement::from(2u32), Witness(1234), Witness(5678)),
             (FieldElement::from(3u32), Witness(5678), Witness(1234)),
         ],
         linear_combinations: vec![],
-        q_c : FieldElement::from(0u32),
+        q_c: FieldElement::from(0u32),
     };
 
     // Create a new file
@@ -115,7 +118,7 @@ fn generate_expression_test_mul_terms_with_linear_combinations(path: &str) {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
     }
 
-    let expression = Expression::<FieldElement>{
+    let expression = Expression::<FieldElement> {
         mul_terms: vec![
             (FieldElement::from(1u32), Witness(0), Witness(1)),
             (FieldElement::from(2u32), Witness(1234), Witness(5678)),
@@ -126,7 +129,7 @@ fn generate_expression_test_mul_terms_with_linear_combinations(path: &str) {
             (FieldElement::from(2u32), Witness(1234)),
             (FieldElement::from(3u32), Witness(5678)),
         ],
-        q_c : FieldElement::from(0u32),
+        q_c: FieldElement::from(0u32),
     };
 
     // Create a new file

@@ -44,3 +44,23 @@ func (m *MemoryOp[T]) UnmarshalReader(r io.Reader) error {
 	}
 	return nil
 }
+
+func (m *MemoryOp[T]) Equals(other *MemoryOp[T]) bool {
+	if m.BlockID != other.BlockID {
+		return false
+	}
+
+	if !m.Operation.Equals(&other.Operation) || !m.Index.Equals(&other.Index) || !m.Value.Equals(&other.Value) {
+		return false
+	}
+
+	if m.Predicate == nil && other.Predicate == nil {
+		return true
+	}
+
+	if m.Predicate == nil || other.Predicate == nil {
+		return false
+	}
+
+	return m.Predicate.Equals(other.Predicate)
+}

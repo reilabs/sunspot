@@ -47,3 +47,26 @@ func (o *OpcodeLocation) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (o *OpcodeLocation) Equals(other *OpcodeLocation) bool {
+	if o.Kind != other.Kind {
+		return false
+	}
+
+	switch o.Kind {
+	case ACIROpcodeLocationKindACIR:
+		if o.ACIRAddress == nil || other.ACIRAddress == nil {
+			return o.ACIRAddress == other.ACIRAddress
+		}
+		return *o.ACIRAddress == *other.ACIRAddress
+
+	case ACIROpcodeLocationKindBrillig:
+		if o.ACIRIndex == nil || other.ACIRIndex == nil || o.BrilligIndex == nil || other.BrilligIndex == nil {
+			return o.ACIRIndex == other.ACIRIndex && o.BrilligIndex == other.BrilligIndex
+		}
+		return *o.ACIRIndex == *other.ACIRIndex && *o.BrilligIndex == *other.BrilligIndex
+
+	default:
+		return false
+	}
+}

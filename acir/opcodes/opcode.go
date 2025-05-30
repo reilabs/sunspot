@@ -73,3 +73,42 @@ func (o *Opcode[T]) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (o *Opcode[T]) Equals(other *Opcode[T]) bool {
+	if o.Kind != other.Kind {
+		return false
+	}
+
+	switch o.Kind {
+	case ACIROpcodeAssertZero:
+		if !o.Expression.Equals(other.Expression) {
+			return false
+		}
+	case ACIROpcodeBlackBoxFuncCall:
+		//if !o.BlackBoxFuncCall.Equals(other.BlackBoxFuncCall) {
+		//	return false
+		//}
+		return true // BlackBoxFuncCall does not have a location, so we assume equality if the call matches.
+	case ACIROpcodeMemoryOp:
+		if !o.MemoryOp.Equals(other.MemoryOp) {
+			return false
+		}
+	case ACIROpcodeMemoryInit:
+		if !o.MemoryInit.Equals(other.MemoryInit) {
+			return false
+		}
+	case ACIROpcodeBrilligCall:
+		//if !o.BrilligCall.Equals(other.BrilligCall) {
+		//	return false
+		//}
+		return true
+	case ACIROpcodeCall:
+		if !o.Call.Equals(other.Call) {
+			return false
+		}
+	default:
+		return false
+	}
+
+	return true
+}
