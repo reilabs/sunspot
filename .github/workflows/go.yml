@@ -17,11 +17,19 @@ jobs:
       with:
         go-version: '1.24.2'
 
+    - name: Set up Rust
+      uses: actions/setup-rust@v1
+      with:
+        rust-version: '1.80.0'
+
     - name: Install dependencies
       run: go mod tidy
 
     - name: Build binary
       run: go build -v ./...
+
+    - name: Build Test binaries
+      run: cd rust/testgen && cargo run && cd ../..
 
     - name: Run tests
       run: go test ./...
