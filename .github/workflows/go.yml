@@ -18,7 +18,7 @@ jobs:
         go-version: '1.24.2'
 
     - name: Set up Rust
-      uses: actions/setup-rust@v1
+      uses: rust-lang/setup-rust@v1
       with:
         rust-version: stable
 
