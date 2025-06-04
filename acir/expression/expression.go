@@ -73,3 +73,7 @@ func (e *Expression[T]) Equals(other *Expression[T]) bool {
 
 	return e.Constant.Equals(other.Constant)
 }
+
+func (e *Expression[T]) Calculate() (T, error) {
+	return e.Constant, nil
+}
