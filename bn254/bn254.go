@@ -5,6 +5,8 @@ import (
 	"io"
 	"math/big"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 const BN254_MODULUS_STRING = "21888242871839275222246405745257275088548364400416034343698204186575808495617"
@@ -42,4 +44,13 @@ func (b *BN254Field) UnmarshalReader(r io.Reader) error {
 
 func (b *BN254Field) Equals(other shr.ACIRField) bool {
 	return true // Implement the equality check logic here
+}
+
+func (b *BN254Field) Mul(api frontend.API, other shr.ACIRField) shr.ACIRField {
+	// Implement the multiplication logic here
+	// For now, just return a new BN254Field with zero value
+
+	return BN254Field{
+		Modulus: new(big.Int),
+	}
 }
