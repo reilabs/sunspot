@@ -24,3 +24,23 @@ func (a *Keccakf1600[T]) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (a *Keccakf1600[T]) Equals(other *Keccakf1600[T]) bool {
+	if len(a.Inputs) != len(other.Inputs) {
+		return false
+	}
+
+	for i := 0; i < 25; i++ {
+		if !a.Inputs[i].Equals(&other.Inputs[i]) {
+			return false
+		}
+	}
+
+	for i := 0; i < 25; i++ {
+		if a.Outputs[i] != other.Outputs[i] {
+			return false
+		}
+	}
+
+	return true
+}

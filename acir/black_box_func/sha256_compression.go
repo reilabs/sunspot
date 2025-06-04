@@ -31,3 +31,29 @@ func (a *SHA256Compression[T]) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (a *SHA256Compression[T]) Equals(other *SHA256Compression[T]) bool {
+	if len(a.Inputs) != len(other.Inputs) || len(a.HashValues) != len(other.HashValues) {
+		return false
+	}
+
+	for i := 0; i < 16; i++ {
+		if !a.Inputs[i].Equals(&other.Inputs[i]) {
+			return false
+		}
+	}
+
+	for i := 0; i < 8; i++ {
+		if !a.HashValues[i].Equals(&other.HashValues[i]) {
+			return false
+		}
+	}
+
+	for i := 0; i < 8; i++ {
+		if a.Outputs[i] != other.Outputs[i] {
+			return false
+		}
+	}
+
+	return true
+}

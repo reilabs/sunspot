@@ -23,3 +23,10 @@ func (a *Xor[T]) UnmarshalReader(r io.Reader) error {
 	}
 	return nil
 }
+
+func (a *Xor[T]) Equals(other *Xor[T]) bool {
+	if !a.Lhs.Equals(&other.Lhs) || !a.Rhs.Equals(&other.Rhs) {
+		return false
+	}
+	return a.Output == other.Output
+}

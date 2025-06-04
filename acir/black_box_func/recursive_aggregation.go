@@ -15,34 +15,34 @@ type RecursiveAggregation[T shr.ACIRField] struct {
 }
 
 func (a *RecursiveAggregation[T]) UnmarshalReader(r io.Reader) error {
-	var VerificationKeyCount uint32
+	var VerificationKeyCount uint64
 	if err := binary.Read(r, binary.LittleEndian, &VerificationKeyCount); err != nil {
 		return err
 	}
 	a.VerificationKey = make([]FunctionInput[T], VerificationKeyCount)
-	for i := uint32(0); i < VerificationKeyCount; i++ {
+	for i := uint64(0); i < VerificationKeyCount; i++ {
 		if err := a.VerificationKey[i].UnmarshalReader(r); err != nil {
 			return err
 		}
 	}
 
-	var ProofCount uint32
+	var ProofCount uint64
 	if err := binary.Read(r, binary.LittleEndian, &ProofCount); err != nil {
 		return err
 	}
 	a.Proof = make([]FunctionInput[T], ProofCount)
-	for i := uint32(0); i < ProofCount; i++ {
+	for i := uint64(0); i < ProofCount; i++ {
 		if err := a.Proof[i].UnmarshalReader(r); err != nil {
 			return err
 		}
 	}
 
-	var PublicInputsCount uint32
+	var PublicInputsCount uint64
 	if err := binary.Read(r, binary.LittleEndian, &PublicInputsCount); err != nil {
 		return err
 	}
 	a.PublicInputs = make([]FunctionInput[T], PublicInputsCount)
-	for i := uint32(0); i < PublicInputsCount; i++ {
+	for i := uint64(0); i < PublicInputsCount; i++ {
 		if err := a.PublicInputs[i].UnmarshalReader(r); err != nil {
 			return err
 		}
@@ -57,4 +57,33 @@ func (a *RecursiveAggregation[T]) UnmarshalReader(r io.Reader) error {
 	}
 
 	return nil
+}
+
+func (a *RecursiveAggregation[T]) Equals(other *RecursiveAggregation[T]) bool {
+	if len(a.VerificationKey) != len(other.VerificationKey) ||
+		len(a.Proof) != len(other.Proof) ||
+		len(a.PublicInputs) != len(other.PublicInputs) ||
+		a.ProofType != other.ProofType {
+		return false
+	}
+
+	for i := range a.VerificationKey {
+		if !a.VerificationKey[i].Equals(&other.VerificationKey[i]) {
+			return false
+		}
+	}
+
+	for i := range a.Proof {
+		if !a.Proof[i].Equals(&other.Proof[i]) {
+			return false
+		}
+	}
+
+	for i := range a.PublicInputs {
+		if !a.PublicInputs[i].Equals(&other.PublicInputs[i]) {
+			return false
+		}
+	}
+
+	return a.KeyHash.Equals(&other.KeyHash)
 }

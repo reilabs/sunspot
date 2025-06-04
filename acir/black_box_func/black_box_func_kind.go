@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-type BlackBoxFuncKind int
+type BlackBoxFuncKind uint32
 
 const (
 	ACIRBlackBoxFuncKindAES128Encrypt BlackBoxFuncKind = iota
@@ -35,4 +35,8 @@ func (k *BlackBoxFuncKind) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 	return nil
+}
+
+func (k *BlackBoxFuncKind) Equals(other *BlackBoxFuncKind) bool {
+	return *k == *other
 }

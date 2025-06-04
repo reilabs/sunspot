@@ -8,17 +8,17 @@ import (
 
 type AES128Encrypt[T shr.ACIRField] struct {
 	Inputs  []FunctionInput[T]
-	Iv      []FunctionInput[T]
-	Key     []FunctionInput[T]
+	Iv      [16]FunctionInput[T]
+	Key     [16]FunctionInput[T]
 	Outputs []shr.Witness
 }
 
 func (a *AES128Encrypt[T]) UnmarshalReader(r io.Reader) error {
-	InputsNum := uint32(0)
+	InputsNum := uint64(0)
 	if err := binary.Read(r, binary.LittleEndian, &InputsNum); err != nil {
 		return err
 	}
-	for i := uint32(0); i < InputsNum; i++ {
+	for i := uint64(0); i < InputsNum; i++ {
 		var input FunctionInput[T]
 		if err := input.UnmarshalReader(r); err != nil {
 			return err
@@ -27,26 +27,22 @@ func (a *AES128Encrypt[T]) UnmarshalReader(r io.Reader) error {
 	}
 
 	for i := uint32(0); i < 16; i++ {
-		var iv FunctionInput[T]
-		if err := iv.UnmarshalReader(r); err != nil {
+		if err := a.Iv[i].UnmarshalReader(r); err != nil {
 			return err
 		}
-		a.Iv = append(a.Iv, iv)
 	}
 
 	for i := uint32(0); i < 16; i++ {
-		var key FunctionInput[T]
-		if err := key.UnmarshalReader(r); err != nil {
+		if err := a.Key[i].UnmarshalReader(r); err != nil {
 			return err
 		}
-		a.Key = append(a.Key, key)
 	}
 
-	OutputsNum := uint32(0)
+	OutputsNum := uint64(0)
 	if err := binary.Read(r, binary.LittleEndian, &OutputsNum); err != nil {
 		return err
 	}
-	for i := uint32(0); i < OutputsNum; i++ {
+	for i := uint64(0); i < OutputsNum; i++ {
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
 			return err
@@ -55,4 +51,38 @@ func (a *AES128Encrypt[T]) UnmarshalReader(r io.Reader) error {
 	}
 
 	return nil
+}
+
+func (a *AES128Encrypt[T]) Equals(other *AES128Encrypt[T]) bool {
+	if len(a.Inputs) != len(other.Inputs) {
+		return false
+	}
+	for i := range a.Inputs {
+		if !a.Inputs[i].Equals(&other.Inputs[i]) {
+			return false
+		}
+	}
+
+	for i := uint32(0); i < 16; i++ {
+		if !a.Iv[i].Equals(&other.Iv[i]) {
+			return false
+		}
+	}
+
+	for i := uint32(0); i < 16; i++ {
+		if !a.Key[i].Equals(&other.Key[i]) {
+			return false
+		}
+	}
+
+	if len(a.Outputs) != len(other.Outputs) {
+		return false
+	}
+	for i := range a.Outputs {
+		if !a.Outputs[i].Equals(&other.Outputs[i]) {
+			return false
+		}
+	}
+
+	return true
 }

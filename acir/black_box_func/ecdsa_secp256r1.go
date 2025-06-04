@@ -44,3 +44,28 @@ func (a *ECDSASECP256R1[T]) UnmarshalReader(r io.Reader) error {
 	}
 	return nil
 }
+
+func (a *ECDSASECP256R1[T]) Equals(other *ECDSASECP256R1[T]) bool {
+	if len(a.PublicKeyX) != len(other.PublicKeyX) ||
+		len(a.PublicKeyY) != len(other.PublicKeyY) ||
+		len(a.Signature) != len(other.Signature) ||
+		len(a.HashedMessage) != len(other.HashedMessage) {
+		return false
+	}
+
+	for i := 0; i < 32; i++ {
+		if !a.PublicKeyX[i].Equals(&other.PublicKeyX[i]) ||
+			!a.PublicKeyY[i].Equals(&other.PublicKeyY[i]) ||
+			!a.HashedMessage[i].Equals(&other.HashedMessage[i]) {
+			return false
+		}
+	}
+
+	for i := 0; i < 64; i++ {
+		if !a.Signature[i].Equals(&other.Signature[i]) {
+			return false
+		}
+	}
+
+	return a.Output == other.Output
+}

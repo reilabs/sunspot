@@ -13,18 +13,18 @@ type Poseidon2Permutation[T shr.ACIRField] struct {
 }
 
 func (a *Poseidon2Permutation[T]) UnmarshalReader(r io.Reader) error {
-	var NumInputs uint32
+	var NumInputs uint64
 	if err := binary.Read(r, binary.LittleEndian, &NumInputs); err != nil {
 		return err
 	}
 	a.Inputs = make([]FunctionInput[T], NumInputs)
-	for i := uint32(0); i < NumInputs; i++ {
+	for i := uint64(0); i < NumInputs; i++ {
 		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
 			return err
 		}
 	}
 
-	var NumOutputs uint32
+	var NumOutputs uint64
 	if err := binary.Read(r, binary.LittleEndian, &NumOutputs); err != nil {
 		return err
 	}
@@ -39,4 +39,24 @@ func (a *Poseidon2Permutation[T]) UnmarshalReader(r io.Reader) error {
 	}
 
 	return nil
+}
+
+func (a *Poseidon2Permutation[T]) Equals(other *Poseidon2Permutation[T]) bool {
+	if len(a.Inputs) != len(other.Inputs) || len(a.Outputs) != len(other.Outputs) || a.Len != other.Len {
+		return false
+	}
+
+	for i := range a.Inputs {
+		if !a.Inputs[i].Equals(&other.Inputs[i]) {
+			return false
+		}
+	}
+
+	for i := range a.Outputs {
+		if a.Outputs[i] != other.Outputs[i] {
+			return false
+		}
+	}
+
+	return true
 }

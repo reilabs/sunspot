@@ -1,6 +1,8 @@
 package blackboxfunc
 
 import (
+	"encoding/binary"
+	"fmt"
 	"io"
 	shr "nr-groth16/acir/shared"
 )
@@ -30,8 +32,14 @@ type BlackBoxFuncCall[T shr.ACIRField] struct {
 }
 
 func (a *BlackBoxFuncCall[T]) UnmarshalReader(r io.Reader) error {
-	if err := a.Kind.UnmarshalReader(r); err != nil {
+	if err := binary.Read(r, binary.LittleEndian, &a.Kind); err != nil {
 		return err
+	}
+
+	if a.Kind > ACIRBlackBoxFuncKindSha256Compression {
+		return BlackBoxFuncKindError{
+			Code: uint32(a.Kind),
+		}
 	}
 
 	switch a.Kind {
@@ -142,6 +150,118 @@ func (a *BlackBoxFuncCall[T]) UnmarshalReader(r io.Reader) error {
 	}
 
 	return nil
+}
+
+func (a *BlackBoxFuncCall[T]) Equals(other *BlackBoxFuncCall[T]) bool {
+	if a.Kind != other.Kind {
+		fmt.Println("BlackBoxFuncCall: Kind mismatch")
+		return false
+	}
+
+	switch a.Kind {
+	case ACIRBlackBoxFuncKindAES128Encrypt:
+		if a.AES128Encrypt == nil || other.AES128Encrypt == nil {
+			return a.AES128Encrypt == nil && other.AES128Encrypt == nil
+		}
+		return a.AES128Encrypt.Equals(other.AES128Encrypt)
+	case ACIRBlackBoxFuncKindAnd:
+		if a.And == nil || other.And == nil {
+			return a.And == nil && other.And == nil
+		}
+		return a.And.Equals(other.And)
+	case ACIRBlackBoxFuncKindXor:
+		if a.Xor == nil || other.Xor == nil {
+			return a.Xor == nil && other.Xor == nil
+		}
+		return a.Xor.Equals(other.Xor)
+	case ACIRBlackBoxFuncKindRange:
+		if a.Range == nil || other.Range == nil {
+			return a.Range == nil && other.Range == nil
+		}
+		return a.Range.Equals(other.Range)
+	case ACIRBlackBoxFuncKindBlake2s:
+		if a.Blake2s == nil || other.Blake2s == nil {
+			return a.Blake2s == nil && other.Blake2s == nil
+		}
+		return a.Blake2s.Equals(other.Blake2s)
+	case ACIRBlackBoxFuncKindBlake3:
+		if a.Blake3 == nil || other.Blake3 == nil {
+			return a.Blake3 == nil && other.Blake3 == nil
+		}
+		return a.Blake3.Equals(other.Blake3)
+	case ACIRBlackBoxFuncKindEcdsaSecp256k1:
+		if a.ECDSASECP256K1 == nil || other.ECDSASECP256K1 == nil {
+			return a.ECDSASECP256K1 == nil && other.ECDSASECP256K1 == nil
+		}
+		return a.ECDSASECP256K1.Equals(other.ECDSASECP256K1)
+	case ACIRBlackBoxFuncKindEcdsaSecp256r1:
+		if a.ECDSASECP256R1 == nil || other.ECDSASECP256R1 == nil {
+			return a.ECDSASECP256R1 == nil && other.ECDSASECP256R1 == nil
+		}
+		return a.ECDSASECP256R1.Equals(other.ECDSASECP256R1)
+	case ACIRBlackBoxFuncKindMultiScalarMul:
+		if a.MultiScalarMul == nil || other.MultiScalarMul == nil {
+			return a.MultiScalarMul == nil && other.MultiScalarMul == nil
+		}
+		return a.MultiScalarMul.Equals(other.MultiScalarMul)
+	case ACIRBlackBoxFuncKindEmbeddedCurveAdd:
+		if a.EmbeddedCurveAdd == nil || other.EmbeddedCurveAdd == nil {
+			return a.EmbeddedCurveAdd == nil && other.EmbeddedCurveAdd == nil
+		}
+		return a.EmbeddedCurveAdd.Equals(other.EmbeddedCurveAdd)
+	case ACIRBlackBoxFuncKindKeccakf1600:
+		if a.Keccakf1600 == nil || other.Keccakf1600 == nil {
+			return a.Keccakf1600 == nil && other.Keccakf1600 == nil
+		}
+		return a.Keccakf1600.Equals(other.Keccakf1600)
+	case ACIRBlackBoxFuncKindRecursiveAggregation:
+		if a.RecursiveAggregation == nil || other.RecursiveAggregation == nil {
+			return a.RecursiveAggregation == nil && other.RecursiveAggregation == nil
+		}
+		return a.RecursiveAggregation.Equals(other.RecursiveAggregation)
+	case ACIRBlackBoxFuncKindBigIntAdd:
+		if a.BigIntAdd == nil || other.BigIntAdd == nil {
+			return a.BigIntAdd == nil && other.BigIntAdd == nil
+		}
+		return a.BigIntAdd.Equals(other.BigIntAdd)
+	case ACIRBlackBoxFuncKindBigIntSub:
+		if a.BigIntSub == nil || other.BigIntSub == nil {
+			return a.BigIntSub == nil && other.BigIntSub == nil
+		}
+		return a.BigIntSub.Equals(other.BigIntSub)
+	case ACIRBlackBoxFuncKindBigIntMul:
+		if a.BigIntMul == nil || other.BigIntMul == nil {
+			return a.BigIntMul == nil && other.BigIntMul == nil
+		}
+		return a.BigIntMul.Equals(other.BigIntMul)
+	case ACIRBlackBoxFuncKindBigIntDiv:
+		if a.BigIntDiv == nil || other.BigIntDiv == nil {
+			return a.BigIntDiv == nil && other.BigIntDiv == nil
+		}
+		return a.BigIntDiv.Equals(other.BigIntDiv)
+	case ACIRBlackBoxFuncKindBigIntFromLeBytes:
+		if a.BigIntFromLEBytes == nil || other.BigIntFromLEBytes == nil {
+			return a.BigIntFromLEBytes == nil && other.BigIntFromLEBytes == nil
+		}
+		return a.BigIntFromLEBytes.Equals(other.BigIntFromLEBytes)
+	case ACIRBlackBoxFuncKindBigIntToLeBytes:
+		if a.BigIntToLEBytes == nil || other.BigIntToLEBytes == nil {
+			return a.BigIntToLEBytes == nil && other.BigIntToLEBytes == nil
+		}
+		return a.BigIntToLEBytes.Equals(other.BigIntToLEBytes)
+	case ACIRBlackBoxFuncKindPoseidon2Permutation:
+		if a.Poseidon2Permutation == nil || other.Poseidon2Permutation == nil {
+			return a.Poseidon2Permutation == nil && other.Poseidon2Permutation == nil
+		}
+		return a.Poseidon2Permutation.Equals(other.Poseidon2Permutation)
+	case ACIRBlackBoxFuncKindSha256Compression:
+		if a.Sha256Compression == nil || other.Sha256Compression == nil {
+			return a.Sha256Compression == nil && other.Sha256Compression == nil
+		}
+		return a.Sha256Compression.Equals(other.Sha256Compression)
+	default:
+		return false
+	}
 }
 
 type BlackBoxFuncKindError struct {

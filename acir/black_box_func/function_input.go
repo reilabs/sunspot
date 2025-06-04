@@ -48,6 +48,27 @@ func (f *FunctionInput[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
+func (f *FunctionInput[T]) Equals(other *FunctionInput[T]) bool {
+	if f.FunctionInputKind != other.FunctionInputKind {
+		return false
+	}
+
+	switch f.FunctionInputKind {
+	case ACIRFunctionInputKindConstant:
+		if f.ConstantInput == nil || other.ConstantInput == nil {
+			return false
+		}
+		return (*f.ConstantInput).Equals(*other.ConstantInput)
+	case ACIRFunctionInputKindWitness:
+		if f.Witness == nil || other.Witness == nil {
+			return false
+		}
+		return *f.Witness == *other.Witness
+	default:
+		return false
+	}
+}
+
 type FunctionInputKind uint32
 
 const (

@@ -23,3 +23,7 @@ func (a *BigIntAdd) UnmarshalReader(r io.Reader) error {
 	}
 	return nil
 }
+
+func (a *BigIntAdd) Equals(other *BigIntAdd) bool {
+	return a.Lhs == other.Lhs && a.Rhs == other.Rhs && a.Output == other.Output
+}

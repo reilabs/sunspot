@@ -31,3 +31,23 @@ func (a *EmbeddedCurveAdd[T]) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+func (a *EmbeddedCurveAdd[T]) Equals(other *EmbeddedCurveAdd[T]) bool {
+	if len(a.Input1) != len(other.Input1) || len(a.Input2) != len(other.Input2) {
+		return false
+	}
+
+	for i := 0; i < 3; i++ {
+		if !a.Input1[i].Equals(&other.Input1[i]) || !a.Input2[i].Equals(&other.Input2[i]) {
+			return false
+		}
+	}
+
+	for i := 0; i < 3; i++ {
+		if a.Outputs[i] != other.Outputs[i] {
+			return false
+		}
+	}
+
+	return true
+}
