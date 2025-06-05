@@ -6,7 +6,7 @@ import (
 	"math/big"
 	shr "nr-groth16/acir/shared"
 
-	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 )
 
 const BN254_MODULUS_STRING = "21888242871839275222246405745257275088548364400416034343698204186575808495617"
@@ -46,11 +46,11 @@ func (b *BN254Field) Equals(other shr.ACIRField) bool {
 	return true // Implement the equality check logic here
 }
 
-func (b *BN254Field) Mul(api frontend.API, other shr.ACIRField) shr.ACIRField {
-	// Implement the multiplication logic here
-	// For now, just return a new BN254Field with zero value
-
-	return BN254Field{
-		Modulus: new(big.Int),
+func (b *BN254Field) ToElement() shr.GenericFPElement {
+	var element fp.Element
+	element.SetBigInt(b.Modulus)
+	return shr.GenericFPElement{
+		Kind:           shr.GenericFPElementKindBN254,
+		BN254FpElement: &element,
 	}
 }
