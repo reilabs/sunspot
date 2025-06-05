@@ -31,6 +31,38 @@ Decoding the binary code is performed into ACIR Decoded structures using the fie
 
 Decoded structures have the ```Decoded``` annotation (e.g. ```ExpressionDecoded[T ACIRField]```)
 
-## Converting the decoded structures into gnark-friendly ones
+## Converting the decoded structures into gnark-compatible ones and making it compilable
 
+After decoding, we need to make our ACIR representation gnark-compatible in order to make the circuit definition and compilation straightforward and simple. Therefore, we do the following:
 
+1. Add the witnesses map map[WitnessID]frontend.Variable to the circuit structure - will be used as source of witnesses
+2. Convert the circuit's with all the underlying structures' ```ACIRField``` fields to gnark-compatible ```GenericFpElements```
+3. Call the frontend.Compile routine through ```Define(api frontend.API) error``` routine (used for compiling the values) - routine required for compiling the circuit
+
+## Using the prover and the verifier
+
+To use the prover and the verifier, we need to create either full witness map (with both private and public witnesses) for prover or public witness map (with public inputs only) for verifier.
+
+This witness map can be constructed manually (or using special routine) by mapping the witness indices to the actual values: all the inputs in ACIR file ABI Parameters section are enumerated consequtively starting from 1.
+
+Therefore, if we have the input of X, Y, Z fields (X, Y - private, Z - public), the witness map will look like:
+
+```
+WitnessMap {
+    1: X,
+    2: Y,
+    3: Z
+}
+```
+
+where X, Y, Z are values provided.
+
+Public witness map will look as follows
+
+```
+PublicWitnessMap {
+    3: Z
+}
+```
+
+Once the appropriate map is ready, it can be propagated into the prover or verifier though a standard ```gnark``` interface
