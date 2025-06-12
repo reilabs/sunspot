@@ -3,6 +3,8 @@ package expression
 import (
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type LinearCombination[T shr.ACIRField] struct {
@@ -32,4 +34,9 @@ func (lc *LinearCombination[T]) Equals(other *LinearCombination[T]) bool {
 	}
 
 	return true
+}
+
+func (lc *LinearCombination[T]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
+	left := witnesses[lc.Witness]
+	return api.Mul(left, lc.Term.ToFrontendVariable())
 }

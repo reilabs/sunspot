@@ -3,6 +3,8 @@ package expression
 import (
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type MulTerm[T shr.ACIRField] struct {
@@ -41,4 +43,10 @@ func (mt *MulTerm[T]) Equals(other *MulTerm[T]) bool {
 	}
 
 	return true
+}
+
+func (Mt *MulTerm[T]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
+	left := witnesses[Mt.WitnessLeft]
+	right := witnesses[Mt.WitnessRight]
+	return api.Mul(left, right, Mt.Term.ToFrontendVariable())
 }

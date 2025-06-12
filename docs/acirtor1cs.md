@@ -65,4 +65,4 @@ PublicWitnessMap {
 }
 ```
 
-Once the appropriate map is ready, it can be propagated into the prover or verifier though a standard ```gnark``` interface
+Once the appropriate map is ready, it can be propagated into the prover or verifier though a standard ```groth16.Prove``` and ```groth16.Verify``` interface

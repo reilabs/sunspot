@@ -25,12 +25,12 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	var numOpcodes uint32
+	var numOpcodes uint64
 	if err := binary.Read(r, binary.LittleEndian, &numOpcodes); err != nil {
 		return err
 	}
 	c.Opcodes = make([]ops.Opcode[T], numOpcodes)
-	for i := uint32(0); i < numOpcodes; i++ {
+	for i := uint64(0); i < numOpcodes; i++ {
 		if err := c.Opcodes[i].UnmarshalReader(r); err != nil {
 			return err
 		}
@@ -75,12 +75,12 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 		c.ReturnValues.ReplaceOrInsert(witness)
 	}
 
-	var numAssertMessages uint32
+	var numAssertMessages uint64
 	if err := binary.Read(r, binary.LittleEndian, &numAssertMessages); err != nil {
 		return err
 	}
 	c.AssertMessages = make(map[ops.OpcodeLocation]AssertionPayload[T], numAssertMessages)
-	for i := uint32(0); i < numAssertMessages; i++ {
+	for i := uint64(0); i < numAssertMessages; i++ {
 		var opcodeLocation ops.OpcodeLocation
 		if err := opcodeLocation.UnmarshalReader(r); err != nil {
 			return err

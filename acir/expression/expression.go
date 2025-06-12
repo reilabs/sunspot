@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type Expression[T shr.ACIRField] struct {
@@ -74,6 +76,13 @@ func (e *Expression[T]) Equals(other *Expression[T]) bool {
 	return e.Constant.Equals(other.Constant)
 }
 
-func (e *Expression[T]) Calculate() (T, error) {
-	return e.Constant, nil
+func (e *Expression[T]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
+	sum := e.Constant.ToFrontendVariable()
+	for _, term := range e.MulTerms {
+		sum = api.Add(sum, term.Calculate(api, witnesses))
+	}
+	for _, lc := range e.LinearCombinations {
+		sum = api.Add(sum, lc.Calculate(api, witnesses))
+	}
+	return sum
 }

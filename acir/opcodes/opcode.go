@@ -8,6 +8,8 @@ import (
 	brl "nr-groth16/acir/brillig"
 	exp "nr-groth16/acir/expression"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type Opcode[T shr.ACIRField] struct {
@@ -111,4 +113,33 @@ func (o *Opcode[T]) Equals(other *Opcode[T]) bool {
 	}
 
 	return true
+}
+
+func (o *Opcode[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
+	switch o.Kind {
+	case ACIROpcodeAssertZero:
+		if o.Expression == nil {
+			panic("Expression is nil for AssertZero opcode")
+		}
+
+		api.AssertIsEqual(o.Expression.Calculate(api, witnesses), 0)
+		return o.Expression.Calculate(api, witnesses)
+	case ACIROpcodeBlackBoxFuncCall:
+		panic("BlackBoxFuncCall opcode is not implemented yet") // TODO: Implement BlackBoxFuncCall calculation
+		//return o.BlackBoxFuncCall.Calculate(api, witnesses)
+	case ACIROpcodeMemoryOp:
+		panic("MemoryOp opcode is not implemented yet") // TODO: Implement MemoryOp calculation
+		//return o.MemoryOp.Calculate(api, witnesses)
+	case ACIROpcodeMemoryInit:
+		panic("MemoryInit opcode is not implemented yet") // TODO: Implement MemoryInit calculation
+		//return o.MemoryInit.Calculate(api, witnesses)
+	case ACIROpcodeBrilligCall:
+		panic("BrilligCall opcode is not implemented yet") // TODO: Implement BrilligCall calculation
+		//return o.BrilligCall.Calculate(api, witnesses)
+	case ACIROpcodeCall:
+		panic("Call opcode is not implemented yet") // TODO: Implement Call calculation
+		//return o.Call.Calculate(api, witnesses)
+	default:
+		panic(fmt.Sprintf("unknown OpcodeKind: %d", o.Kind))
+	}
 }

@@ -7,6 +7,8 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark/frontend"
 )
 
 const BN254_MODULUS_STRING = "21888242871839275222246405745257275088548364400416034343698204186575808495617"
@@ -36,6 +38,8 @@ func (b *BN254Field) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
+	b.Modulus = new(big.Int).SetBytes(bn254Bytes)
+
 	//val := new(big.Int).SetBytes(bn254Bytes)
 	//b.Modulus = val.Mod(val, Bn254Modulus)
 
@@ -53,4 +57,13 @@ func (b *BN254Field) ToElement() shr.GenericFPElement {
 		Kind:           shr.GenericFPElementKindBN254,
 		BN254FpElement: &element,
 	}
+}
+
+func (b *BN254Field) ToFrontendVariable() frontend.Variable {
+	var element fr.Element
+	if b.Modulus == nil {
+		b.Modulus = new(big.Int).SetUint64(0)
+	}
+	element.SetBigInt(b.Modulus)
+	return element
 }
