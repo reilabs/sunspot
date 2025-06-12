@@ -19,14 +19,14 @@ type BN254Field struct {
 	Modulus *big.Int
 }
 
-func (b *BN254Field) Zero() *BN254Field {
-	return &BN254Field{
+func Zero() BN254Field {
+	return BN254Field{
 		Modulus: new(big.Int).SetInt64(0),
 	}
 }
 
-func (b *BN254Field) One() *BN254Field {
-	return &BN254Field{
+func One() BN254Field {
+	return BN254Field{
 		Modulus: new(big.Int).SetInt64(1),
 	}
 }

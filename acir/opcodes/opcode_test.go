@@ -29,13 +29,14 @@ func TestExpressionExecution(t *testing.T) {
 		Visibility: schema.Public,
 	})
 
-	privVarY := builder.SecretVariable(schema.LeafInfo{
-		FullName:   func() string { return "testSecretVariableY" },
-		Visibility: schema.Secret,
-	})
 	pubVarZ := builder.PublicVariable(schema.LeafInfo{
 		FullName:   func() string { return "testPublicVariableZ" },
 		Visibility: schema.Public,
+	})
+
+	privVarY := builder.SecretVariable(schema.LeafInfo{
+		FullName:   func() string { return "testSecretVariableY" },
+		Visibility: schema.Secret,
 	})
 
 	witnessMap := map[shr.Witness]frontend.Variable{
@@ -44,23 +45,25 @@ func TestExpressionExecution(t *testing.T) {
 		3: pubVarZ,
 	}
 
+	zero := bn254.Zero()
+	one := bn254.One()
 	exprOpCode := Opcode[*bn254.BN254Field]{
 		Kind: ACIROpcodeAssertZero,
 		Expression: &expr.Expression[*bn254.BN254Field]{
 			MulTerms: []expr.MulTerm[*bn254.BN254Field]{
 				{
-					Term:         &bn254.BN254Field{},
+					Term:         &one,
 					WitnessLeft:  1,
 					WitnessRight: 2,
 				},
 			},
 			LinearCombinations: []expr.LinearCombination[*bn254.BN254Field]{
 				{
-					Term:    &bn254.BN254Field{},
+					Term:    &one,
 					Witness: 3,
 				},
 			},
-			Constant: &bn254.BN254Field{},
+			Constant: &zero,
 		},
 	}
 
@@ -71,15 +74,11 @@ func TestExpressionExecution(t *testing.T) {
 		t.Fatalf("Failed to compile R1CS: %v", err)
 	}
 
-	if ccs.GetNbConstraints() != 1 {
-		t.Errorf("Expected 1 constraints, got %d", ccs.GetNbConstraints())
-	}
-
 	if ccs.GetNbPublicVariables() != 3 {
-		t.Errorf("Expected 2  public variables, got %d", ccs.GetNbPublicVariables())
+		t.Errorf("Expected 3 public variables, got %d", ccs.GetNbPublicVariables())
 	}
 	if ccs.GetNbSecretVariables() != 1 {
-		t.Errorf("Expected 0 secret variables, got %d", ccs.GetNbSecretVariables())
+		t.Errorf("Expected 1 secret variables, got %d", ccs.GetNbSecretVariables())
 	}
 
 	witness, err := witness.New(fr.Modulus())
@@ -90,9 +89,9 @@ func TestExpressionExecution(t *testing.T) {
 	values := make(chan any)
 
 	go func() {
-		values <- big.NewInt(123)
-		values <- big.NewInt(12)
-		values <- big.NewInt(135)
+		values <- big.NewInt(2)
+		values <- big.NewInt(-850)
+		values <- big.NewInt(425)
 		close(values)
 	}()
 

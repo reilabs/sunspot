@@ -48,5 +48,6 @@ func (mt *MulTerm[T]) Equals(other *MulTerm[T]) bool {
 func (Mt *MulTerm[T]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
 	left := witnesses[Mt.WitnessLeft]
 	right := witnesses[Mt.WitnessRight]
+	api.Println("Calculating MulTerm with left witness:", left, "and right witness:", right, "with term:", Mt.Term.ToFrontendVariable())
 	return api.Mul(left, right, Mt.Term.ToFrontendVariable())
 }

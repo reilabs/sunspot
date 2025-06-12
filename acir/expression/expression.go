@@ -84,5 +84,5 @@ func (e *Expression[T]) Calculate(api frontend.API, witnesses map[shr.Witness]fr
 	for _, lc := range e.LinearCombinations {
 		sum = api.Add(sum, lc.Calculate(api, witnesses))
 	}
-	return sum
+	return api.Add(sum, e.Constant.ToFrontendVariable())
 }
