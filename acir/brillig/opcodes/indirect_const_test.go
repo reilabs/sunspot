@@ -13,15 +13,15 @@ func TestIndirectConstUnmarshalReader(t *testing.T) {
 		t.Fatalf("failed to open file: %v", err)
 	}
 
-	op := BrilligOpcode[*bn254.BN254Field]{}
+	op := BrilligOpcode[bn254.BN254Field]{}
 	if err := op.UnmarshalReader(file); err != nil {
 		t.Fatalf("failed to unmarshal IndirectConst: %v", err)
 	}
 
 	expectedIntegerBitSize := mem.IntegerBitSizeU32
-	expected := BrilligOpcode[*bn254.BN254Field]{
+	expected := BrilligOpcode[bn254.BN254Field]{
 		OpCode: ACIRBrilligOpcodeIndirectConst,
-		IndirectConst: &IndirectConst[*bn254.BN254Field]{
+		IndirectConst: &IndirectConst[bn254.BN254Field]{
 			DestinationPointer: mem.MemoryAddress{
 				Kind:  mem.MemoryAddressKindDirect,
 				Value: 1234,
@@ -30,7 +30,7 @@ func TestIndirectConstUnmarshalReader(t *testing.T) {
 				Kind:           mem.BitSizeKindInteger,
 				IntegerBitSize: &expectedIntegerBitSize,
 			},
-			Value: &bn254.BN254Field{},
+			Value: bn254.Zero(),
 		},
 	}
 

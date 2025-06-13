@@ -13,12 +13,12 @@ func TestBinaryIntOpUnmarshalReaderAdd(t *testing.T) {
 		t.Fatalf("failed to open test file: %v", err)
 	}
 
-	op := BrilligOpcode[*bn254.BN254Field]{}
+	op := BrilligOpcode[bn254.BN254Field]{}
 	if err := op.UnmarshalReader(f); err != nil {
 		t.Fatalf("failed to unmarshal BinaryIntOpAdd: %v", err)
 	}
 
-	expected := BrilligOpcode[*bn254.BN254Field]{
+	expected := BrilligOpcode[bn254.BN254Field]{
 		OpCode: ACIRBrilligOpcodeBinaryIntOp,
 		BinaryIntOp: &BinaryIntOp{
 			Destination: mem.MemoryAddress{
@@ -51,12 +51,12 @@ func TestBinaryIntOpUnmarshalReaderLessThanOrEquals(t *testing.T) {
 		t.Fatalf("failed to open test file: %v", err)
 	}
 
-	op := BrilligOpcode[*bn254.BN254Field]{}
+	op := BrilligOpcode[bn254.BN254Field]{}
 	if err := op.UnmarshalReader(f); err != nil {
 		t.Fatalf("failed to unmarshal BinaryIntOpLessThanOrEquals: %v", err)
 	}
 
-	expected := BrilligOpcode[*bn254.BN254Field]{
+	expected := BrilligOpcode[bn254.BN254Field]{
 		OpCode: ACIRBrilligOpcodeBinaryIntOp,
 		BinaryIntOp: &BinaryIntOp{
 			Destination: mem.MemoryAddress{

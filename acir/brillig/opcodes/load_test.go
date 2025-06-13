@@ -13,12 +13,12 @@ func TestLoadUnmarshalReader(t *testing.T) {
 		t.Fatalf("failed to open file: %v", err)
 	}
 
-	op := BrilligOpcode[*bn254.BN254Field]{}
+	op := BrilligOpcode[bn254.BN254Field]{}
 	if err := op.UnmarshalReader(file); err != nil {
 		t.Fatalf("failed to unmarshal Load: %v", err)
 	}
 
-	expected := BrilligOpcode[*bn254.BN254Field]{
+	expected := BrilligOpcode[bn254.BN254Field]{
 		OpCode: ACIRBrilligOpcodeLoad,
 		Load: &Load{
 			Destination: mem.MemoryAddress{

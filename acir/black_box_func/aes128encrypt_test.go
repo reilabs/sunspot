@@ -13,34 +13,34 @@ func TestAES128EncryptUnmarshalReaderEmpty(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
+	blackBoxFuncCall := BlackBoxFuncCall[bn254.BN254Field]{}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
 
 	expectedIvWitness := shr.Witness(1234)
 	expectedKeyWitness := shr.Witness(5678)
-	expectedIv := [16]FunctionInput[*bn254.BN254Field]{}
+	expectedIv := [16]FunctionInput[bn254.BN254Field]{}
 	for i := 0; i < 16; i++ {
-		expectedIv[i] = FunctionInput[*bn254.BN254Field]{
+		expectedIv[i] = FunctionInput[bn254.BN254Field]{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedIvWitness,
 			NumberOfBits:      5678,
 		}
 	}
-	expectedKey := [16]FunctionInput[*bn254.BN254Field]{}
+	expectedKey := [16]FunctionInput[bn254.BN254Field]{}
 	for i := 0; i < 16; i++ {
-		expectedKey[i] = FunctionInput[*bn254.BN254Field]{
+		expectedKey[i] = FunctionInput[bn254.BN254Field]{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedKeyWitness,
 			NumberOfBits:      91011,
 		}
 	}
 
-	expected := BlackBoxFuncCall[*bn254.BN254Field]{
+	expected := BlackBoxFuncCall[bn254.BN254Field]{
 		Kind: ACIRBlackBoxFuncKindAES128Encrypt,
-		AES128Encrypt: &AES128Encrypt[*bn254.BN254Field]{
-			Inputs:  []FunctionInput[*bn254.BN254Field]{},
+		AES128Encrypt: &AES128Encrypt[bn254.BN254Field]{
+			Inputs:  []FunctionInput[bn254.BN254Field]{},
 			Iv:      expectedIv,
 			Key:     expectedKey,
 			Outputs: []shr.Witness{},
@@ -60,24 +60,24 @@ func TestAES128EncryptUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
+	blackBoxFuncCall := BlackBoxFuncCall[bn254.BN254Field]{}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
 
 	expectedIvWitness := shr.Witness(3456)
 	expectedKeyWitness := shr.Witness(4567)
-	expectedIv := [16]FunctionInput[*bn254.BN254Field]{}
+	expectedIv := [16]FunctionInput[bn254.BN254Field]{}
 	for i := 0; i < 16; i++ {
-		expectedIv[i] = FunctionInput[*bn254.BN254Field]{
+		expectedIv[i] = FunctionInput[bn254.BN254Field]{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedIvWitness,
 			NumberOfBits:      5678,
 		}
 	}
-	expectedKey := [16]FunctionInput[*bn254.BN254Field]{}
+	expectedKey := [16]FunctionInput[bn254.BN254Field]{}
 	for i := 0; i < 16; i++ {
-		expectedKey[i] = FunctionInput[*bn254.BN254Field]{
+		expectedKey[i] = FunctionInput[bn254.BN254Field]{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedKeyWitness,
 			NumberOfBits:      6789,
@@ -86,7 +86,7 @@ func TestAES128EncryptUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 
 	expectedWitnessInput1 := shr.Witness(1234)
 	expectedWitnessInput2 := shr.Witness(2345)
-	expectedInputs := []FunctionInput[*bn254.BN254Field]{
+	expectedInputs := []FunctionInput[bn254.BN254Field]{
 		{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedWitnessInput1,
@@ -104,9 +104,9 @@ func TestAES128EncryptUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		shr.Witness(2345),
 		shr.Witness(3456),
 	}
-	expected := BlackBoxFuncCall[*bn254.BN254Field]{
+	expected := BlackBoxFuncCall[bn254.BN254Field]{
 		Kind: ACIRBlackBoxFuncKindAES128Encrypt,
-		AES128Encrypt: &AES128Encrypt[*bn254.BN254Field]{
+		AES128Encrypt: &AES128Encrypt[bn254.BN254Field]{
 			Inputs:  expectedInputs,
 			Iv:      expectedIv,
 			Key:     expectedKey,
