@@ -36,12 +36,12 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 		}
 	}
 
-	var numPrivateParameters uint64
+	var numPrivateParameters uint32
 	if err := binary.Read(r, binary.LittleEndian, &numPrivateParameters); err != nil {
 		return err
 	}
 	c.PrivateParameters = *btree.New(2)
-	for i := uint64(0); i < numPrivateParameters; i++ {
+	for i := uint32(0); i < numPrivateParameters; i++ {
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
 			return err
@@ -49,12 +49,12 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 		c.PrivateParameters.ReplaceOrInsert(witness)
 	}
 
-	var numPublicParameters uint64
+	var numPublicParameters uint32
 	if err := binary.Read(r, binary.LittleEndian, &numPublicParameters); err != nil {
 		return err
 	}
 	c.PublicParameters = *btree.New(2)
-	for i := uint64(0); i < numPublicParameters; i++ {
+	for i := uint32(0); i < numPublicParameters; i++ {
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
 			return err
@@ -62,12 +62,12 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 		c.PublicParameters.ReplaceOrInsert(witness)
 	}
 
-	var numReturnValues uint64
+	var numReturnValues uint32
 	if err := binary.Read(r, binary.LittleEndian, &numReturnValues); err != nil {
 		return err
 	}
 	c.ReturnValues = *btree.New(2)
-	for i := uint64(0); i < numReturnValues; i++ {
+	for i := uint32(0); i < numReturnValues; i++ {
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
 			return err
@@ -75,12 +75,12 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 		c.ReturnValues.ReplaceOrInsert(witness)
 	}
 
-	var numAssertMessages uint64
+	var numAssertMessages uint32
 	if err := binary.Read(r, binary.LittleEndian, &numAssertMessages); err != nil {
 		return err
 	}
 	c.AssertMessages = make(map[ops.OpcodeLocation]AssertionPayload[T], numAssertMessages)
-	for i := uint64(0); i < numAssertMessages; i++ {
+	for i := uint32(0); i < numAssertMessages; i++ {
 		var opcodeLocation ops.OpcodeLocation
 		if err := opcodeLocation.UnmarshalReader(r); err != nil {
 			return err
