@@ -5,6 +5,8 @@ import (
 	"io"
 	brl "nr-groth16/acir/brillig"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type Program[T shr.ACIRField] struct {
@@ -39,5 +41,14 @@ func (p *Program[T]) UnmarshalReader(r io.Reader) error {
 		}
 	}
 
+	return nil
+}
+
+func (p *Program[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+	for _, circuit := range p.Functions {
+		if err := circuit.Define(api, witnesses); err != nil {
+			return err
+		}
+	}
 	return nil
 }

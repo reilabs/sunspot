@@ -115,7 +115,7 @@ func (o *Opcode[T]) Equals(other *Opcode[T]) bool {
 	return true
 }
 
-func (o *Opcode[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
+func (o *Opcode[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
 	switch o.Kind {
 	case ACIROpcodeAssertZero:
 		if o.Expression == nil {
@@ -123,7 +123,6 @@ func (o *Opcode[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.
 		}
 
 		api.AssertIsEqual(o.Expression.Calculate(api, witnesses), 0)
-		return o.Expression.Calculate(api, witnesses)
 	case ACIROpcodeBlackBoxFuncCall:
 		panic("BlackBoxFuncCall opcode is not implemented yet") // TODO: Implement BlackBoxFuncCall calculation
 		//return o.BlackBoxFuncCall.Calculate(api, witnesses)
@@ -142,4 +141,6 @@ func (o *Opcode[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.
 	default:
 		panic(fmt.Sprintf("unknown OpcodeKind: %d", o.Kind))
 	}
+
+	return nil
 }

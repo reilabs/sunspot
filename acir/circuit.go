@@ -7,6 +7,7 @@ import (
 	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"
 )
 
@@ -90,6 +91,15 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 			return err
 		}
 		c.AssertMessages[opcodeLocation] = payload
+	}
+	return nil
+}
+
+func (c *Circuit[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+	for _, opcode := range c.Opcodes {
+		if err := opcode.Define(api, witnesses); err != nil {
+			return err
+		}
 	}
 	return nil
 }

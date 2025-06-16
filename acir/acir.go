@@ -7,8 +7,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	hdr "nr-groth16/acir/header"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark-crypto/ecc"
+	"github.com/consensys/gnark/backend/witness"
+	"github.com/consensys/gnark/constraint"
+	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/frontend/cs/r1cs"
+	"github.com/consensys/gnark/frontend/schema"
 )
 
 type ACIR[T shr.ACIRField] struct {
@@ -130,4 +138,87 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	}
 
 	return reader, err
+}
+
+func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
+	builder, err := r1cs.NewBuilder(ecc.BN254.ScalarField(), frontend.CompileConfig{
+		CompressThreshold: 300,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create R1CS builder: %w", err)
+	}
+
+	witnessMap := make(map[shr.Witness]frontend.Variable)
+	for index, param := range a.ABI.Parameters {
+		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+			fmt.Println("Adding public parameter:", param.Name, "at index:", index)
+			witnessMap[shr.Witness(index)] = builder.PublicVariable(
+				schema.LeafInfo{
+					FullName:   func() string { return param.Name },
+					Visibility: schema.Public,
+				},
+			)
+		}
+	}
+
+	for index, param := range a.ABI.Parameters {
+		if param.Visibility == hdr.ACIRParameterVisibilityPrivate {
+			fmt.Println("Adding private parameter:", param.Name, "at index:", index)
+			witnessMap[shr.Witness(index)] = builder.SecretVariable(
+				schema.LeafInfo{
+					FullName:   func() string { return param.Name },
+					Visibility: schema.Secret,
+				},
+			)
+		}
+	}
+
+	fmt.Println("Total number of parameters:", len(a.ABI.Parameters))
+
+	a.Program.Define(builder, witnessMap)
+
+	fmt.Println("Compiling ACIR program with", len(a.Program.Functions), "functions and", len(a.Program.UnconstrainedFunctions), "unconstrained functions")
+
+	return builder.Compile()
+}
+
+func (a *ACIR[T]) GenerateWitness(inputs map[string]*big.Int, field *big.Int) (witness.Witness, error) {
+	witness, err := witness.New(field)
+	if err != nil {
+		return nil, err
+	}
+
+	values := make(chan any)
+	countPublic := 0
+	countPrivate := 0
+
+	for _, param := range a.ABI.Parameters {
+		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+			countPublic++
+		} else if param.Visibility == hdr.ACIRParameterVisibilityPrivate {
+			countPrivate++
+		}
+	}
+
+	go func() {
+		for _, param := range a.ABI.Parameters {
+			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+				values <- inputs[param.Name]
+			}
+		}
+
+		for _, param := range a.ABI.Parameters {
+			if param.Visibility == hdr.ACIRParameterVisibilityPrivate {
+				values <- inputs[param.Name]
+			}
+		}
+		close(values)
+	}()
+
+	err = witness.Fill(countPublic, countPrivate, values)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fill witness: %w", err)
+	}
+
+	return witness, nil
 }
