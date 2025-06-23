@@ -24,19 +24,11 @@ jobs:
         override: true
         components: clippy, rustfmt
     
-    - name: Install Nargo
+    - name: Install Nargo via noirup
       run: |
-        echo "Installing Rust..."
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        . "$HOME/.cargo/env"
-
-        echo "Configuring cargo to use system git CLI..."
-        mkdir -p ~/.cargo
-        printf "[net]\ngit-fetch-with-cli = true\n" >> ~/.cargo/config.toml
-
-        echo "Installing Nargo from correct repo..."
-        cargo install --locked --git https://github.com/noir-lang/nargo nargo
-
+        curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
+        source $HOME/.cargo/env
+        noirup
 
     - name: Install dependencies
       run: go mod tidy
