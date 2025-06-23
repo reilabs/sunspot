@@ -24,14 +24,15 @@ jobs:
         override: true
         components: clippy, rustfmt
     
-    - name: Install Nargo via noirup
+    - name: Install noirup
       run: |
-        source /home/runner/.bashrc
         curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
-        source /home/runner/.bashrc
+        echo "$HOME/.noirup/bin" >> $GITHUB_PATH
 
     - name: Install Nargo
-      run: noirup
+      run: |
+        noirup
+        nargo --version
 
     - name: Install dependencies
       run: go mod tidy
