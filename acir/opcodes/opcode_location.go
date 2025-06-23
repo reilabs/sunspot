@@ -56,7 +56,6 @@ func (o *OpcodeLocation) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &o.Kind); err != nil {
 		return err
 	}
-	o.Kind -= 1
 	log.Trace().Msg("Unmarshalling OpcodeLocation with kind: " + fmt.Sprint(o.Kind))
 
 	switch o.Kind {

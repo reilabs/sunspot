@@ -134,7 +134,7 @@ func (o *Opcode[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.
 
 		api.AssertIsEqual(o.Expression.Calculate(api, witnesses), 0)
 	case ACIROpcodeBlackBoxFuncCall:
-		panic("BlackBoxFuncCall opcode is not implemented yet") // TODO: Implement BlackBoxFuncCall calculation
+		//panic("BlackBoxFuncCall opcode is not implemented yet") // TODO: Implement BlackBoxFuncCall calculation
 		//return o.BlackBoxFuncCall.Calculate(api, witnesses)
 	case ACIROpcodeMemoryOp:
 		panic("MemoryOp opcode is not implemented yet") // TODO: Implement MemoryOp calculation
@@ -143,7 +143,7 @@ func (o *Opcode[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.
 		panic("MemoryInit opcode is not implemented yet") // TODO: Implement MemoryInit calculation
 		//return o.MemoryInit.Calculate(api, witnesses)
 	case ACIROpcodeBrilligCall:
-		panic("BrilligCall opcode is not implemented yet") // TODO: Implement BrilligCall calculation
+		//panic("BrilligCall opcode is not implemented yet") // TODO: Implement BrilligCall calculation
 		//return o.BrilligCall.Calculate(api, witnesses)
 	case ACIROpcodeCall:
 		panic("Call opcode is not implemented yet") // TODO: Implement Call calculation

@@ -27,8 +27,6 @@ func (m *MemoryAddress) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	m.Kind -= 1
-
 	if m.Kind != MemoryAddressKindDirect && m.Kind != MemoryAddressKindRelative {
 		return fmt.Errorf("invalid MemoryAddressKind: %d", m.Kind)
 	}
