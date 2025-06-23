@@ -29,7 +29,9 @@ jobs:
         source /home/runner/.bashrc
         curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
         source /home/runner/.bashrc
-        noirup
+
+    - name: Install Nargo
+      run: noirup
 
     - name: Install dependencies
       run: go mod tidy
