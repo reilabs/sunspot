@@ -39,7 +39,7 @@ jobs:
       run: cd rust/testgen && cargo run && cd ../..
 
     - name: Build Noir contracts
-      run: cd noir-samples/sum_a_b && nargo build && nargo execute
+      run: cd noir-samples/sum_a_b && nargo compile && nargo execute
 
     - name: Run tests
       run: go test ./...
