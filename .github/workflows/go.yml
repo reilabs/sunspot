@@ -26,12 +26,16 @@ jobs:
     
     - name: Install noirup
       run: |
+        # Install noirup
         curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
-        echo "$HOME/.noirup/bin" >> $GITHUB_PATH
 
-    - name: Install Nargo
-      run: |
+        # Add noirup to PATH in this step only
+        export PATH="$HOME/.noirup/bin:$PATH"
+
+        # Install Nargo
         noirup
+
+        # Check version to confirm success
         nargo --version
 
     - name: Install dependencies
