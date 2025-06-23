@@ -27,7 +27,8 @@ jobs:
     - name: Install Nargo via noirup
       run: |
         curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
-        source ~/.bashrc && noirup
+        source /home/runner/.bashrc
+        noirup
 
     - name: Install dependencies
       run: go mod tidy
