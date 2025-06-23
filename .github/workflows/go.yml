@@ -23,6 +23,12 @@ jobs:
         toolchain: stable
         override: true
         components: clippy, rustfmt
+    
+    - name: Set up Nargo
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
+        cargo install --locked --git https://github.com/noir-lang/noir nargo
 
     - name: Install dependencies
       run: go mod tidy
