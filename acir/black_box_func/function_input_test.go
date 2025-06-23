@@ -13,13 +13,13 @@ func TestFunctionInputUnmarshalReaderConstant(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var input FunctionInput[bn254.BN254Field]
+	var input FunctionInput[*bn254.BN254Field]
 	if err := input.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal FunctionInput: %v", err)
 	}
 
 	expectedField := bn254.Zero()
-	expected := FunctionInput[bn254.BN254Field]{
+	expected := FunctionInput[*bn254.BN254Field]{
 		FunctionInputKind: ACIRFunctionInputKindConstant,
 		ConstantInput:     &expectedField,
 		Witness:           nil,
@@ -39,13 +39,13 @@ func TestFunctionInputUnmarshalReaderWitness(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var input FunctionInput[bn254.BN254Field]
+	var input FunctionInput[*bn254.BN254Field]
 	if err := input.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal FunctionInput: %v", err)
 	}
 
 	expectedWitness := shr.Witness(1234)
-	expected := FunctionInput[bn254.BN254Field]{
+	expected := FunctionInput[*bn254.BN254Field]{
 		FunctionInputKind: ACIRFunctionInputKindWitness,
 		ConstantInput:     nil,
 		Witness:           &expectedWitness,

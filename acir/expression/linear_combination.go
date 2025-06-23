@@ -1,25 +1,33 @@
 package expression
 
 import (
+	"fmt"
 	"io"
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/rs/zerolog/log"
 )
 
 type LinearCombination[T shr.ACIRField] struct {
-	Term    T
-	Witness shr.Witness
+	Term    T           `json:"term"`    // The term that is multiplied with the witness
+	Witness shr.Witness `json:"witness"` // Witness for the linear combination
 }
 
 func (lc *LinearCombination[T]) UnmarshalReader(r io.Reader) error {
+	lc.Term = shr.MakeNonNil(lc.Term) // Ensure Term is non-nil
+
 	if err := lc.Term.UnmarshalReader(r); err != nil {
 		return err
 	}
 
+	log.Trace().Msg("Unmarshalling LinearCombination with term: " + lc.Term.String())
+
 	if err := lc.Witness.UnmarshalReader(r); err != nil {
 		return err
 	}
+
+	log.Trace().Msg("Unmarshalling LinearCombination with witness: " + fmt.Sprint(lc.Witness))
 
 	return nil
 }
@@ -37,6 +45,13 @@ func (lc *LinearCombination[T]) Equals(other *LinearCombination[T]) bool {
 }
 
 func (lc *LinearCombination[T]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
-	left := witnesses[lc.Witness]
+	log.Trace().Msg("Calculating LinearCombination with term: " + lc.Term.String() + " and witness: " + fmt.Sprint(lc.Witness))
+	log.Trace().Msg("Witnesses: " + fmt.Sprint(witnesses))
+	left, ok := witnesses[lc.Witness]
+	if !ok {
+		witnesses[lc.Witness] = api.Compiler().InternalVariable(uint32(lc.Witness))
+		left = witnesses[lc.Witness]
+		log.Trace().Msg("Left witness not found, creating internal variable for witness: " + fmt.Sprint(lc.Witness))
+	}
 	return api.Mul(left, lc.Term.ToFrontendVariable())
 }

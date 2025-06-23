@@ -2,6 +2,7 @@ package opcodes
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
 	bbf "nr-groth16/acir/black_box_func"
@@ -10,6 +11,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/rs/zerolog/log"
 )
 
 type Opcode[T shr.ACIRField] struct {
@@ -38,33 +40,41 @@ func (o *Opcode[T]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
+	log.Trace().Msg("Unmarshalling Opcode with kind: " + fmt.Sprint(o.Kind))
+
 	switch o.Kind {
 	case ACIROpcodeAssertZero:
+		log.Trace().Msg("Unmarshalling AssertZero opcode")
 		o.Expression = new(exp.Expression[T])
 		if err := o.Expression.UnmarshalReader(r); err != nil {
 			return err
 		}
 	case ACIROpcodeBlackBoxFuncCall:
+		log.Trace().Msg("Unmarshalling BlackBoxFuncCall opcode")
 		o.BlackBoxFuncCall = new(bbf.BlackBoxFuncCall[T])
 		if err := o.BlackBoxFuncCall.UnmarshalReader(r); err != nil {
 			return err
 		}
 	case ACIROpcodeMemoryOp:
+		log.Trace().Msg("Unmarshalling MemoryOp opcode")
 		o.MemoryOp = new(MemoryOp[T])
 		if err := o.MemoryOp.UnmarshalReader(r); err != nil {
 			return err
 		}
 	case ACIROpcodeMemoryInit:
+		log.Trace().Msg("Unmarshalling MemoryInit opcode")
 		o.MemoryInit = new(MemoryInit[T])
 		if err := o.MemoryInit.UnmarshalReader(r); err != nil {
 			return err
 		}
 	case ACIROpcodeBrilligCall:
+		log.Trace().Msg("Unmarshalling BrilligCall opcode")
 		o.BrilligCall = new(brl.BrilligCall[T])
 		if err := o.BrilligCall.UnmarshalReader(r); err != nil {
 			return err
 		}
 	case ACIROpcodeCall:
+		log.Trace().Msg("Unmarshalling Call opcode")
 		o.Call = new(Call[T])
 		if err := o.Call.UnmarshalReader(r); err != nil {
 			return err
@@ -143,4 +153,24 @@ func (o *Opcode[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.
 	}
 
 	return nil
+}
+
+func (o Opcode[T]) MarshalJSON() ([]byte, error) {
+	stringMap := make(map[string]interface{})
+	switch o.Kind {
+	case ACIROpcodeAssertZero:
+		stringMap["assert_zero"] = o.Expression
+	case ACIROpcodeBlackBoxFuncCall:
+		stringMap["black_box_func_call"] = o.BlackBoxFuncCall
+	case ACIROpcodeMemoryOp:
+		stringMap["memory_op"] = o.MemoryOp
+	case ACIROpcodeMemoryInit:
+		stringMap["memory_init"] = o.MemoryInit
+	case ACIROpcodeBrilligCall:
+		stringMap["brillig_call"] = o.BrilligCall
+	case ACIROpcodeCall:
+		stringMap["call"] = o.Call
+	}
+
+	return json.Marshal(stringMap)
 }

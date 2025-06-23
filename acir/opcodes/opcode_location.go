@@ -2,8 +2,11 @@ package opcodes
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
+
+	"github.com/rs/zerolog/log"
 )
 
 type OpcodeLocation struct {
@@ -20,10 +23,41 @@ const (
 	ACIROpcodeLocationKindBrillig
 )
 
+func (o OpcodeLocation) MarshalJSON() ([]byte, error) {
+	fieldsMap := make(map[string]interface{})
+	fieldsMap["Kind"] = o.Kind
+
+	switch o.Kind {
+	case ACIROpcodeLocationKindACIR:
+		if o.ACIRAddress != nil {
+			fieldsMap["ACIRAddress"] = *o.ACIRAddress
+		} else {
+			fieldsMap["ACIRAddress"] = nil
+		}
+	case ACIROpcodeLocationKindBrillig:
+		if o.ACIRIndex != nil {
+			fieldsMap["ACIRIndex"] = *o.ACIRIndex
+		} else {
+			fieldsMap["ACIRIndex"] = nil
+		}
+		if o.BrilligIndex != nil {
+			fieldsMap["BrilligIndex"] = *o.BrilligIndex
+		} else {
+			fieldsMap["BrilligIndex"] = nil
+		}
+	default:
+		return nil, fmt.Errorf("unknown OpcodeLocation Kind: %d", o.Kind)
+	}
+
+	return json.Marshal(fieldsMap)
+}
+
 func (o *OpcodeLocation) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &o.Kind); err != nil {
 		return err
 	}
+	o.Kind -= 1
+	log.Trace().Msg("Unmarshalling OpcodeLocation with kind: " + fmt.Sprint(o.Kind))
 
 	switch o.Kind {
 	case ACIROpcodeLocationKindACIR:

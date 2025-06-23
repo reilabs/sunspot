@@ -13,15 +13,15 @@ func TestBlake3UnmarshalReaderEmpty(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[bn254.BN254Field]{}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
 
-	expectedFunctionCall := BlackBoxFuncCall[bn254.BN254Field]{
+	expectedFunctionCall := BlackBoxFuncCall[*bn254.BN254Field]{
 		Kind: ACIRBlackBoxFuncKindBlake3,
-		Blake3: &Blake3[bn254.BN254Field]{
-			Inputs:  []FunctionInput[bn254.BN254Field]{},
+		Blake3: &Blake3[*bn254.BN254Field]{
+			Inputs:  []FunctionInput[*bn254.BN254Field]{},
 			Outputs: [32]shr.Witness{},
 		},
 	}
@@ -43,17 +43,17 @@ func TestBlake3UnmarshalReaderWithInputs(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[bn254.BN254Field]{}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
 
 	expectedWitness1 := shr.Witness(1234)
 	expectedWitness2 := shr.Witness(5678)
-	expectedFunctionCall := BlackBoxFuncCall[bn254.BN254Field]{
+	expectedFunctionCall := BlackBoxFuncCall[*bn254.BN254Field]{
 		Kind: ACIRBlackBoxFuncKindBlake3,
-		Blake3: &Blake3[bn254.BN254Field]{
-			Inputs: []FunctionInput[bn254.BN254Field]{
+		Blake3: &Blake3[*bn254.BN254Field]{
+			Inputs: []FunctionInput[*bn254.BN254Field]{
 				{
 					FunctionInputKind: ACIRFunctionInputKindWitness,
 					Witness:           &expectedWitness1,

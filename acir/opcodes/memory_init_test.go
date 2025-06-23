@@ -13,14 +13,14 @@ func TestMemoryInitUnmarshalReaderBlockTest(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[bn254.BN254Field]
+	var opcode Opcode[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
 	}
 
-	expectedOpcode := Opcode[bn254.BN254Field]{
+	expectedOpcode := Opcode[*bn254.BN254Field]{
 		Kind: ACIROpcodeMemoryInit,
-		MemoryInit: &MemoryInit[bn254.BN254Field]{
+		MemoryInit: &MemoryInit[*bn254.BN254Field]{
 			BlockType: ACIRMemoryBlockMemory,
 			BlockID:   0,
 			Init:      []shr.Witness{},
@@ -40,14 +40,14 @@ func TestMemoryInitUnmarshalReaderCallDataTest(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[bn254.BN254Field]
+	var opcode Opcode[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
 	}
 
-	expectedOpcode := Opcode[bn254.BN254Field]{
+	expectedOpcode := Opcode[*bn254.BN254Field]{
 		Kind: ACIROpcodeMemoryInit,
-		MemoryInit: &MemoryInit[bn254.BN254Field]{
+		MemoryInit: &MemoryInit[*bn254.BN254Field]{
 			BlockType: ACIRMemoryBlockCallData,
 			BlockID:   1,
 			Init:      []shr.Witness{0, 1, 2},
@@ -70,14 +70,14 @@ func TestMemoryInitUnmarshalReaderReturnDataTest(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[bn254.BN254Field]
+	var opcode Opcode[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
 	}
 
-	expectedOpcode := Opcode[bn254.BN254Field]{
+	expectedOpcode := Opcode[*bn254.BN254Field]{
 		Kind: ACIROpcodeMemoryInit,
-		MemoryInit: &MemoryInit[bn254.BN254Field]{
+		MemoryInit: &MemoryInit[*bn254.BN254Field]{
 			BlockType: ACIRMemoryBlockReturnData,
 			BlockID:   2,
 			Init:      []shr.Witness{0, 1, 2},

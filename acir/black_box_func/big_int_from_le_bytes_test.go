@@ -13,15 +13,15 @@ func TestBigIntFromLEBytesUnmarshalReader(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[bn254.BN254Field]{}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
 
-	expectedFunctionCall := BlackBoxFuncCall[bn254.BN254Field]{
+	expectedFunctionCall := BlackBoxFuncCall[*bn254.BN254Field]{
 		Kind: ACIRBlackBoxFuncKindBigIntFromLeBytes,
-		BigIntFromLEBytes: &BigIntFromLEBytes[bn254.BN254Field]{
-			Inputs:  []FunctionInput[bn254.BN254Field]{},
+		BigIntFromLEBytes: &BigIntFromLEBytes[*bn254.BN254Field]{
+			Inputs:  []FunctionInput[*bn254.BN254Field]{},
 			Modulus: []uint8{},
 			Output:  0,
 		},
@@ -40,16 +40,16 @@ func TestBigIntFromLEBytesUnmarshalReaderWithInputsAndModulus(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[bn254.BN254Field]{}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
 
 	expectedWitness := shr.Witness(1)
-	expectedFunctionCall := BlackBoxFuncCall[bn254.BN254Field]{
+	expectedFunctionCall := BlackBoxFuncCall[*bn254.BN254Field]{
 		Kind: ACIRBlackBoxFuncKindBigIntFromLeBytes,
-		BigIntFromLEBytes: &BigIntFromLEBytes[bn254.BN254Field]{
-			Inputs: []FunctionInput[bn254.BN254Field]{
+		BigIntFromLEBytes: &BigIntFromLEBytes[*bn254.BN254Field]{
+			Inputs: []FunctionInput[*bn254.BN254Field]{
 				{
 					FunctionInputKind: ACIRFunctionInputKindWitness,
 					Witness:           &expectedWitness,

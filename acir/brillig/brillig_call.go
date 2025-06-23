@@ -19,23 +19,23 @@ func (b *BrilligCall[T]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	var numInputs uint32
+	var numInputs uint64
 	if err := binary.Read(r, binary.LittleEndian, &numInputs); err != nil {
 		return err
 	}
 	b.Inputs = make([]BrilligInputs[T], numInputs)
-	for i := uint32(0); i < numInputs; i++ {
+	for i := uint64(0); i < numInputs; i++ {
 		if err := b.Inputs[i].UnmarshalReader(r); err != nil {
 			return err
 		}
 	}
 
-	var numOutputs uint32
+	var numOutputs uint64
 	if err := binary.Read(r, binary.LittleEndian, &numOutputs); err != nil {
 		return err
 	}
 	b.Outputs = make([]BrilligOutputs, numOutputs)
-	for i := uint32(0); i < numOutputs; i++ {
+	for i := uint64(0); i < numOutputs; i++ {
 		if err := b.Outputs[i].UnmarshalReader(r); err != nil {
 			return err
 		}
