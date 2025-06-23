@@ -38,6 +38,9 @@ jobs:
     - name: Build Test binaries
       run: cd rust/testgen && cargo run && cd ../..
 
+    - name: Build Noir contracts
+      run: cd noir-samples/sum_a_b && noir build && noir execute
+
     - name: Run tests
       run: go test ./...
 
