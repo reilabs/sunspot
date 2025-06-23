@@ -24,13 +24,10 @@ jobs:
         override: true
         components: clippy, rustfmt
     
-    - name: Install noirup
-      run: |
-        curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
-        echo "Home directory contents:"
-        ls -la $HOME
-        echo "Searching for noirup files:"
-        find $HOME -name '*noirup*' -type f -or -type d
+    - name: Set up Noir
+      uses: noir-lang/noirup@v0.1.2
+      with:
+        toolchain: 0.6.0
 
     - name: Install dependencies
       run: go mod tidy
