@@ -143,6 +143,52 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	return reader, err
 }
 
+func (a *ACIR[T]) CompileExecuted(witness WitnessStack[T]) (constraint.ConstraintSystem, error) {
+	builder, err := r1cs.NewBuilder(ecc.BN254.ScalarField(), frontend.CompileConfig{
+		CompressThreshold: 300,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create R1CS builder: %w", err)
+	}
+
+	witnessMap := make(map[shr.Witness]frontend.Variable)
+	for index, param := range a.ABI.Parameters {
+		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+			log.Trace().Msg("Adding public parameter to witness map: " + param.Name + " at index " + fmt.Sprint(index))
+			witnessMap[shr.Witness(index)] = builder.PublicVariable(
+				schema.LeafInfo{
+					FullName:   func() string { return param.Name },
+					Visibility: schema.Public,
+				},
+			)
+		}
+	}
+
+	for index, stack := range witness.ItemStack {
+		log.Trace().Msgf("Processing item stack %d with %d witnesses", index, stack.Len())
+		iter := stack.Iter()
+		for iter.Next() {
+			witnessItem := iter.Key()
+			log.Trace().Msgf("Processing witness item %d in stack %d", witnessItem, index)
+			if _, ok := witnessMap[witnessItem]; !ok {
+				log.Trace().Msgf("Adding item stack %d to witness map, with witness key %d", index, witnessItem)
+				witnessMap[witnessItem] = builder.SecretVariable(
+					schema.LeafInfo{
+						FullName:   func() string { return fmt.Sprintf("item_stack_%d", index) },
+						Visibility: schema.Secret,
+					},
+				)
+			}
+		}
+	}
+
+	log.Trace().Msg("Adding internal variable to builder" + fmt.Sprint(witnessMap))
+
+	a.Program.Define(builder, witnessMap)
+
+	return builder.Compile()
+}
+
 func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 	builder, err := r1cs.NewBuilder(ecc.BN254.ScalarField(), frontend.CompileConfig{
 		CompressThreshold: 300,
