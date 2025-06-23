@@ -32,7 +32,7 @@ jobs:
 
         echo "Configuring cargo to use system git CLI..."
         mkdir -p ~/.cargo
-        echo '[net]\ngit-fetch-with-cli = true' >> ~/.cargo/config.toml
+        printf "[net]\ngit-fetch-with-cli = true\n" >> ~/.cargo/config.toml
 
         echo "Installing Nargo from correct repo..."
         cargo install --locked --git https://github.com/noir-lang/nargo nargo
