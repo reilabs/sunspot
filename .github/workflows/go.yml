@@ -27,10 +27,10 @@ jobs:
     - name: Install noirup
       run: |
         curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
-        ls $HOME
-        ls $HOME/.noirup
-        $HOME/.noirup/bin/noirup install
-        $HOME/.noirup/bin/nargo --version
+        echo "Home directory contents:"
+        ls -la $HOME
+        echo "Searching for noirup files:"
+        find $HOME -name '*noirup*' -type f -or -type d
 
     - name: Install dependencies
       run: go mod tidy
