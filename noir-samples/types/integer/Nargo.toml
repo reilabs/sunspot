@@ -1,0 +1,6 @@
+[package]
+name = "integer"
+type = "bin"
+authors = [""]
+
+[dependencies]

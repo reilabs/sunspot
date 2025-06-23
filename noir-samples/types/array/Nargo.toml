@@ -1,0 +1,6 @@
+[package]
+name = "array"
+type = "bin"
+authors = [""]
+
+[dependencies]

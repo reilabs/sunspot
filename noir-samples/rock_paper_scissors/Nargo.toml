@@ -1,0 +1,6 @@
+[package]
+name = "rock_paper_scissors"
+type = "bin"
+authors = [""]
+
+[dependencies]

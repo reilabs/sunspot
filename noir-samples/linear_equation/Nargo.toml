@@ -1,0 +1,6 @@
+[package]
+name = "linear_equation"
+type = "bin"
+authors = [""]
+
+[dependencies]
