@@ -27,9 +27,8 @@ jobs:
     - name: Install noirup
       run: |
         curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
-        export PATH="$HOME/.noirup/bin:$PATH"
-        noirup       # This downloads and installs nargo etc
-        nargo --version
+        $HOME/.noirup/noirup install
+        $HOME/.noirup/bin/nargo --version
 
     - name: Install dependencies
       run: go mod tidy
