@@ -27,7 +27,7 @@ jobs:
     - name: Set up Noir
       uses: noir-lang/noirup@v0.1.2
       with:
-        toolchain: 0.6.0
+        toolchain: 1.0.0-v3
 
     - name: Build Noir contracts
       run: |
