@@ -2,8 +2,11 @@ package expression
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
+
+	"github.com/rs/zerolog/log"
 )
 
 type ExpressionWidth struct {
@@ -25,12 +28,14 @@ func (e *ExpressionWidth) UnmarshalReader(r io.Reader) error {
 
 	switch e.Kind {
 	case ACIRExpressionWidthUnbounded:
+		log.Trace().Msg("Unmarshalling ExpressionWidth: Unbounded")
 		e.Width = nil
 	case ACIRExpressionWidthBounded:
 		e.Width = new(uint64)
 		if err := binary.Read(r, binary.LittleEndian, e.Width); err != nil {
 			return err
 		}
+		log.Trace().Msgf("Unmarshalling ExpressionWidth: Bounded with width %d", *e.Width)
 	default:
 		return fmt.Errorf("unknown ExpressionWidth Kind: %d", e.Kind)
 	}
@@ -52,4 +57,15 @@ func (e *ExpressionWidth) Equals(other *ExpressionWidth) bool {
 	}
 
 	return *e.Width == *other.Width
+}
+
+func (e *ExpressionWidth) MarshalJSON() ([]byte, error) {
+	fieldsMap := make(map[string]interface{})
+	switch e.Kind {
+	case ACIRExpressionWidthUnbounded:
+		fieldsMap["unbounded"] = nil
+	case ACIRExpressionWidthBounded:
+		fieldsMap["bounded"] = *e.Width
+	}
+	return json.Marshal(fieldsMap)
 }

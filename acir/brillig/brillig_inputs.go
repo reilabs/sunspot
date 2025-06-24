@@ -34,13 +34,13 @@ func (b *BrilligInputs[T]) UnmarshalReader(r io.Reader) error {
 			return err
 		}
 	case ACIRBrilligInputsKindArray:
-		var numInputs uint32
+		var numInputs uint64
 		if err := binary.Read(r, binary.LittleEndian, &numInputs); err != nil {
 			return err
 		}
 		b.Array = new([]exp.Expression[T])
 		*b.Array = make([]exp.Expression[T], numInputs)
-		for i := uint32(0); i < numInputs; i++ {
+		for i := uint64(0); i < numInputs; i++ {
 			if err := (*b.Array)[i].UnmarshalReader(r); err != nil {
 				return err
 			}

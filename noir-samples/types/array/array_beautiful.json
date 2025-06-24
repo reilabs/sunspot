@@ -1,0 +1,44 @@
+{
+  "noir_version": "1.0.0-beta.3+ceaa1986628197bd1170147f6a07f0f98d21030a",
+  "hash": 20670755205725169,
+  "abi": {
+    "parameters": [
+      {
+        "name": "x",
+        "type": {
+          "kind": "array",
+          "length": 4,
+          "type": {
+            "kind": "field"
+          }
+        },
+        "visibility": "private"
+      },
+      {
+        "name": "y",
+        "type": {
+          "kind": "array",
+          "length": 4,
+          "type": {
+            "kind": "field"
+          }
+        },
+        "visibility": "private"
+      }
+    ],
+    "return_type": null,
+    "error_types": {}
+  },
+  "bytecode": "H4sIAAAAAAAA/62SMQ7DMAhF7SZNehwwEMPWq9Sqc/8jtFYZqnbIEL6EGJDe8Hk5fbK+J6f/3HzffcO5YCQrB7Iugazpi0WwMfdaOhI+oFhTAZa2KSqKyrMoUVfWas0qGDJ13MVod9gcyLoGspZA1hrXPQwn5h93k7s9fjz5fXSxuPdHeQEphvX8JAMAAA==",
+  "debug_symbols": "TYxLCsQgEAXv0uss4iKz8CrDEPy0oUFaaXVgkNx9TEggy3rFqw4ebdtW4pAK6HeHmJyplHhQh/mcSjZ8UKlGKuhFTYDsQat52ScIFBH0S+2fAVYoRtrWZ2XMXyNkbMQLQ2P3sPWXb3P/sySHvgkepdON/B8=",
+  "file_map": {
+    "61": {
+      "source": "fn main(x: [Field; 4], y: [Field; 4]) {\n    assert(x[0] + x[1] + x[2] + x[3] == y[0] + y[1] + y[2] + y[3]);\n}\n\n#[test]\nfn test_main() {\n    main([1, 2, 3, 4], [2, 3, 3, 2]);\n\n    // Uncomment to make test fail\n    // main(1, 1);\n}\n",
+      "path": "/home/mihail/nr-groth16/noir-samples/types/array/src/main.nr"
+    }
+  },
+  "names": [
+    "main"
+  ],
+  "brillig_names": []
+}

@@ -24,6 +24,7 @@ func (f *FunctionInput[T]) UnmarshalReader(r io.Reader) error {
 	switch f.FunctionInputKind {
 	case ACIRFunctionInputKindConstant:
 		var constant T
+		constant = shr.MakeNonNil(constant) // Ensure constant is non-nil
 		if err := constant.UnmarshalReader(r); err != nil {
 			return err
 		}

@@ -1,0 +1,6 @@
+[package]
+name = "boolean"
+type = "bin"
+authors = [""]
+
+[dependencies]

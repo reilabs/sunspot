@@ -18,7 +18,7 @@ func TestFunctionInputUnmarshalReaderConstant(t *testing.T) {
 		t.Fatalf("Failed to unmarshal FunctionInput: %v", err)
 	}
 
-	expectedField := &bn254.BN254Field{}
+	expectedField := bn254.Zero()
 	expected := FunctionInput[*bn254.BN254Field]{
 		FunctionInputKind: ACIRFunctionInputKindConstant,
 		ConstantInput:     &expectedField,

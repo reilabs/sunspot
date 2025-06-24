@@ -13,6 +13,8 @@ type IndirectConst[T shr.ACIRField] struct {
 }
 
 func (c *IndirectConst[T]) UnmarshalReader(r io.Reader) error {
+	c.Value = shr.MakeNonNil(c.Value)
+
 	if err := c.DestinationPointer.UnmarshalReader(r); err != nil {
 		return err
 	}

@@ -1,0 +1,6 @@
+[package]
+name = "square_equation"
+type = "bin"
+authors = [""]
+
+[dependencies]

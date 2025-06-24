@@ -32,13 +32,13 @@ func (b *BrilligOutputs) UnmarshalReader(r io.Reader) error {
 			return err
 		}
 	case ACIRBrilligOutputsKindArray:
-		var numOutputs uint32
+		var numOutputs uint64
 		if err := binary.Read(r, binary.LittleEndian, &numOutputs); err != nil {
 			return err
 		}
 		b.Array = new([]shr.Witness)
 		*b.Array = make([]shr.Witness, numOutputs)
-		for i := uint32(0); i < numOutputs; i++ {
+		for i := uint64(0); i < numOutputs; i++ {
 			if err := (*b.Array)[i].UnmarshalReader(r); err != nil {
 				return err
 			}

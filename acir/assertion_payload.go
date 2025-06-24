@@ -16,13 +16,13 @@ func (a *AssertionPayload[T]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	var numPayload uint32
+	var numPayload uint64
 	if err := binary.Read(r, binary.LittleEndian, &numPayload); err != nil {
 		return err
 	}
 
 	a.Payload = make([]ExpressionOrMemory[T], numPayload)
-	for i := uint32(0); i < numPayload; i++ {
+	for i := uint64(0); i < numPayload; i++ {
 		if err := a.Payload[i].UnmarshalReader(r); err != nil {
 			return err
 		}

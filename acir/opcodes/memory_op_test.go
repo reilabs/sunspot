@@ -25,17 +25,17 @@ func TestMemoryOpWithoutPredicate(t *testing.T) {
 			Operation: exp.Expression[*bn254.BN254Field]{
 				MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
 				LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-				Constant:           &bn254.BN254Field{},
+				Constant:           bn254.Zero(),
 			},
 			Index: exp.Expression[*bn254.BN254Field]{
 				MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
 				LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-				Constant:           &bn254.BN254Field{},
+				Constant:           bn254.Zero(),
 			},
 			Value: exp.Expression[*bn254.BN254Field]{
 				MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
 				LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-				Constant:           &bn254.BN254Field{},
+				Constant:           bn254.Zero(),
 			},
 			Predicate: nil,
 		},
@@ -66,22 +66,22 @@ func TestMemoryOpWithPredicate(t *testing.T) {
 			Operation: exp.Expression[*bn254.BN254Field]{
 				MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
 				LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-				Constant:           &bn254.BN254Field{},
+				Constant:           bn254.Zero(),
 			},
 			Index: exp.Expression[*bn254.BN254Field]{
 				MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
 				LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-				Constant:           &bn254.BN254Field{},
+				Constant:           bn254.Zero(),
 			},
 			Value: exp.Expression[*bn254.BN254Field]{
 				MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
 				LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-				Constant:           &bn254.BN254Field{},
+				Constant:           bn254.Zero(),
 			},
 			Predicate: &exp.Expression[*bn254.BN254Field]{
 				MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
 				LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-				Constant:           &bn254.BN254Field{},
+				Constant:           bn254.Zero(),
 			},
 		},
 	}

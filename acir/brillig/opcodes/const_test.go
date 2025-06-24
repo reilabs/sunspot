@@ -30,7 +30,7 @@ func TestConstUnmarshalReader(t *testing.T) {
 				Kind:           mem.BitSizeKindInteger,
 				IntegerBitSize: &expectedIntegerBitSize,
 			},
-			Value: &bn254.BN254Field{},
+			Value: bn254.Zero(),
 		},
 	}
 
