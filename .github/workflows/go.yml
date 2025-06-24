@@ -33,7 +33,18 @@ jobs:
       run: |
         nargo --help
         nargo compile --help
-        cd noir-samples/sum_a_b && nargo compile && nargo execute
+        cd noir-samples/sum_a_b
+        nargo compile
+        nargo execute
+        cd ../square_equation
+        nargo compile
+        nargo execute
+        cd ../linear_equation
+        nargo compile
+        nargo execute
+        cd ../rock_paper_scissors
+        nargo compile
+        nargo execute
 
     - name: Install dependencies
       run: go mod tidy
