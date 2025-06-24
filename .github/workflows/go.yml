@@ -33,7 +33,7 @@ jobs:
       run: |
         nargo --help
         nargo compile --help
-        cd noir-samples/sum_a_b && nargo compile sum_a_b.json && nargo execute
+        cd noir-samples/sum_a_b && nargo compile && nargo execute
 
     - name: Install dependencies
       run: go mod tidy
