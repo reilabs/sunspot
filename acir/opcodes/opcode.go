@@ -11,6 +11,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
 
@@ -173,4 +174,17 @@ func (o Opcode[T]) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(stringMap)
+}
+
+func (o Opcode[T]) FillWitnessTree(tree *btree.BTree) bool {
+	if tree == nil {
+		return false
+	}
+
+	ok := true
+	if o.Kind == ACIROpcodeAssertZero && o.Expression != nil {
+		ok = o.Expression.FillWitnessTree(tree)
+	}
+
+	return ok
 }

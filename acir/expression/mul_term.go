@@ -6,6 +6,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
 
@@ -68,4 +69,15 @@ func (Mt *MulTerm[T]) Calculate(api frontend.API, witnesses map[shr.Witness]fron
 	log.Trace().Msg("Calculating MulTerm with left witness: " + fmt.Sprint(Mt.WitnessLeft) + " and right witness: " + fmt.Sprint(Mt.WitnessRight))
 	log.Trace().Msg("Witnesses: " + fmt.Sprint(witnesses))
 	return api.Mul(left, right, Mt.Term.ToFrontendVariable())
+}
+
+func (mt *MulTerm[T]) FillWitnessTree(tree *btree.BTree) bool {
+	if tree == nil {
+		return false
+	}
+
+	tree.ReplaceOrInsert(mt.WitnessLeft)
+	tree.ReplaceOrInsert(mt.WitnessRight)
+
+	return true
 }

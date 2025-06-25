@@ -8,6 +8,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
 
@@ -58,4 +59,12 @@ func (p *Program[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend
 		}
 	}
 	return nil
+}
+
+func (p *Program[T]) GetWitnessTree() *btree.BTree {
+	witnessTree := btree.New(2)
+	for _, circuit := range p.Functions {
+		circuit.FillWitnessTree(witnessTree)
+	}
+	return witnessTree
 }

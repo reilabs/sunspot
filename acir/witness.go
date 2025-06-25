@@ -23,7 +23,7 @@ type ItemStack[T shr.ACIRField] map[uint32]btree.Map[shr.Witness, T]
 
 type WitnessMap[T shr.ACIRField] btree.Map[shr.Witness, T]
 
-func LoadWitnessFromFile[T shr.ACIRField](filePath string, modulus *big.Int) (WitnessStack[T], error) {
+func LoadWitnessStackFromFile[T shr.ACIRField](filePath string, modulus *big.Int) (WitnessStack[T], error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Error().Err(err).Str("file", filePath).Msg("Failed to open witness file")
@@ -82,7 +82,12 @@ func LoadWitnessFromFile[T shr.ACIRField](filePath string, modulus *big.Int) (Wi
 	return witnessStack, nil
 }
 
-func (acir *ACIR[T]) GetWitness(ws WitnessStack[T], field *big.Int) (witness.Witness, error) {
+func (acir *ACIR[T]) GetWitness(fileName string, field *big.Int) (witness.Witness, error) {
+	witnessStack, err := LoadWitnessStackFromFile[T](fileName, field)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load witness stack from file %s: %w", fileName, err)
+	}
+
 	witness, err := witness.New(field)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new witness: %w", err)
@@ -99,7 +104,7 @@ func (acir *ACIR[T]) GetWitness(ws WitnessStack[T], field *big.Int) (witness.Wit
 	}
 	log.Trace().Msgf("Number of public parameters: %d", countPublic)
 
-	for stackIndex, itemStack := range ws.ItemStack {
+	for stackIndex, itemStack := range witnessStack.ItemStack {
 		log.Trace().Msgf("Processing stack %d with %d items", stackIndex, itemStack.Len())
 		countPrivate += itemStack.Len()
 	}
@@ -111,7 +116,7 @@ func (acir *ACIR[T]) GetWitness(ws WitnessStack[T], field *big.Int) (witness.Wit
 		for index, param := range acir.ABI.Parameters {
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
 				log.Trace().Msgf("Sending public parameter %s", param.Name)
-				for stackIndex, itemStack := range ws.ItemStack {
+				for stackIndex, itemStack := range witnessStack.ItemStack {
 					log.Trace().Msgf("Processing stack %d for public parameter %s", stackIndex, param.Name)
 					if value, ok := itemStack.Get(shr.Witness(index)); ok {
 						log.Trace().Msgf("Sending value %s for public parameter %s in stack %d", value.String(), param.Name, stackIndex)
@@ -125,7 +130,7 @@ func (acir *ACIR[T]) GetWitness(ws WitnessStack[T], field *big.Int) (witness.Wit
 		}
 		log.Trace().Msg("Finished sending public parameters")
 
-		for _, itemStack := range ws.ItemStack {
+		for _, itemStack := range witnessStack.ItemStack {
 			log.Trace().Msgf("Processing private items in stack %d", itemStack.Len())
 			for it := itemStack.Iter(); it.Next(); {
 				witnessKey := it.Key()

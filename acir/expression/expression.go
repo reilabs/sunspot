@@ -7,6 +7,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
 
@@ -94,4 +95,24 @@ func (e *Expression[T]) Calculate(api frontend.API, witnesses map[shr.Witness]fr
 		sum = api.Add(sum, lc.Calculate(api, witnesses))
 	}
 	return api.Add(sum, e.Constant.ToFrontendVariable())
+}
+
+func (e *Expression[T]) FillWitnessTree(tree *btree.BTree) bool {
+	if tree == nil {
+		return false
+	}
+
+	for _, term := range e.MulTerms {
+		if !term.FillWitnessTree(tree) {
+			return false
+		}
+	}
+
+	for _, lc := range e.LinearCombinations {
+		if !lc.FillWitnessTree(tree) {
+			return false
+		}
+	}
+
+	return true
 }
