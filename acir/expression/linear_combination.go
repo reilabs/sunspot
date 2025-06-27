@@ -6,6 +6,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
 
@@ -54,4 +55,12 @@ func (lc *LinearCombination[T]) Calculate(api frontend.API, witnesses map[shr.Wi
 		log.Trace().Msg("Left witness not found, creating internal variable for witness: " + fmt.Sprint(lc.Witness))
 	}
 	return api.Mul(left, lc.Term.ToFrontendVariable())
+}
+
+func (lc *LinearCombination[T]) FillWitnessTree(tree *btree.BTree) bool {
+	if tree == nil {
+		return false
+	}
+	tree.ReplaceOrInsert(lc.Witness)
+	return true
 }

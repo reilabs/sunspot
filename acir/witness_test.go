@@ -8,7 +8,7 @@ import (
 )
 
 func TestACIRWitnessSumAB(t *testing.T) {
-	witnessStack, err := LoadWitnessFromFile[*bn254.BN254Field](
+	witnessStack, err := LoadWitnessStackFromFile[*bn254.BN254Field](
 		"../noir-samples/sum_a_b/target/sum_a_b.gz",
 		ecc_bn254.ID.ScalarField(),
 	)
@@ -24,7 +24,7 @@ func TestACIRWitnessSumAB(t *testing.T) {
 }
 
 func TestACIRWitnessSquareEquation(t *testing.T) {
-	witnessStack, err := LoadWitnessFromFile[*bn254.BN254Field](
+	witnessStack, err := LoadWitnessStackFromFile[*bn254.BN254Field](
 		"../noir-samples/square_equation/target/square_equation.gz",
 		ecc_bn254.ID.ScalarField(),
 	)
@@ -40,7 +40,7 @@ func TestACIRWitnessSquareEquation(t *testing.T) {
 }
 
 func TestACIRWitnessRockPaperScissors(t *testing.T) {
-	witnessStack, err := LoadWitnessFromFile[*bn254.BN254Field](
+	witnessStack, err := LoadWitnessStackFromFile[*bn254.BN254Field](
 		"../noir-samples/rock_paper_scissors/target/rock_paper_scissors.gz",
 		ecc_bn254.ID.ScalarField(),
 	)

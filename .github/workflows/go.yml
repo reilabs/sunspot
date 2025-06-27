@@ -41,7 +41,11 @@ jobs:
         nargo execute
         cd ../linear_equation
         nargo compile
+        nargo execute
         cd ../rock_paper_scissors
+        nargo compile
+        nargo execute
+        cd ../polynomial
         nargo compile
         nargo execute
 

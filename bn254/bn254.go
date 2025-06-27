@@ -57,7 +57,7 @@ func (b *BN254Field) UnmarshalReader(r io.Reader) error {
 			return fmt.Errorf("failed to set BN254 field modulus from hex string: %s", str)
 		}
 	} else {
-		if _, ok := b.Modulus.SetString(str, 10); !ok {
+		if _, ok := b.Modulus.SetString(str, 16); !ok {
 			return fmt.Errorf("failed to set BN254 field modulus from string: %s", str)
 		}
 	}

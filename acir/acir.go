@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,6 +18,7 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/consensys/gnark/frontend/schema"
+	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,8 +29,24 @@ type ACIR[T shr.ACIRField] struct {
 	Program      Program[T]                  `json:"program"`
 	DebugSymbols string                      `json:"debug_symbols"`
 	FileMap      map[string]hdr.ACIRFileData `json:"file_map"`
+	WitnessTree  *btree.BTree                `json:"-"` // Optional, can be nil
 	Names        []string                    `json:"names"`
 	BrilligNames []string                    `json:"brillig_names"`
+}
+
+func LoadACIR[T shr.ACIRField](fileName string) (ACIR[T], error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return ACIR[T]{}, fmt.Errorf("failed to open ACIR file: %w", err)
+	}
+	defer file.Close()
+
+	var acir ACIR[T]
+	if err := json.NewDecoder(file).Decode(&acir); err != nil {
+		return ACIR[T]{}, fmt.Errorf("failed to decode ACIR JSON: %w", err)
+	}
+
+	return acir, nil
 }
 
 func (a *ACIR[T]) UnmarshalJSON(data []byte) error {
@@ -143,52 +159,6 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	return reader, err
 }
 
-func (a *ACIR[T]) CompileExecuted(witness WitnessStack[T]) (constraint.ConstraintSystem, error) {
-	builder, err := r1cs.NewBuilder(ecc.BN254.ScalarField(), frontend.CompileConfig{
-		CompressThreshold: 300,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create R1CS builder: %w", err)
-	}
-
-	witnessMap := make(map[shr.Witness]frontend.Variable)
-	for index, param := range a.ABI.Parameters {
-		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-			log.Trace().Msg("Adding public parameter to witness map: " + param.Name + " at index " + fmt.Sprint(index))
-			witnessMap[shr.Witness(index)] = builder.PublicVariable(
-				schema.LeafInfo{
-					FullName:   func() string { return param.Name },
-					Visibility: schema.Public,
-				},
-			)
-		}
-	}
-
-	for index, stack := range witness.ItemStack {
-		log.Trace().Msgf("Processing item stack %d with %d witnesses", index, stack.Len())
-		iter := stack.Iter()
-		for iter.Next() {
-			witnessItem := iter.Key()
-			log.Trace().Msgf("Processing witness item %d in stack %d", witnessItem, index)
-			if _, ok := witnessMap[witnessItem]; !ok {
-				log.Trace().Msgf("Adding item stack %d to witness map, with witness key %d", index, witnessItem)
-				witnessMap[witnessItem] = builder.SecretVariable(
-					schema.LeafInfo{
-						FullName:   func() string { return fmt.Sprintf("item_stack_%d", index) },
-						Visibility: schema.Secret,
-					},
-				)
-			}
-		}
-	}
-
-	log.Trace().Msg("Adding internal variable to builder" + fmt.Sprint(witnessMap))
-
-	a.Program.Define(builder, witnessMap)
-
-	return builder.Compile()
-}
-
 func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 	builder, err := r1cs.NewBuilder(ecc.BN254.ScalarField(), frontend.CompileConfig{
 		CompressThreshold: 300,
@@ -210,25 +180,32 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 		}
 	}
 
-	for index, param := range a.ABI.Parameters {
-		if param.Visibility == hdr.ACIRParameterVisibilityPrivate {
-			log.Trace().Msg("Adding private parameter to witness map: " + param.Name + " at index " + fmt.Sprint(index))
-			witnessMap[shr.Witness(index)] = builder.SecretVariable(
+	a.WitnessTree = a.Program.GetWitnessTree()
+	if a.WitnessTree == nil {
+		return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
+	}
+	log.Trace().Msg("Processing witness tree with " + fmt.Sprint(a.WitnessTree.Len()))
+
+	a.WitnessTree.Ascend(func(it btree.Item) bool {
+		witness, ok := it.(shr.Witness)
+		if !ok {
+			log.Warn().Msgf("Item in witness tree is not of type shr.Witness: %T", it)
+			return true // Continue processing other items
+		}
+		log.Trace().Msgf("Processing witness item %d", it)
+		if _, ok := witnessMap[witness]; !ok {
+			log.Trace().Msgf("Adding witness to witness map, with key %d", witness)
+			witnessMap[witness] = builder.SecretVariable(
 				schema.LeafInfo{
-					FullName:   func() string { return param.Name },
+					FullName:   func() string { return fmt.Sprintf("__witness_%d", witness) },
 					Visibility: schema.Secret,
 				},
 			)
 		}
-	}
+		return true
+	})
 
-	for index, param := range a.ABI.Parameters {
-		if param.Visibility == hdr.ACIRParameterVisibilityDatabus {
-			log.Trace().Msg("Adding databus parameter to witness map: " + param.Name + " at index " + fmt.Sprint(index))
-		}
-	}
-
-	builder.InternalVariable(1)
+	log.Trace().Msg("Adding internal variable to builder" + fmt.Sprint(witnessMap))
 
 	a.Program.Define(builder, witnessMap)
 
@@ -274,56 +251,6 @@ func (a *ACIR[T]) GenerateWitness(inputs map[string]*big.Int, field *big.Int) (w
 	}
 
 	return witness, nil
-}
-
-func (a *ACIR[T]) GetWitnessFromFile(filePath string, field *big.Int) (witness.Witness, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open witness file: %w", err)
-	}
-
-	defer file.Close()
-
-	var padding [12]byte
-	if _, err := file.Read(padding[:]); err != nil {
-		return nil, fmt.Errorf("failed to read padding: %w", err)
-	}
-
-	var witnessCount uint64
-	if err := binary.Read(file, binary.LittleEndian, &witnessCount); err != nil {
-		return nil, fmt.Errorf("failed to read witness count: %w", err)
-	}
-
-	witnessMap := make(map[string]*big.Int)
-	for i := uint64(0); i < witnessCount; i++ {
-		var witnessIndex uint32
-		err := binary.Read(file, binary.LittleEndian, &witnessIndex)
-		if err == io.EOF {
-			break // End of file reached
-		} else if err != nil {
-			return nil, fmt.Errorf("failed to read witness index: %w", err)
-		}
-		witnessIndex += 1 // Adjusting to 1-based index
-
-		var length uint64
-		if err := binary.Read(file, binary.LittleEndian, &length); err != nil {
-			return nil, fmt.Errorf("failed to read witness value length: %w", err)
-		}
-
-		valueBytes := make([]byte, length)
-		if _, err := file.Read(valueBytes); err != nil {
-			return nil, fmt.Errorf("failed to read value bytes: %w", err)
-		}
-
-		value, _ := new(big.Int).SetString(string(valueBytes), 10)
-		if witnessIndex > uint32(len(a.ABI.Parameters)) {
-			return nil, fmt.Errorf("witness index %d out of bounds for parameters length %d", witnessIndex, len(a.ABI.Parameters))
-		}
-
-		witnessMap[a.ABI.Parameters[witnessIndex-1].Name] = value
-	}
-
-	return a.GenerateWitness(witnessMap, field)
 }
 
 func (a *ACIR[T]) String() string {

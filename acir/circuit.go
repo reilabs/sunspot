@@ -97,9 +97,16 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 		c.ReturnValues.ReplaceOrInsert(witness)
 	}
 
+	log.Trace().Msg("Unmarshalling Circuit with assert messages")
+
 	var numAssertMessages uint64
 	if err := binary.Read(r, binary.LittleEndian, &numAssertMessages); err != nil {
-		return err
+		if err == io.EOF {
+			log.Trace().Msg("No assert messages found, continuing without them")
+			c.AssertMessages = make(map[ops.OpcodeLocation]AssertionPayload[T])
+			return nil
+		}
+		log.Trace().Msg("Error reading number of assert messages: " + err.Error())
 	}
 	log.Trace().Msg("Unmarshalling Circuit with number of assert messages: " + fmt.Sprintf("%x %d", numAssertMessages, numAssertMessages))
 
@@ -119,6 +126,11 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 
 	var recursiveFlag uint8
 	if err := binary.Read(r, binary.LittleEndian, &recursiveFlag); err != nil {
+		if err == io.EOF {
+			log.Trace().Msg("No recursive flag found, continuing without it")
+			c.Recursive = false
+			return nil
+		}
 		return err
 	}
 	c.Recursive = recursiveFlag != 0
@@ -134,4 +146,14 @@ func (c *Circuit[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend
 		}
 	}
 	return nil
+}
+
+func (c *Circuit[T]) FillWitnessTree(witnessTree *btree.BTree) {
+	if witnessTree == nil {
+		return
+	}
+
+	for _, opcode := range c.Opcodes {
+		opcode.FillWitnessTree(witnessTree)
+	}
 }
