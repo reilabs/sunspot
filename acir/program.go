@@ -30,12 +30,15 @@ func (p *Program[T]) UnmarshalReader(r io.Reader) error {
 			return err
 		}
 	}
+	log.Trace().Msg("Finished unmarshalling circuits")
 
 	var unconstrainedFuncCount uint64
 	if err := binary.Read(r, binary.BigEndian, &unconstrainedFuncCount); err != nil {
-		if err == io.EOF {
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			log.Trace().Msg("No unconstrained brillig bytecode functions found, returning nil")
 			return nil
 		}
+		log.Error().Err(err).Msg("Failed to read unconstrained brillig bytecode function count")
 		return err
 	}
 

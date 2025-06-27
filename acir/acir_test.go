@@ -197,3 +197,41 @@ func TestACIRPolynomial(t *testing.T) {
 		t.Logf("Verification succeeded!")
 	}
 }
+
+/*func TestACIRAES128Encrypt(t *testing.T) {
+	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/aes128encrypt/target/aes128encrypt.json")
+	if err != nil {
+		t.Fatalf("Failed to load ACIR: %v", err)
+	}
+
+	ccs, err := acir.Compile()
+	if err != nil {
+		t.Fatalf("Failed to compile ACIR: %v", err)
+	}
+
+	pk, vk, err := groth16.Setup(ccs)
+	if err != nil {
+		t.Fatalf("Failed to setup Groth16: %v", err)
+	}
+
+	witness, err := acir.GetWitness("../noir-samples/aes128encrypt/target/aes128encrypt.gz", ecc_bn254.ID.ScalarField())
+	if err != nil {
+		t.Fatalf("Failed to get witness: %v", err)
+	}
+
+	proof, err := groth16.Prove(ccs, pk, witness)
+	if err != nil {
+		t.Fatalf("Failed to generate proof: %v", err)
+	}
+
+	publicWitness, err := witness.Public()
+	if err != nil {
+		t.Fatalf("Failed to get public witness: %v", err)
+	}
+
+	if err := groth16.Verify(proof, vk, publicWitness); err != nil {
+		t.Fatalf("Verification failed: %v", err)
+	} else {
+		t.Logf("Verification succeeded!")
+	}
+}*/

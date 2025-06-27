@@ -29,6 +29,7 @@ type ACIR[T shr.ACIRField] struct {
 	Program      Program[T]                  `json:"program"`
 	DebugSymbols string                      `json:"debug_symbols"`
 	FileMap      map[string]hdr.ACIRFileData `json:"file_map"`
+	WitnessTree  *btree.BTree                `json:"-"` // Optional, can be nil
 	Names        []string                    `json:"names"`
 	BrilligNames []string                    `json:"brillig_names"`
 }
@@ -179,13 +180,13 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 		}
 	}
 
-	witnessTree := a.Program.GetWitnessTree()
-	if witnessTree == nil {
+	a.WitnessTree = a.Program.GetWitnessTree()
+	if a.WitnessTree == nil {
 		return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
 	}
-	log.Trace().Msg("Processing witness tree with " + fmt.Sprint(witnessTree.Len()))
+	log.Trace().Msg("Processing witness tree with " + fmt.Sprint(a.WitnessTree.Len()))
 
-	witnessTree.Ascend(func(it btree.Item) bool {
+	a.WitnessTree.Ascend(func(it btree.Item) bool {
 		witness, ok := it.(shr.Witness)
 		if !ok {
 			log.Warn().Msgf("Item in witness tree is not of type shr.Witness: %T", it)

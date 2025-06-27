@@ -1,4 +1,4 @@
-global N: u32 = 3;
+global N: u32 = 5;
 
 fn pow(base: Field, exp: u32) -> Field {
     let mut result: Field = 1;
@@ -20,7 +20,7 @@ fn main(coefficients: [Field; N], x : Field, y: pub Field) {
 
 #[test]
 fn test_main() {
-    main([1, 2, 3], 1, 6);
+    main([1, 2, 3, 4, 5], 2, 129);
 
     // Uncomment to make test fail
     // main([1, 2, 3], 1);

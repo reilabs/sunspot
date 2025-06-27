@@ -106,7 +106,16 @@ func (acir *ACIR[T]) GetWitness(fileName string, field *big.Int) (witness.Witnes
 
 	for stackIndex, itemStack := range witnessStack.ItemStack {
 		log.Trace().Msgf("Processing stack %d with %d items", stackIndex, itemStack.Len())
-		countPrivate += itemStack.Len()
+		itemStackCount := itemStack.Len()
+		for it := itemStack.Iter(); it.Next(); {
+			witnessKey := it.Key()
+			if acir.WitnessTree != nil && !acir.WitnessTree.Has(witnessKey) {
+				log.Warn().Msgf("Witness key %d not found in witness tree or is zero, skipping", witnessKey)
+				itemStackCount--
+				continue
+			}
+		}
+		countPrivate += itemStackCount
 	}
 
 	countPrivate -= countPublic
@@ -141,6 +150,10 @@ func (acir *ACIR[T]) GetWitness(fileName string, field *big.Int) (witness.Witnes
 						skipKey = true
 						break
 					}
+				}
+				if acir.WitnessTree != nil && !acir.WitnessTree.Has(witnessKey) {
+					log.Warn().Msgf("Witness key %d not found in witness tree, skipping", witnessKey)
+					skipKey = true
 				}
 				if skipKey {
 					continue
