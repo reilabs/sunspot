@@ -23,15 +23,16 @@ import (
 )
 
 type ACIR[T shr.ACIRField] struct {
-	NoirVersion  string                      `json:"noir_version"`
-	Hash         uint64                      `json:"hash"`
-	ABI          hdr.ACIRABI                 `json:"abi"`
-	Program      Program[T]                  `json:"program"`
-	DebugSymbols string                      `json:"debug_symbols"`
-	FileMap      map[string]hdr.ACIRFileData `json:"file_map"`
-	WitnessTree  *btree.BTree                `json:"-"` // Optional, can be nil
-	Names        []string                    `json:"names"`
-	BrilligNames []string                    `json:"brillig_names"`
+	NoirVersion         string                      `json:"noir_version"`
+	Hash                uint64                      `json:"hash"`
+	ABI                 hdr.ACIRABI                 `json:"abi"`
+	Program             Program[T]                  `json:"program"`
+	DebugSymbols        string                      `json:"debug_symbols"`
+	FileMap             map[string]hdr.ACIRFileData `json:"file_map"`
+	WitnessTree         *btree.BTree                `json:"-"`
+	ConstantWitnessTree *btree.BTree                `json:"-"`
+	Names               []string                    `json:"names"`
+	BrilligNames        []string                    `json:"brillig_names"`
 }
 
 func LoadACIR[T shr.ACIRField](fileName string) (ACIR[T], error) {
@@ -180,7 +181,7 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 		}
 	}
 
-	a.WitnessTree = a.Program.GetWitnessTree()
+	a.WitnessTree, a.ConstantWitnessTree = a.Program.GetWitnessTree()
 	if a.WitnessTree == nil {
 		return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
 	}
@@ -205,7 +206,24 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 		return true
 	})
 
-	log.Trace().Msg("Adding internal variable to builder" + fmt.Sprint(witnessMap))
+	a.ConstantWitnessTree.Ascend(func(it btree.Item) bool {
+		witness, ok := it.(shr.Witness)
+		if !ok {
+			log.Warn().Msgf("Item in constant witness tree is not of type shr.Witness: %T", it)
+			return true // Continue processing other items
+		}
+		log.Trace().Msgf("Processing constant witness item %d", it)
+		if _, ok := witnessMap[witness]; !ok {
+			log.Trace().Msgf("Adding constant witness to witness map, with key %d", witness)
+			witnessMap[witness] = builder.SecretVariable(
+				schema.LeafInfo{
+					FullName:   func() string { return fmt.Sprintf("__constant_%d", witness) },
+					Visibility: schema.Secret,
+				},
+			)
+		}
+		return true
+	})
 
 	a.Program.Define(builder, witnessMap)
 

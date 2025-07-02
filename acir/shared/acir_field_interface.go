@@ -2,6 +2,7 @@ package shared
 
 import (
 	"io"
+	"math/big"
 	"reflect"
 
 	"github.com/consensys/gnark/frontend"
@@ -31,4 +32,5 @@ type ACIRField interface {
 	Equals(other ACIRField) bool
 	ToFrontendVariable() frontend.Variable
 	String() string
+	ToBigInt() *big.Int // Added ToBigInt method to convert to *big.Int
 }

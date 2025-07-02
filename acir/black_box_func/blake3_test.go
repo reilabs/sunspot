@@ -30,7 +30,7 @@ func TestBlake3UnmarshalReaderEmpty(t *testing.T) {
 		expectedFunctionCall.Blake3.Outputs[i] = shr.Witness(0)
 	}
 
-	if !blackBoxFuncCall.Equals(&expectedFunctionCall) {
+	if !blackBoxFuncCall.Equals(expectedFunctionCall) {
 		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expectedFunctionCall, blackBoxFuncCall)
 	}
 
@@ -73,7 +73,7 @@ func TestBlake3UnmarshalReaderWithInputs(t *testing.T) {
 		expectedFunctionCall.Blake3.Outputs[i] = shr.Witness(1234)
 	}
 
-	if !blackBoxFuncCall.Equals(&expectedFunctionCall) {
+	if !blackBoxFuncCall.Equals(expectedFunctionCall) {
 		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expectedFunctionCall, blackBoxFuncCall)
 	}
 

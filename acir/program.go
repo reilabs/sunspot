@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math/big"
 	brl "nr-groth16/acir/brillig"
 	shr "nr-groth16/acir/shared"
 
@@ -64,10 +65,32 @@ func (p *Program[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend
 	return nil
 }
 
-func (p *Program[T]) GetWitnessTree() *btree.BTree {
+func (p *Program[T]) GetWitnessTree() (*btree.BTree, *btree.BTree) {
 	witnessTree := btree.New(2)
 	for _, circuit := range p.Functions {
 		circuit.FillWitnessTree(witnessTree)
 	}
-	return witnessTree
+
+	constantsTree := btree.New(2)
+	start, ok := witnessTree.Max().(shr.Witness)
+	if !ok {
+		log.Error().Msg("Failed to get max witness ID from witness tree")
+		return nil, nil
+	}
+
+	for _, circuit := range p.Functions {
+		circuit.CollectConstantsAsWitnesses(uint32(start)+1, constantsTree)
+	}
+
+	return witnessTree, constantsTree
+}
+
+func (p *Program[T]) FeedConstantsAsWitnesses() []*big.Int {
+	values := make([]*big.Int, 0)
+
+	for _, circuit := range p.Functions {
+		values = append(values, circuit.FeedConstantsAsWitnesses()...)
+	}
+
+	return values
 }

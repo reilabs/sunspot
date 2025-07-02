@@ -46,13 +46,13 @@ func (lc *LinearCombination[T]) Equals(other *LinearCombination[T]) bool {
 }
 
 func (lc *LinearCombination[T]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
-	log.Trace().Msg("Calculating LinearCombination with term: " + lc.Term.String() + " and witness: " + fmt.Sprint(lc.Witness))
-	log.Trace().Msg("Witnesses: " + fmt.Sprint(witnesses))
+	log.Trace().Msg("EXPRESSION: LINEARCOMBINATION: Calculating LinearCombination with term: " + lc.Term.String() + " and witness: " + fmt.Sprint(lc.Witness))
+	//log.Trace().Msg("EXPRESSION: LINEARCOMBINATION: Witnesses: " + fmt.Sprint(witnesses))
 	left, ok := witnesses[lc.Witness]
 	if !ok {
 		witnesses[lc.Witness] = api.Compiler().InternalVariable(uint32(lc.Witness))
 		left = witnesses[lc.Witness]
-		log.Trace().Msg("Left witness not found, creating internal variable for witness: " + fmt.Sprint(lc.Witness))
+		log.Trace().Msg("EXPRESSION: LINEARCOMBINATION: Left witness not found, creating internal variable for witness: " + fmt.Sprint(lc.Witness))
 	}
 	return api.Mul(left, lc.Term.ToFrontendVariable())
 }

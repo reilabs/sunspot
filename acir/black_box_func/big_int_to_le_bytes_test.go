@@ -26,7 +26,7 @@ func TestBigIntToLEBytesUnmarshalReader(t *testing.T) {
 		},
 	}
 
-	if !blackBoxFuncCall.Equals(&expectedFunctionCall) {
+	if !blackBoxFuncCall.Equals(expectedFunctionCall) {
 		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expectedFunctionCall, blackBoxFuncCall)
 	}
 
