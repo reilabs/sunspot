@@ -88,3 +88,7 @@ func (b BN254Field) ToFrontendVariable() frontend.Variable {
 func (b BN254Field) String() string {
 	return b.Modulus.String()
 }
+
+func (b BN254Field) ToBigInt() *big.Int {
+	return new(big.Int).Set(&b.Modulus)
+}

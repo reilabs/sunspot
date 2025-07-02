@@ -99,7 +99,7 @@ func (e *Expression[T]) Calculate(api frontend.API, witnesses map[shr.Witness]fr
 
 	log.Trace().Msg("EXPRESSION: Sum after all MulTerms and LinearCombinations: " + fmt.Sprint(sum))
 	log.Trace().Msg("EXPRESSION: Adding constant to sum: " + fmt.Sprint(e.Constant.ToBigInt().Uint64()))
-	sum = api.Add(sum, witnesses[e.constantWitnessID])
+	//sum = api.Add(sum, witnesses[e.constantWitnessID])
 	log.Trace().Msg("EXPRESSION: Final sum after all MulTerms and LinearCombinations and Constant: " + fmt.Sprint(sum))
 	return sum
 }

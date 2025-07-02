@@ -6,6 +6,7 @@ import (
 
 	ecc_bn254 "github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark/backend/groth16"
+	"github.com/rs/zerolog/log"
 )
 
 func TestACIRSumABExecuted(t *testing.T) {
@@ -198,7 +199,6 @@ func TestACIRPolynomial(t *testing.T) {
 	}
 }
 
-/*
 func TestACIRKeccakF1600(t *testing.T) {
 	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.json")
 	if err != nil {
@@ -275,7 +275,7 @@ func TestACIRRange(t *testing.T) {
 	} else {
 		t.Logf("Verification succeeded!")
 	}
-}*/
+}
 
 func TestACIRLCChecker(t *testing.T) {
 	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/lcchecker/target/lcchecker.json")
