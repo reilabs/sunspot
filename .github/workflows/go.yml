@@ -48,6 +48,17 @@ jobs:
         cd ../polynomial
         nargo compile
         nargo execute
+        cd ../lcchecker
+        nargo compile
+        nargo execute
+        cd ../range
+        nargo compile
+        nargo execute
+        cd ../black_box_functions/keccak_f1600
+        nargo compile
+        nargo execute
+
+
 
     - name: Install dependencies
       run: go mod tidy
