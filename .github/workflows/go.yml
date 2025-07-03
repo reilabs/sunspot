@@ -57,6 +57,9 @@ jobs:
         cd ../black_box_functions/keccak_f1600
         nargo compile
         nargo execute
+        cd ../black_box_functions/and
+        nargo compile
+        nargo execute
 
 
 

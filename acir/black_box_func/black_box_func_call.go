@@ -157,11 +157,11 @@ func (a *BlackBoxFuncCall[T]) UnmarshalReader(r io.Reader) error {
 func (a BlackBoxFuncCall[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
 	switch a.Kind {
 	/*case ACIRBlackBoxFuncKindAES128Encrypt:
-		return a.AES128Encrypt.Define(api, witnesses)
+	return a.AES128Encrypt.Define(api, witnesses)*/
 	case ACIRBlackBoxFuncKindAnd:
 		return a.And.Define(api, witnesses)
-	case ACIRBlackBoxFuncKindXor:
-		return a.Xor.Define(api, witnesses)*/
+	/*case ACIRBlackBoxFuncKindXor:
+	return a.Xor.Define(api, witnesses)*/
 	case ACIRBlackBoxFuncKindRange:
 		return a.Range.Define(api, witnesses)
 	/*case ACIRBlackBoxFuncKindBlake2s:

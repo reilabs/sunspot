@@ -1,0 +1,6 @@
+[package]
+name = "and"
+type = "bin"
+authors = [""]
+
+[dependencies]
