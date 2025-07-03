@@ -160,8 +160,8 @@ func (a BlackBoxFuncCall[T]) Define(api frontend.API, witnesses map[shr.Witness]
 	return a.AES128Encrypt.Define(api, witnesses)*/
 	case ACIRBlackBoxFuncKindAnd:
 		return a.And.Define(api, witnesses)
-	/*case ACIRBlackBoxFuncKindXor:
-	return a.Xor.Define(api, witnesses)*/
+	case ACIRBlackBoxFuncKindXor:
+		return a.Xor.Define(api, witnesses)
 	case ACIRBlackBoxFuncKindRange:
 		return a.Range.Define(api, witnesses)
 	/*case ACIRBlackBoxFuncKindBlake2s:

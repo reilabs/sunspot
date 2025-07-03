@@ -33,7 +33,7 @@ jobs:
       run: |
         nargo --help
         nargo compile --help
-        cd noir-samples/sum_a_b
+        cd noir-samples/expressions/sum_a_b
         nargo compile
         nargo execute
         cd ../square_equation
@@ -51,17 +51,18 @@ jobs:
         cd ../lcchecker
         nargo compile
         nargo execute
-        cd ../range
+        cd ../../black_box_functions/range
         nargo compile
         nargo execute
-        cd ../black_box_functions/keccak_f1600
+        cd ../keccak_f1600
         nargo compile
         nargo execute
-        cd ../black_box_functions/and
+        cd ../and
         nargo compile
         nargo execute
-
-
+        cd ../xor
+        nargo compile
+        nargo execute
 
     - name: Install dependencies
       run: go mod tidy

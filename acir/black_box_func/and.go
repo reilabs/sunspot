@@ -47,6 +47,7 @@ func (a *And[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Var
 		return fmt.Errorf("witness %d not found in witnesses map", a.Output)
 	}
 	output_binary := api.ToBinary(output)
+	fmt.Println("lhs_binary: ", len(lhs_binary), " rhs_binary: ", len(rhs_binary), " output_binary: ", len(output_binary))
 	verifiable_len := min(len(lhs_binary), len(rhs_binary), len(output_binary))
 	for i := 0; i < verifiable_len; i++ {
 		lhs_bit := lhs_binary[i]

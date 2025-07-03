@@ -1,0 +1,6 @@
+[package]
+name = "xor"
+type = "bin"
+authors = [""]
+
+[dependencies]
