@@ -10,7 +10,7 @@ import (
 )
 
 func TestACIRSumABExecuted(t *testing.T) {
-	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/sum_a_b/target/sum_a_b.json")
+	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/expressions/sum_a_b/target/sum_a_b.json")
 	if err != nil {
 		t.Fatalf("Failed to load ACIR: %v", err)
 	}
@@ -25,7 +25,7 @@ func TestACIRSumABExecuted(t *testing.T) {
 		t.Fatalf("Failed to setup Groth16: %v", err)
 	}
 
-	witness, err := acir.GetWitness("../noir-samples/sum_a_b/target/sum_a_b.gz", ecc_bn254.ID.ScalarField())
+	witness, err := acir.GetWitness("../noir-samples/expressions/sum_a_b/target/sum_a_b.gz", ecc_bn254.ID.ScalarField())
 	if err != nil {
 		t.Fatalf("Failed to get witness: %v", err)
 	}
@@ -48,7 +48,7 @@ func TestACIRSumABExecuted(t *testing.T) {
 }
 
 func TestACIRLinearEquationExecuted(t *testing.T) {
-	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/linear_equation/target/linear_equation.json")
+	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/expressions/linear_equation/target/linear_equation.json")
 	if err != nil {
 		t.Fatalf("Failed to load ACIR: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestACIRLinearEquationExecuted(t *testing.T) {
 		t.Fatalf("Failed to setup Groth16: %v", err)
 	}
 
-	witness, err := acir.GetWitness("../noir-samples/linear_equation/target/linear_equation.gz", ecc_bn254.ID.ScalarField())
+	witness, err := acir.GetWitness("../noir-samples/expressions/linear_equation/target/linear_equation.gz", ecc_bn254.ID.ScalarField())
 	if err != nil {
 		t.Fatalf("Failed to get witness: %v", err)
 	}
@@ -86,7 +86,7 @@ func TestACIRLinearEquationExecuted(t *testing.T) {
 }
 
 func TestACIRSquareEquationExecuted(t *testing.T) {
-	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/square_equation/target/square_equation.json")
+	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/expressions/square_equation/target/square_equation.json")
 	if err != nil {
 		t.Fatalf("Failed to load ACIR: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestACIRSquareEquationExecuted(t *testing.T) {
 		t.Fatalf("Failed to setup Groth16: %v", err)
 	}
 
-	witness, err := acir.GetWitness("../noir-samples/square_equation/target/square_equation.gz", ecc_bn254.ID.ScalarField())
+	witness, err := acir.GetWitness("../noir-samples/expressions/square_equation/target/square_equation.gz", ecc_bn254.ID.ScalarField())
 	if err != nil {
 		t.Fatalf("Failed to get witness: %v", err)
 	}
@@ -124,7 +124,7 @@ func TestACIRSquareEquationExecuted(t *testing.T) {
 }
 
 func TestACIRRockPaperScissorsExecuted(t *testing.T) {
-	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/black_box_func/rock_paper_scissors/target/rock_paper_scissors.json")
+	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/expressions/rock_paper_scissors/target/rock_paper_scissors.json")
 	if err != nil {
 		t.Fatalf("Failed to load ACIR: %v", err)
 	}
@@ -139,7 +139,7 @@ func TestACIRRockPaperScissorsExecuted(t *testing.T) {
 		t.Fatalf("Failed to setup Groth16: %v", err)
 	}
 
-	witness, err := acir.GetWitness("../noir-samples/rock_paper_scissors/target/rock_paper_scissors.gz", ecc_bn254.ID.ScalarField())
+	witness, err := acir.GetWitness("../noir-samples/expressions/rock_paper_scissors/target/rock_paper_scissors.gz", ecc_bn254.ID.ScalarField())
 	if err != nil {
 		t.Fatalf("Failed to get witness: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestACIRRockPaperScissorsExecuted(t *testing.T) {
 }
 
 func TestACIRPolynomial(t *testing.T) {
-	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/polynomial/target/polynomial.json")
+	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/expressions/polynomial/target/polynomial.json")
 	if err != nil {
 		t.Fatalf("Failed to load ACIR: %v", err)
 	}
@@ -177,7 +177,7 @@ func TestACIRPolynomial(t *testing.T) {
 		t.Fatalf("Failed to setup Groth16: %v", err)
 	}
 
-	witness, err := acir.GetWitness("../noir-samples/polynomial/target/polynomial.gz", ecc_bn254.ID.ScalarField())
+	witness, err := acir.GetWitness("../noir-samples/expressions/polynomial/target/polynomial.gz", ecc_bn254.ID.ScalarField())
 	if err != nil {
 		t.Fatalf("Failed to get witness: %v", err)
 	}
@@ -238,7 +238,7 @@ func TestACIRKeccakF1600(t *testing.T) {
 }
 
 func TestACIRRange(t *testing.T) {
-	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/range/target/range.json")
+	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/black_box_functions/range/target/range.json")
 	if err != nil {
 		t.Fatalf("Failed to load ACIR: %v", err)
 	}
@@ -253,7 +253,7 @@ func TestACIRRange(t *testing.T) {
 		t.Fatalf("Failed to setup Groth16: %v", err)
 	}
 
-	witness, err := acir.GetWitness("../noir-samples/range/target/range.gz", ecc_bn254.ID.ScalarField())
+	witness, err := acir.GetWitness("../noir-samples/black_box_functions/range/target/range.gz", ecc_bn254.ID.ScalarField())
 	if err != nil {
 		t.Fatalf("Failed to get witness: %v", err)
 	}
@@ -278,7 +278,7 @@ func TestACIRRange(t *testing.T) {
 }
 
 func TestACIRLCChecker(t *testing.T) {
-	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/lcchecker/target/lcchecker.json")
+	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/expressions/lcchecker/target/lcchecker.json")
 	if err != nil {
 		t.Fatalf("Failed to load ACIR: %v", err)
 	}
@@ -293,7 +293,7 @@ func TestACIRLCChecker(t *testing.T) {
 		t.Fatalf("Failed to setup Groth16: %v", err)
 	}
 
-	witness, err := acir.GetWitness("../noir-samples/lcchecker/target/lcchecker.gz", ecc_bn254.ID.ScalarField())
+	witness, err := acir.GetWitness("../noir-samples/expressions/lcchecker/target/lcchecker.gz", ecc_bn254.ID.ScalarField())
 	if err != nil {
 		t.Fatalf("Failed to get witness: %v", err)
 	}
