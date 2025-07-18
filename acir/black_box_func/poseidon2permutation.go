@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type Poseidon2Permutation[T shr.ACIRField] struct {
@@ -59,4 +61,8 @@ func (a *Poseidon2Permutation[T]) Equals(other *Poseidon2Permutation[T]) bool {
 	}
 
 	return true
+}
+
+func (a *Poseidon2Permutation[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+	return nil
 }

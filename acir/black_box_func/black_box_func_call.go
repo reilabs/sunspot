@@ -7,6 +7,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/rs/zerolog/log"
 )
 
 type BlackBoxFuncCall[T shr.ACIRField] struct {
@@ -43,6 +44,8 @@ func (a *BlackBoxFuncCall[T]) UnmarshalReader(r io.Reader) error {
 			Code: uint32(a.Kind),
 		}
 	}
+
+	log.Trace().Msgf("Unmarshalling black box function call kind %v", a.Kind)
 
 	switch a.Kind {
 	case ACIRBlackBoxFuncKindAES128Encrypt:
@@ -167,22 +170,22 @@ func (a BlackBoxFuncCall[T]) Define(api frontend.API, witnesses map[shr.Witness]
 	/*case ACIRBlackBoxFuncKindBlake2s:
 		return a.Blake2s.Define(api, witnesses)
 	case ACIRBlackBoxFuncKindBlake3:
-		return a.Blake3.Define(api, witnesses)
+		return a.Blake3.Define(api, witnesses)*/
 	case ACIRBlackBoxFuncKindEcdsaSecp256k1:
 		return a.ECDSASECP256K1.Define(api, witnesses)
 	case ACIRBlackBoxFuncKindEcdsaSecp256r1:
 		return a.ECDSASECP256R1.Define(api, witnesses)
-	case ACIRBlackBoxFuncKindMultiScalarMul:
+	/*case ACIRBlackBoxFuncKindMultiScalarMul:
 		return a.MultiScalarMul.Define(api, witnesses)
 	case ACIRBlackBoxFuncKindEmbeddedCurveAdd:
 		return a.EmbeddedCurveAdd.Define(api, witnesses)
 	case ACIRBlackBoxFuncKindKeccakf1600:
 		return a.Keccakf1600.Define(api, witnesses)
 	case ACIRBlackBoxFuncKindRecursiveAggregation:
-		return a.RecursiveAggregation.Define(api, witnesses)
+		return a.RecursiveAggregation.Define(api, witnesses)*/
 	case ACIRBlackBoxFuncKindBigIntAdd:
 		return a.BigIntAdd.Define(api, witnesses)
-	case ACIRBlackBoxFuncKindBigIntSub:
+	/*case ACIRBlackBoxFuncKindBigIntSub:
 		return a.BigIntSub.Define(api, witnesses)
 	case ACIRBlackBoxFuncKindBigIntMul:
 		return a.BigIntMul.Define(api, witnesses)
@@ -191,11 +194,11 @@ func (a BlackBoxFuncCall[T]) Define(api frontend.API, witnesses map[shr.Witness]
 	case ACIRBlackBoxFuncKindBigIntFromLeBytes:
 		return a.BigIntFromLEBytes.Define(api, witnesses)
 	case ACIRBlackBoxFuncKindBigIntToLeBytes:
-		return a.BigIntToLEBytes.Define(api, witnesses)
+		return a.BigIntToLEBytes.Define(api, witnesses)*/
 	case ACIRBlackBoxFuncKindPoseidon2Permutation:
 		return a.Poseidon2Permutation.Define(api, witnesses)
 	case ACIRBlackBoxFuncKindSha256Compression:
-		return a.Sha256Compression.Define(api, witnesses)*/
+		return a.Sha256Compression.Define(api, witnesses)
 	default:
 		return fmt.Errorf("unknown black box function kind: %d", a.Kind)
 	}
