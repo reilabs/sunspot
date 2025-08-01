@@ -3,8 +3,7 @@
 
 git submodule update --init --recursive
 
-ls -la noir-samples
-cd noir-samples/black_box_func/aes128encrypt
+cd noir-samples/black_box_functions/aes128encrypt
 nargo build
 nargo execute
 cd ../and
