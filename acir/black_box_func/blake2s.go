@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type Blake2s[T shr.ACIRField] struct {
@@ -48,4 +50,16 @@ func (a *Blake2s[T]) Equals(other *Blake2s[T]) bool {
 	}
 
 	return true
+}
+
+func (a *Blake2s[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+
+	for i := 0; i < 32; i++ {
+		api.AssertIsEqual(a.Outputs[i], witnesses[a.Outputs[i]])
+	}
+
+	// Here you would implement the actual Blake2s hashing logic using the inputs.
+	// This is a placeholder for the actual implementation.
+	// api.Blake2s(a.Inputs, a.Outputs[:])
+	return nil
 }
