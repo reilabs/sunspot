@@ -31,6 +31,8 @@ jobs:
 
     - name: Build Noir contracts
       run: |
+        chmod +x build_noir_samples.sh
+        ./build_noir_samples.sh
         nargo --help
         nargo compile --help
         cd noir-samples/expressions/sum_a_b
