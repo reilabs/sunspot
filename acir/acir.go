@@ -11,6 +11,7 @@ import (
 	hdr "nr-groth16/acir/header"
 	shr "nr-groth16/acir/shared"
 	"os"
+	"strconv"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/witness"
@@ -22,6 +23,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Struct representation of an ACIR programme
 type ACIR[T shr.ACIRField] struct {
 	NoirVersion         string                      `json:"noir_version"`
 	Hash                uint64                      `json:"hash"`
@@ -35,6 +37,7 @@ type ACIR[T shr.ACIRField] struct {
 	BrilligNames        []string                    `json:"brillig_names"`
 }
 
+// Loads ACIR from disk and creates representation in memory
 func LoadACIR[T shr.ACIRField](fileName string) (ACIR[T], error) {
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -50,6 +53,7 @@ func LoadACIR[T shr.ACIRField](fileName string) (ACIR[T], error) {
 	return acir, nil
 }
 
+// Construct an ACIR instance from json data
 func (a *ACIR[T]) UnmarshalJSON(data []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -61,8 +65,12 @@ func (a *ACIR[T]) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("missing or invalid noir_version field in ACIR")
 	}
 
-	if hash, ok := raw["hash"].(float64); ok {
-		a.Hash = uint64(hash)
+	if hashStr, ok := raw["hash"].(string); ok {
+		hash, err := strconv.ParseUint(hashStr, 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid hash value in ACIR: %v", err)
+		}
+		a.Hash = hash
 	} else {
 		return fmt.Errorf("missing or invalid hash field in ACIR")
 	}
@@ -156,7 +164,7 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-
+	fmt.Println("bytecode", reader)
 	return reader, err
 }
 

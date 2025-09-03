@@ -1,6 +1,7 @@
 package acir
 
 import (
+	"fmt"
 	"nr-groth16/bn254"
 	"testing"
 
@@ -10,6 +11,8 @@ import (
 
 func testProveAndVerify(t *testing.T, acirPath string, witnessPath string) {
 	acir, err := LoadACIR[*bn254.BN254Field](acirPath)
+
+	fmt.Println("acir", acir)
 	if err != nil {
 		t.Fatalf("Failed to load ACIR: %v", err)
 	}
