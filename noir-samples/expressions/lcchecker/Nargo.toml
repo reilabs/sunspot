@@ -1,0 +1,6 @@
+[package]
+name = "lcchecker"
+type = "bin"
+authors = [""]
+
+[dependencies]

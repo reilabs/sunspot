@@ -27,13 +27,15 @@ jobs:
     - name: Set up Noir
       uses: noir-lang/noirup@v0.1.2
       with:
-        toolchain: v1.0.0-beta.3
+        toolchain: v1.0.0-beta.11
 
     - name: Build Noir contracts
       run: |
+        chmod +x build_noir_samples.sh
+        ./build_noir_samples.sh
         nargo --help
         nargo compile --help
-        cd noir-samples/sum_a_b
+        cd noir-samples/expressions/sum_a_b
         nargo compile
         nargo execute
         cd ../square_equation
@@ -46,6 +48,21 @@ jobs:
         nargo compile
         nargo execute
         cd ../polynomial
+        nargo compile
+        nargo execute
+        cd ../lcchecker
+        nargo compile
+        nargo execute
+        cd ../../black_box_functions/range
+        nargo compile
+        nargo execute
+        cd ../keccak_f1600
+        nargo compile
+        nargo execute
+        cd ../and
+        nargo compile
+        nargo execute
+        cd ../xor
         nargo compile
         nargo execute
 

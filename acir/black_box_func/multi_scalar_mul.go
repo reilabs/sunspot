@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/rs/zerolog/log"
 )
 
 type MultiScalarMul[T shr.ACIRField] struct {
@@ -13,10 +15,12 @@ type MultiScalarMul[T shr.ACIRField] struct {
 }
 
 func (a *MultiScalarMul[T]) UnmarshalReader(r io.Reader) error {
+	log.Trace().Msgf("Unmarshalling MultiScalarMul function call")
 	var numPoints uint64
 	if err := binary.Read(r, binary.LittleEndian, &numPoints); err != nil {
 		return err
 	}
+	log.Trace().Msgf("Number of points: %d", numPoints)
 
 	a.Points = make([]FunctionInput[T], numPoints)
 	for i := uint64(0); i < numPoints; i++ {
@@ -29,10 +33,17 @@ func (a *MultiScalarMul[T]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &numScalars); err != nil {
 		return err
 	}
+	log.Trace().Msgf("Number of scalars: %d", numScalars)
 
 	a.Scalars = make([]FunctionInput[T], numScalars)
 	for i := uint64(0); i < numScalars; i++ {
 		if err := a.Scalars[i].UnmarshalReader(r); err != nil {
+			return err
+		}
+	}
+
+	for i := 0; i < 3; i++ {
+		if err := a.Outputs[i].UnmarshalReader(r); err != nil {
 			return err
 		}
 	}

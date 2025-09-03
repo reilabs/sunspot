@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math/big"
 	exp "nr-groth16/acir/expression"
 	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
@@ -141,6 +142,9 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 
 func (c *Circuit[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
 	for _, opcode := range c.Opcodes {
+		//if index != 1 || index == 4 || index == 5 || index == 6 || index == 8 {
+		//	continue
+		//}
 		if err := opcode.Define(api, witnesses); err != nil {
 			return err
 		}
@@ -156,4 +160,23 @@ func (c *Circuit[T]) FillWitnessTree(witnessTree *btree.BTree) {
 	for _, opcode := range c.Opcodes {
 		opcode.FillWitnessTree(witnessTree)
 	}
+}
+
+func (c *Circuit[T]) CollectConstantsAsWitnesses(start uint32, witnessTree *btree.BTree) {
+	if witnessTree == nil {
+		return
+	}
+
+	for _, opcode := range c.Opcodes {
+		opcode.CollectConstantsAsWitnesses(start, witnessTree)
+	}
+}
+
+func (c *Circuit[T]) FeedConstantsAsWitnesses() []*big.Int {
+	values := make([]*big.Int, 0)
+
+	for _, opcode := range c.Opcodes {
+		values = append(values, opcode.FeedConstantsAsWitnesses()...)
+	}
+	return values
 }

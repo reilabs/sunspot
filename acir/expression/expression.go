@@ -14,7 +14,8 @@ import (
 type Expression[T shr.ACIRField] struct {
 	MulTerms           []MulTerm[T]           `json:"mul_terms"`           // Terms that are multiplied together
 	LinearCombinations []LinearCombination[T] `json:"linear_combinations"` // Linear combinations of variables
-	Constant           T                      `json:"constant"`            // Constant term in the expression
+	Constant           T                      `json:"constant"`
+	constantWitnessID  shr.Witness            // Constant term in the expression
 }
 
 func (e *Expression[T]) UnmarshalReader(r io.Reader) error {
@@ -88,13 +89,19 @@ func (e *Expression[T]) Equals(other *Expression[T]) bool {
 
 func (e *Expression[T]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
 	sum := e.Constant.ToFrontendVariable()
+	log.Trace().Msg("EXPRESSION: Calculating Expression with " + fmt.Sprint(len(e.MulTerms)) + " MulTerms and " + fmt.Sprint(len(e.LinearCombinations)) + " LinearCombinations")
 	for _, term := range e.MulTerms {
 		sum = api.Add(sum, term.Calculate(api, witnesses))
 	}
 	for _, lc := range e.LinearCombinations {
 		sum = api.Add(sum, lc.Calculate(api, witnesses))
 	}
-	return api.Add(sum, e.Constant.ToFrontendVariable())
+
+	log.Trace().Msg("EXPRESSION: Sum after all MulTerms and LinearCombinations: " + fmt.Sprint(sum))
+	log.Trace().Msg("EXPRESSION: Adding constant to sum: " + fmt.Sprint(e.Constant.ToBigInt().Uint64()))
+	//sum = api.Add(sum, witnesses[e.constantWitnessID])
+	log.Trace().Msg("EXPRESSION: Final sum after all MulTerms and LinearCombinations and Constant: " + fmt.Sprint(sum))
+	return sum
 }
 
 func (e *Expression[T]) FillWitnessTree(tree *btree.BTree) bool {
@@ -113,6 +120,18 @@ func (e *Expression[T]) FillWitnessTree(tree *btree.BTree) bool {
 			return false
 		}
 	}
+
+	return true
+}
+
+func (e *Expression[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
+	if tree == nil {
+		return false
+	}
+
+	e.constantWitnessID = shr.Witness(start + uint32(tree.Len()))
+	tree.ReplaceOrInsert(e.constantWitnessID)
+	log.Trace().Msgf("Collecting constant %s as witness with ID %d", e.Constant.ToBigInt().String(), e.constantWitnessID)
 
 	return true
 }

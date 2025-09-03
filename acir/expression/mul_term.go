@@ -58,16 +58,16 @@ func (Mt *MulTerm[T]) Calculate(api frontend.API, witnesses map[shr.Witness]fron
 	if !ok {
 		witnesses[Mt.WitnessLeft] = api.Compiler().InternalVariable(uint32(Mt.WitnessLeft))
 		left = witnesses[Mt.WitnessLeft]
-		log.Trace().Msg("Left witness not found, creating internal variable for witness: " + fmt.Sprint(Mt.WitnessLeft))
+		log.Trace().Msg("EXPRESSION: MULTERM: Left witness not found, creating internal variable for witness: " + fmt.Sprint(Mt.WitnessLeft))
 	}
 	right, ok := witnesses[Mt.WitnessRight]
 	if !ok {
 		witnesses[Mt.WitnessRight] = api.Compiler().InternalVariable(uint32(Mt.WitnessRight))
 		right = witnesses[Mt.WitnessRight]
-		log.Trace().Msg("Right witness not found, creating internal variable for witness: " + fmt.Sprint(Mt.WitnessRight))
+		log.Trace().Msg("EXPRESSION: MULTERM: Right witness not found, creating internal variable for witness: " + fmt.Sprint(Mt.WitnessRight))
 	}
-	log.Trace().Msg("Calculating MulTerm with left witness: " + fmt.Sprint(Mt.WitnessLeft) + " and right witness: " + fmt.Sprint(Mt.WitnessRight))
-	log.Trace().Msg("Witnesses: " + fmt.Sprint(witnesses))
+	log.Trace().Msg("EXPRESSION: MULTERM: Calculating MulTerm with left witness: " + fmt.Sprint(Mt.WitnessLeft) + " and right witness: " + fmt.Sprint(Mt.WitnessRight))
+	//log.Trace().Msg("Witnesses: " + fmt.Sprint(witnesses))
 	return api.Mul(left, right, Mt.Term.ToFrontendVariable())
 }
 

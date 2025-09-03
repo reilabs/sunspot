@@ -1,0 +1,3 @@
+[submodule "noir-samples/real_world/zk-noir-voting"]
+	path = noir-samples/real_world/zk-noir-voting
+	url = https://github.com/cholakovvv/zk-noir-voting/

@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
+	"github.com/rs/zerolog/log"
 )
 
 type BlackBoxFuncCall[T shr.ACIRField] struct {
@@ -41,6 +44,8 @@ func (a *BlackBoxFuncCall[T]) UnmarshalReader(r io.Reader) error {
 			Code: uint32(a.Kind),
 		}
 	}
+
+	log.Trace().Msgf("Unmarshalling black box function call kind %v", a.Kind)
 
 	switch a.Kind {
 	case ACIRBlackBoxFuncKindAES128Encrypt:
@@ -152,7 +157,54 @@ func (a *BlackBoxFuncCall[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *BlackBoxFuncCall[T]) Equals(other *BlackBoxFuncCall[T]) bool {
+func (a BlackBoxFuncCall[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+	switch a.Kind {
+	case ACIRBlackBoxFuncKindAES128Encrypt:
+		return a.AES128Encrypt.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindAnd:
+		return a.And.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindXor:
+		return a.Xor.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindRange:
+		return a.Range.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindBlake2s:
+		return fmt.Errorf("Blake2s is not implemented yet")
+	case ACIRBlackBoxFuncKindBlake3:
+		return fmt.Errorf("Blake3 is not implemented yet")
+	case ACIRBlackBoxFuncKindEcdsaSecp256k1:
+		return a.ECDSASECP256K1.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindEcdsaSecp256r1:
+		return a.ECDSASECP256R1.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindMultiScalarMul:
+		return fmt.Errorf("MultiScalarMul is not implemented yet")
+	case ACIRBlackBoxFuncKindEmbeddedCurveAdd:
+		return fmt.Errorf("EmbeddedCurveAdd is not implemented yet")
+	case ACIRBlackBoxFuncKindKeccakf1600:
+		return fmt.Errorf("Keccakf1600 is not implemented yet")
+	case ACIRBlackBoxFuncKindRecursiveAggregation:
+		return fmt.Errorf("RecursiveAggregation is not implemented yet")
+	case ACIRBlackBoxFuncKindBigIntAdd:
+		return a.BigIntAdd.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindBigIntSub:
+		return a.BigIntSub.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindBigIntMul:
+		return a.BigIntMul.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindBigIntDiv:
+		return a.BigIntDiv.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindBigIntFromLeBytes:
+		return fmt.Errorf("BigIntFromLEBytes is not implemented yet")
+	case ACIRBlackBoxFuncKindBigIntToLeBytes:
+		return fmt.Errorf("BigIntToLEBytes is not implemented yet")
+	case ACIRBlackBoxFuncKindPoseidon2Permutation:
+		return a.Poseidon2Permutation.Define(api, witnesses)
+	case ACIRBlackBoxFuncKindSha256Compression:
+		return a.Sha256Compression.Define(api, witnesses)
+	default:
+		return fmt.Errorf("unknown black box function kind: %d", a.Kind)
+	}
+}
+
+func (a BlackBoxFuncCall[T]) Equals(other BlackBoxFuncCall[T]) bool {
 	if a.Kind != other.Kind {
 		fmt.Println("BlackBoxFuncCall: Kind mismatch")
 		return false
@@ -178,7 +230,7 @@ func (a *BlackBoxFuncCall[T]) Equals(other *BlackBoxFuncCall[T]) bool {
 		if a.Range == nil || other.Range == nil {
 			return a.Range == nil && other.Range == nil
 		}
-		return a.Range.Equals(other.Range)
+		return a.Range.Equals(*other.Range)
 	case ACIRBlackBoxFuncKindBlake2s:
 		if a.Blake2s == nil || other.Blake2s == nil {
 			return a.Blake2s == nil && other.Blake2s == nil

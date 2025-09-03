@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type FunctionInput[T shr.ACIRField] struct {
@@ -99,4 +101,24 @@ type ACIRFunctionInputKindError struct {
 
 func (e ACIRFunctionInputKindError) Error() string {
 	return fmt.Sprintf("Invalid ACIR function input kind (can be either Constant or Witness) - received %d", e.DecodedKind)
+}
+
+func (f *FunctionInput[T]) ToVariable(witnesses map[shr.Witness]frontend.Variable) (frontend.Variable, error) {
+	switch f.FunctionInputKind {
+	case ACIRFunctionInputKindConstant:
+		if f.ConstantInput == nil {
+			return nil, fmt.Errorf("constant input is nil")
+		}
+		return (*f.ConstantInput).ToFrontendVariable(), nil
+	case ACIRFunctionInputKindWitness:
+		if f.Witness == nil {
+			return nil, fmt.Errorf("witness is nil")
+		}
+		if _, ok := witnesses[*f.Witness]; !ok {
+			return nil, fmt.Errorf("witness %d not found in witnesses map", *f.Witness)
+		}
+		return witnesses[*f.Witness], nil
+	default:
+		return nil, fmt.Errorf("unknown function input kind")
+	}
 }

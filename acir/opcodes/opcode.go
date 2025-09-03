@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	bbf "nr-groth16/acir/black_box_func"
 	brl "nr-groth16/acir/brillig"
 	exp "nr-groth16/acir/expression"
@@ -135,6 +136,7 @@ func (o *Opcode[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.
 
 		api.AssertIsEqual(o.Expression.Calculate(api, witnesses), 0)
 	case ACIROpcodeBlackBoxFuncCall:
+		o.BlackBoxFuncCall.Define(api, witnesses)
 		//panic("BlackBoxFuncCall opcode is not implemented yet") // TODO: Implement BlackBoxFuncCall calculation
 		//return o.BlackBoxFuncCall.Calculate(api, witnesses)
 	case ACIROpcodeMemoryOp:
@@ -187,4 +189,27 @@ func (o Opcode[T]) FillWitnessTree(tree *btree.BTree) bool {
 	}
 
 	return ok
+}
+
+func (o Opcode[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
+	if tree == nil {
+		return false
+	}
+
+	ok := true
+	if o.Kind == ACIROpcodeAssertZero && o.Expression != nil {
+		ok = o.Expression.CollectConstantsAsWitnesses(start, tree)
+	}
+
+	return ok
+}
+
+func (o Opcode[T]) FeedConstantsAsWitnesses() []*big.Int {
+	values := make([]*big.Int, 0)
+
+	if o.Kind == ACIROpcodeAssertZero && o.Expression != nil {
+		values = append(values, o.Expression.Constant.ToBigInt())
+	}
+
+	return values
 }

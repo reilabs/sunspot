@@ -4,6 +4,9 @@ import (
 	"encoding/binary"
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
+	"github.com/rs/zerolog/log"
 )
 
 type ECDSASECP256K1[T shr.ACIRField] struct {
@@ -15,6 +18,7 @@ type ECDSASECP256K1[T shr.ACIRField] struct {
 }
 
 func (a *ECDSASECP256K1[T]) UnmarshalReader(r io.Reader) error {
+	log.Trace().Msgf("Unmarshalling ECDSASECP256K1 function call")
 	for i := 0; i < 32; i++ {
 		if err := a.PublicKeyX[i].UnmarshalReader(r); err != nil {
 			return err
@@ -68,4 +72,9 @@ func (a *ECDSASECP256K1[T]) Equals(other *ECDSASECP256K1[T]) bool {
 	}
 
 	return a.Output == other.Output
+}
+
+func (a ECDSASECP256K1[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+
+	return nil
 }

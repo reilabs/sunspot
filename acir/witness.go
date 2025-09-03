@@ -118,6 +118,8 @@ func (acir *ACIR[T]) GetWitness(fileName string, field *big.Int) (witness.Witnes
 		countPrivate += itemStackCount
 	}
 
+	countPrivate += acir.ConstantWitnessTree.Len()
+
 	countPrivate -= countPublic
 	log.Trace().Msgf("Number of private parameters: %d", countPrivate)
 
@@ -164,6 +166,14 @@ func (acir *ACIR[T]) GetWitness(fileName string, field *big.Int) (witness.Witnes
 			}
 		}
 		log.Trace().Msg("Finished sending private parameters")
+
+		data := acir.Program.FeedConstantsAsWitnesses()
+		for _, value := range data {
+			log.Trace().Msgf("Sending constant value %s", value.String())
+			values <- value
+		}
+
+		log.Trace().Msg("Finished sending constant values")
 
 		close(values)
 	}()

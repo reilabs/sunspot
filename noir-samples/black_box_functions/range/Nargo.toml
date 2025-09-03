@@ -1,0 +1,6 @@
+[package]
+name = "range"
+type = "bin"
+authors = [""]
+
+[dependencies]

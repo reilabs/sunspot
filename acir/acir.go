@@ -11,6 +11,7 @@ import (
 	hdr "nr-groth16/acir/header"
 	shr "nr-groth16/acir/shared"
 	"os"
+	"strconv"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/witness"
@@ -22,18 +23,21 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// Struct representation of an ACIR programme
 type ACIR[T shr.ACIRField] struct {
-	NoirVersion  string                      `json:"noir_version"`
-	Hash         uint64                      `json:"hash"`
-	ABI          hdr.ACIRABI                 `json:"abi"`
-	Program      Program[T]                  `json:"program"`
-	DebugSymbols string                      `json:"debug_symbols"`
-	FileMap      map[string]hdr.ACIRFileData `json:"file_map"`
-	WitnessTree  *btree.BTree                `json:"-"` // Optional, can be nil
-	Names        []string                    `json:"names"`
-	BrilligNames []string                    `json:"brillig_names"`
+	NoirVersion         string                      `json:"noir_version"`
+	Hash                uint64                      `json:"hash"`
+	ABI                 hdr.ACIRABI                 `json:"abi"`
+	Program             Program[T]                  `json:"program"`
+	DebugSymbols        string                      `json:"debug_symbols"`
+	FileMap             map[string]hdr.ACIRFileData `json:"file_map"`
+	WitnessTree         *btree.BTree                `json:"-"`
+	ConstantWitnessTree *btree.BTree                `json:"-"`
+	Names               []string                    `json:"names"`
+	BrilligNames        []string                    `json:"brillig_names"`
 }
 
+// Loads ACIR from disk and creates representation in memory
 func LoadACIR[T shr.ACIRField](fileName string) (ACIR[T], error) {
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -49,6 +53,7 @@ func LoadACIR[T shr.ACIRField](fileName string) (ACIR[T], error) {
 	return acir, nil
 }
 
+// Construct an ACIR instance from json data
 func (a *ACIR[T]) UnmarshalJSON(data []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -60,8 +65,12 @@ func (a *ACIR[T]) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("missing or invalid noir_version field in ACIR")
 	}
 
-	if hash, ok := raw["hash"].(float64); ok {
-		a.Hash = uint64(hash)
+	if hashStr, ok := raw["hash"].(string); ok {
+		hash, err := strconv.ParseUint(hashStr, 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid hash value in ACIR: %v", err)
+		}
+		a.Hash = hash
 	} else {
 		return fmt.Errorf("missing or invalid hash field in ACIR")
 	}
@@ -155,7 +164,7 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-
+	fmt.Println("bytecode", reader)
 	return reader, err
 }
 
@@ -180,7 +189,7 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 		}
 	}
 
-	a.WitnessTree = a.Program.GetWitnessTree()
+	a.WitnessTree, a.ConstantWitnessTree = a.Program.GetWitnessTree()
 	if a.WitnessTree == nil {
 		return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
 	}
@@ -205,7 +214,24 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 		return true
 	})
 
-	log.Trace().Msg("Adding internal variable to builder" + fmt.Sprint(witnessMap))
+	a.ConstantWitnessTree.Ascend(func(it btree.Item) bool {
+		witness, ok := it.(shr.Witness)
+		if !ok {
+			log.Warn().Msgf("Item in constant witness tree is not of type shr.Witness: %T", it)
+			return true // Continue processing other items
+		}
+		log.Trace().Msgf("Processing constant witness item %d", it)
+		if _, ok := witnessMap[witness]; !ok {
+			log.Trace().Msgf("Adding constant witness to witness map, with key %d", witness)
+			witnessMap[witness] = builder.SecretVariable(
+				schema.LeafInfo{
+					FullName:   func() string { return fmt.Sprintf("__constant_%d", witness) },
+					Visibility: schema.Secret,
+				},
+			)
+		}
+		return true
+	})
 
 	a.Program.Define(builder, witnessMap)
 

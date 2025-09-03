@@ -47,7 +47,7 @@ func TestAES128EncryptUnmarshalReaderEmpty(t *testing.T) {
 		},
 	}
 
-	if !blackBoxFuncCall.Equals(&expected) {
+	if !blackBoxFuncCall.Equals(expected) {
 		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expected, blackBoxFuncCall)
 	}
 
@@ -114,7 +114,7 @@ func TestAES128EncryptUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		},
 	}
 
-	if !blackBoxFuncCall.Equals(&expected) {
+	if !blackBoxFuncCall.Equals(expected) {
 		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expected,
 			blackBoxFuncCall)
 	}
