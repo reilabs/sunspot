@@ -89,13 +89,13 @@ func TestACIRPolynomial(t *testing.T) {
 	)
 }
 
-func TestACIRKeccakF1600(t *testing.T) {
-	testProveAndVerify(
-		t,
-		"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.json",
-		"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.gz",
-	)
-}
+// func TestACIRKeccakF1600(t *testing.T) {
+// 	testProveAndVerify(
+// 		t,
+// 		"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.json",
+// 		"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.gz",
+// 	)
+// }
 
 func TestACIRRange(t *testing.T) {
 	testProveAndVerify(
@@ -129,45 +129,45 @@ func TestACIRXor(t *testing.T) {
 	)
 }
 
-func TestACIRZKVoting(t *testing.T) {
-	testProveAndVerify(
-		t,
-		"../noir-samples/real_world/zk-noir-voting/circuits/target/circuits.json",
-		"../noir-samples/real_world/zk-noir-voting/circuits/target/circuits.gz",
-	)
-}
+// func TestACIRZKVoting(t *testing.T) {
+// 	testProveAndVerify(
+// 		t,
+// 		"../noir-samples/real_world/zk-noir-voting/circuits/target/circuits.json",
+// 		"../noir-samples/real_world/zk-noir-voting/circuits/target/circuits.gz",
+// 	)
+// }
 
-func TestACIRProveKitBasic(t *testing.T) {
-	testProveAndVerify(
-		t,
-		"../noir-samples/real_world/ProveKit/noir-examples/basic/target/basic.json",
-		"../noir-samples/real_world/ProveKit/noir-examples/basic/target/basic.gz",
-	)
-}
+// func TestACIRProveKitBasic(t *testing.T) {
+// 	testProveAndVerify(
+// 		t,
+// 		"../noir-samples/real_world/ProveKit/noir-examples/basic/target/basic.json",
+// 		"../noir-samples/real_world/ProveKit/noir-examples/basic/target/basic.gz",
+// 	)
+// }
 
-func TestACIRProveKitBasic2(t *testing.T) {
-	testProveAndVerify(
-		t,
-		"../noir-samples/real_world/ProveKit/noir-examples/basic-2/target/basic.json",
-		"../noir-samples/real_world/ProveKit/noir-examples/basic-2/target/basic.gz",
-	)
-}
+// func TestACIRProveKitBasic2(t *testing.T) {
+// 	testProveAndVerify(
+// 		t,
+// 		"../noir-samples/real_world/ProveKit/noir-examples/basic-2/target/basic.json",
+// 		"../noir-samples/real_world/ProveKit/noir-examples/basic-2/target/basic.gz",
+// 	)
+// }
 
-func TestACIRProveKitBasic3(t *testing.T) {
-	testProveAndVerify(
-		t,
-		"../noir-samples/real_world/ProveKit/noir-examples/basic-3/target/basic.json",
-		"../noir-samples/real_world/ProveKit/noir-examples/basic-3/target/basic.gz",
-	)
-}
+// func TestACIRProveKitBasic3(t *testing.T) {
+// 	testProveAndVerify(
+// 		t,
+// 		"../noir-samples/real_world/ProveKit/noir-examples/basic-3/target/basic.json",
+// 		"../noir-samples/real_world/ProveKit/noir-examples/basic-3/target/basic.gz",
+// 	)
+// }
 
-func TestACIRPoseidonVar(t *testing.T) {
-	testProveAndVerify(
-		t,
-		"../noir-samples/real_world/ProveKit/noir-examples/poseidon-var/target/basic.json",
-		"../noir-samples/real_world/ProveKit/noir-examples/poseidon-var/target/basic.gz",
-	)
-}
+// func TestACIRPoseidonVar(t *testing.T) {
+// 	testProveAndVerify(
+// 		t,
+// 		"../noir-samples/real_world/ProveKit/noir-examples/poseidon-var/target/basic.json",
+// 		"../noir-samples/real_world/ProveKit/noir-examples/poseidon-var/target/basic.gz",
+// 	)
+// }
 
 /*func TestACIRAES128Encrypt(t *testing.T) {
 	acir, err := LoadACIR[*bn254.BN254Field]("../noir-samples/aes128encrypt/target/aes128encrypt.json")

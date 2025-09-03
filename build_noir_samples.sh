@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 # This script builds the Noir samples
 
 git submodule update --init --recursive

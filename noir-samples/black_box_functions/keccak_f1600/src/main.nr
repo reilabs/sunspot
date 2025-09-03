@@ -1,4 +1,4 @@
-use std::hash::keccak::keccakf1600;
+use std::hash::keccakf1600;
 
 fn main(x: Field, y: pub Field) {
     //assert(x != y);
