@@ -1,0 +1,7 @@
+[package]
+name = "provekit_basic"
+type = "bin"
+authors = [""]
+
+[dependencies]
+poseidon2 = { tag = "main", git = "https://github.com/TaceoLabs/noir-poseidon", directory = "poseidon2"}
