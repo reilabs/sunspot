@@ -1,3 +1,4 @@
+#![allow(clippy::field_reassign_with_default)]
 use std::io::Write;
 
 use brillig::{HeapArray, MemoryAddress};
