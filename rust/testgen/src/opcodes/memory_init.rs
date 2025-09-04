@@ -11,7 +11,7 @@ use acir::{
 use tracing::trace;
 
 fn generate_memory_init_memory_block_test(path: &str) {
-    let file_name = format!("{}/memory_init_memory_block.bin", path);
+    let file_name = format!("{path}/memory_init_memory_block.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -44,7 +44,7 @@ fn generate_memory_init_memory_block_test(path: &str) {
 }
 
 fn generate_memory_init_calldata_test(path: &str) {
-    let file_name = format!("{}/memory_init_calldata.bin", path);
+    let file_name = format!("{path}/memory_init_calldata.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -77,7 +77,7 @@ fn generate_memory_init_calldata_test(path: &str) {
 }
 
 fn generat_memory_init_return_data_test(path: &str) {
-    let file_name = format!("{}/memory_init_return_data.bin", path);
+    let file_name = format!("{path}/memory_init_return_data.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -110,7 +110,7 @@ fn generat_memory_init_return_data_test(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/memory_init/", directory);
+    let directory = format!("{directory}/memory_init/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

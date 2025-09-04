@@ -7,7 +7,7 @@ use acir::{
 use tracing::trace;
 
 fn generate_expression_test_empty(path: &str) {
-    let file_name = format!("{}/expression_empty.bin", path);
+    let file_name = format!("{path}/expression_empty.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -39,7 +39,7 @@ fn generate_expression_test_empty(path: &str) {
 }
 
 fn generate_expression_test_linear_combinations(path: &str) {
-    let file_name = format!("{}/expression_linear_combinations.bin", path);
+    let file_name = format!("{path}/expression_linear_combinations.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -75,7 +75,7 @@ fn generate_expression_test_linear_combinations(path: &str) {
 }
 
 fn generate_expression_test_mul_terms(path: &str) {
-    let file_name = format!("{}/expression_mul_terms.bin", path);
+    let file_name = format!("{path}/expression_mul_terms.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -111,7 +111,7 @@ fn generate_expression_test_mul_terms(path: &str) {
 }
 
 fn generate_expression_test_mul_terms_with_linear_combinations(path: &str) {
-    let file_name = format!("{}/expression_mul_terms_with_linear_combinations.bin", path);
+    let file_name = format!("{path}/expression_mul_terms_with_linear_combinations.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -151,7 +151,7 @@ fn generate_expression_test_mul_terms_with_linear_combinations(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/expression/", directory);
+    let directory = format!("{directory}/expression/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

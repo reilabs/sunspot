@@ -5,7 +5,7 @@ use tracing::trace;
 
 
 fn generate_aes128encrypt_test_empty(path: &str) {
-    let file_name = format!("{}/aes128encrypt_empty.bin", path);
+    let file_name = format!("{path}/aes128encrypt_empty.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -41,7 +41,7 @@ fn generate_aes128encrypt_test_empty(path: &str) {
 }
 
 fn generate_aes128encrypt_test_with_inputs_and_outputs(path: &str) {
-    let file_name = format!("{}/aes128encrypt_with_inputs_and_outputs.bin", path);
+    let file_name = format!("{path}/aes128encrypt_with_inputs_and_outputs.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -85,7 +85,7 @@ fn generate_aes128encrypt_test_with_inputs_and_outputs(path: &str) {
 
 pub fn generate_tests(path: &str) {
     // Check if the directory exists
-    let directory_path = format!("{}/aes128encrypt", path);
+    let directory_path = format!("{path}/aes128encrypt");
     if !std::path::Path::new(&directory_path).exists() {
         // Create the directory
         std::fs::create_dir_all(&directory_path).expect("Failed to create directory");

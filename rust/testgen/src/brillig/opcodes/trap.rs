@@ -5,7 +5,7 @@ use brillig::{HeapVector, MemoryAddress, Opcode};
 use tracing::trace;
 
 fn generate_trap_test(path: &str) {
-    let file_name = format!("{}/trap.bin", path);
+    let file_name = format!("{path}/trap.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -38,7 +38,7 @@ fn generate_trap_test(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/trap/", directory);
+    let directory = format!("{directory}/trap/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

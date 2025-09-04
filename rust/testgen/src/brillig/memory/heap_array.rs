@@ -4,7 +4,7 @@ use brillig::{HeapArray, MemoryAddress};
 use tracing::trace;
 
 fn generate_test_heap_array_direct_0x1234(path: &str) {
-    let file_name = format!("{}/heap_array_direct_0x1234.bin", path);
+    let file_name = format!("{path}/heap_array_direct_0x1234.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -19,7 +19,7 @@ fn generate_test_heap_array_direct_0x1234(path: &str) {
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
         .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&heap_array, config).expect("Failed to encode data");
+    let data = bincode::serde::encode_to_vec(heap_array, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -30,7 +30,7 @@ fn generate_test_heap_array_direct_0x1234(path: &str) {
 }
 
 fn generate_test_heap_array_relative_0x1234(path: &str) {
-    let file_name = format!("{}/heap_array_relative_0x1234.bin", path);
+    let file_name = format!("{path}/heap_array_relative_0x1234.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -45,7 +45,7 @@ fn generate_test_heap_array_relative_0x1234(path: &str) {
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
         .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&heap_array, config).expect("Failed to encode data");
+    let data = bincode::serde::encode_to_vec(heap_array, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -56,7 +56,7 @@ fn generate_test_heap_array_relative_0x1234(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/heap_array/", directory);
+    let directory = format!("{directory}/heap_array/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

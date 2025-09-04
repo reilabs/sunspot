@@ -4,7 +4,7 @@ use acir::circuit::OpcodeLocation;
 use tracing::trace;
 
 fn generate_test_opcode_location_acir(path: &str) {
-    let file_name = format!("{}/opcode_location_acir.bin", path);
+    let file_name = format!("{path}/opcode_location_acir.bin");
 
     // Check if the file already exists
     if path::Path::new(&file_name).exists() {
@@ -20,7 +20,7 @@ fn generate_test_opcode_location_acir(path: &str) {
         .with_fixed_int_encoding()
         .with_little_endian();
     let data =
-        bincode::serde::encode_to_vec(&opcode_location, config).expect("Failed to encode data");
+        bincode::serde::encode_to_vec(opcode_location, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -33,7 +33,7 @@ fn generate_test_opcode_location_acir(path: &str) {
 }
 
 fn generate_test_opcode_location_brillig(path: &str) {
-    let file_name = format!("{}/opcode_location_brillig.bin", path);
+    let file_name = format!("{path}/opcode_location_brillig.bin");
 
     // Check if the file already exists
     if path::Path::new(&file_name).exists() {
@@ -52,7 +52,7 @@ fn generate_test_opcode_location_brillig(path: &str) {
         .with_fixed_int_encoding()
         .with_little_endian();
     let data =
-        bincode::serde::encode_to_vec(&opcode_location, config).expect("Failed to encode data");
+        bincode::serde::encode_to_vec(opcode_location, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -65,7 +65,7 @@ fn generate_test_opcode_location_brillig(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/opcode_location/", directory);
+    let directory = format!("{directory}/opcode_location/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

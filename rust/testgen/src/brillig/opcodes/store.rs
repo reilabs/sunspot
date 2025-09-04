@@ -5,7 +5,7 @@ use brillig::Opcode;
 use tracing::trace;
 
 fn generate_store_test(path: &str) {
-    let file_name = format!("{}/store.bin", path);
+    let file_name = format!("{path}/store.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -36,7 +36,7 @@ fn generate_store_test(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/store/", directory);
+    let directory = format!("{directory}/store/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

@@ -4,7 +4,7 @@ use acir::{circuit::opcodes::{BlackBoxFuncCall, FunctionInput}, native_types::Wi
 use tracing::trace;
 
 fn generate_and_test(path: &str) {
-    let file_name = format!("{}/and_test.bin", path);
+    let file_name = format!("{path}/and_test.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -41,7 +41,7 @@ fn generate_and_test(path: &str) {
 
 pub fn generate_tests(root: &str) {
     // Check if the directory exists
-    let directory_path = format!("{}/and", root);
+    let directory_path = format!("{root}/and");
     if !std::path::Path::new(&directory_path).exists() {
         // Create the directory
         std::fs::create_dir_all(&directory_path).expect("Failed to create directory");

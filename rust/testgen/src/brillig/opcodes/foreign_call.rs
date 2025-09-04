@@ -8,7 +8,7 @@ use brillig::{
 use tracing::trace;
 
 fn generate_foreign_call_tests_empty(path: &str) {
-    let file_name = format!("{}/foreign_call_empty.bin", path);
+    let file_name = format!("{path}/foreign_call_empty.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -43,7 +43,7 @@ fn generate_foreign_call_tests_empty(path: &str) {
 }
 
 fn generate_foreign_call_tests_with_inputs(path: &str) {
-    let file_name = format!("{}/foreign_call_with_inputs.bin", path);
+    let file_name = format!("{path}/foreign_call_with_inputs.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -87,7 +87,7 @@ fn generate_foreign_call_tests_with_inputs(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/foreign_call/", directory);
+    let directory = format!("{directory}/foreign_call/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

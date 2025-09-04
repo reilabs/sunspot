@@ -4,7 +4,7 @@ use brillig::{BitSize, HeapValueType, IntegerBitSize};
 use tracing::trace;
 
 fn generate_test_heap_value_type_simple(path: &str) {
-    let file_name = format!("{}/heap_value_type_simple.bin", path);
+    let file_name = format!("{path}/heap_value_type_simple.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -29,7 +29,7 @@ fn generate_test_heap_value_type_simple(path: &str) {
 }
 
 fn generate_test_heap_value_type_array_empty(path: &str) {
-    let file_name = format!("{}/heap_value_type_array_empty.bin", path);
+    let file_name = format!("{path}/heap_value_type_array_empty.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -57,7 +57,7 @@ fn generate_test_heap_value_type_array_empty(path: &str) {
 }
 
 fn generate_test_heap_value_type_array(path: &str) {
-    let file_name = format!("{}/heap_value_type_array.bin", path);
+    let file_name = format!("{path}/heap_value_type_array.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -95,7 +95,7 @@ fn generate_test_heap_value_type_array(path: &str) {
 }
 
 fn generate_test_heap_value_type_vector_empty(path: &str) {
-    let file_name = format!("{}/heap_value_type_vector_empty.bin", path);
+    let file_name = format!("{path}/heap_value_type_vector_empty.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -122,7 +122,7 @@ fn generate_test_heap_value_type_vector_empty(path: &str) {
 }
 
 fn generate_test_heap_value_type_vector(path: &str) {
-    let file_name = format!("{}/heap_value_type_vector.bin", path);
+    let file_name = format!("{path}/heap_value_type_vector.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -152,7 +152,7 @@ fn generate_test_heap_value_type_vector(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/heap_value_type/", directory);
+    let directory = format!("{directory}/heap_value_type/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

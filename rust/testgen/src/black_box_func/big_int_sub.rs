@@ -4,7 +4,7 @@ use acir::{circuit::opcodes::BlackBoxFuncCall, FieldElement};
 use tracing::trace;
 
 fn generate_big_int_sub_test(path: &str) {
-    let file_name = format!("{}/big_int_sub_test.bin", path);
+    let file_name = format!("{path}/big_int_sub_test.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -40,7 +40,7 @@ fn generate_big_int_sub_test(path: &str) {
 
 pub fn generate_tests(root: &str) {
     // Check if the directory exists
-    let directory_path = format!("{}/big_int_sub", root);
+    let directory_path = format!("{root}/big_int_sub");
     if !std::path::Path::new(&directory_path).exists() {
         // Create the directory
         std::fs::create_dir_all(&directory_path).expect("Failed to create directory");

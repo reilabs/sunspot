@@ -5,7 +5,7 @@ use brillig::{Label, MemoryAddress, Opcode};
 use tracing::trace;
 
 fn generate_jump_if_not_test(path: &str) {
-    let file_name = format!("{}/jump_if_not.bin", path);
+    let file_name = format!("{path}/jump_if_not.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -37,7 +37,7 @@ fn generate_jump_if_not_test(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/jump_if_not/", directory);
+    let directory = format!("{directory}/jump_if_not/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

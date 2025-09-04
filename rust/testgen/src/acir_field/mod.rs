@@ -4,7 +4,7 @@ use acir::acir_field;
 use tracing::trace;
 
 fn generate_zero_field(path: &str) {
-    let file_name = format!("{}/zero_field.bin", path);
+    let file_name = format!("{path}/zero_field.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -17,7 +17,7 @@ fn generate_zero_field(path: &str) {
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
         .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&zero_field, config).expect("Failed to encode data");
+    let data = bincode::serde::encode_to_vec(zero_field, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -30,7 +30,7 @@ fn generate_zero_field(path: &str) {
 }
 
 fn generate_1234_field(path: &str) {
-    let file_name = format!("{}/field_1234.bin", path);
+    let file_name = format!("{path}/field_1234.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -43,7 +43,7 @@ fn generate_1234_field(path: &str) {
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
         .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&field_value, config).expect("Failed to encode data");
+    let data = bincode::serde::encode_to_vec(field_value, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -54,7 +54,7 @@ fn generate_1234_field(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/acir_field/", directory);
+    let directory = format!("{directory}/acir_field/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

@@ -5,7 +5,7 @@ use brillig::{Label, Opcode};
 use tracing::trace;
 
 fn generate_jump_test(path: &str) {
-    let file_name = format!("{}/jump.bin", path);
+    let file_name = format!("{path}/jump.bin");
 
     // Check if the file already exists
     if path::Path::new(&file_name).exists() {
@@ -35,7 +35,7 @@ fn generate_jump_test(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/jump/", directory);
+    let directory = format!("{directory}/jump/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

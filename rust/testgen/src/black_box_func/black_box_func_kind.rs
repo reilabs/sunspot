@@ -2,7 +2,7 @@ use tracing::trace;
 
 pub fn generate_tests(root: &str) {
     // Check if the directory exists
-    let directory_path = format!("{}/black_box_func_kind", root);
+    let directory_path = format!("{root}/black_box_func_kind");
     if !std::path::Path::new(&directory_path).exists() {
         // Create the directory
         std::fs::create_dir_all(&directory_path).expect("Failed to create directory");

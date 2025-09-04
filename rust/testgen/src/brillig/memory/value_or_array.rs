@@ -3,7 +3,7 @@ use std::io::Write;
 use tracing::trace;
 
 fn generate_test_value_or_array_memory_address(path: &str) {
-    let file_name = format!("{}/value_or_array_memory_address.bin", path);
+    let file_name = format!("{path}/value_or_array_memory_address.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -16,7 +16,7 @@ fn generate_test_value_or_array_memory_address(path: &str) {
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
         .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&value_or_array_memory, config)
+    let data = bincode::serde::encode_to_vec(value_or_array_memory, config)
         .expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
@@ -28,7 +28,7 @@ fn generate_test_value_or_array_memory_address(path: &str) {
 }
 
 fn generate_test_value_or_array_heap_array(path: &str) {
-    let file_name = format!("{}/value_or_array_heap_array.bin", path);
+    let file_name = format!("{path}/value_or_array_heap_array.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -44,7 +44,7 @@ fn generate_test_value_or_array_heap_array(path: &str) {
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
         .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&value_or_array_memory, config)
+    let data = bincode::serde::encode_to_vec(value_or_array_memory, config)
         .expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
@@ -56,7 +56,7 @@ fn generate_test_value_or_array_heap_array(path: &str) {
 }
 
 fn generate_test_value_or_array_heap_vector(path: &str) {
-    let file_name = format!("{}/value_or_array_heap_vector.bin", path);
+    let file_name = format!("{path}/value_or_array_heap_vector.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -71,7 +71,7 @@ fn generate_test_value_or_array_heap_vector(path: &str) {
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
         .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&value_or_array_memory, config)
+    let data = bincode::serde::encode_to_vec(value_or_array_memory, config)
         .expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
@@ -83,7 +83,7 @@ fn generate_test_value_or_array_heap_vector(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/value_or_array/", directory);
+    let directory = format!("{directory}/value_or_array/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

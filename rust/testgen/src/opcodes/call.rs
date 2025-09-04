@@ -8,7 +8,7 @@ use acir::{
 use tracing::trace;
 
 fn generate_call_test_empty(path: &str) {
-    let file_name = format!("{}/call_empty.bin", path);
+    let file_name = format!("{path}/call_empty.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -41,7 +41,7 @@ fn generate_call_test_empty(path: &str) {
 }
 
 fn generate_call_test_with_inputs(path: &str) {
-    let file_name = format!("{}/call_with_inputs.bin", path);
+    let file_name = format!("{path}/call_with_inputs.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -74,7 +74,7 @@ fn generate_call_test_with_inputs(path: &str) {
 }
 
 fn generate_call_test_with_outputs(path: &str) {
-    let file_name = format!("{}/call_with_outputs.bin", path);
+    let file_name = format!("{path}/call_with_outputs.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -107,7 +107,7 @@ fn generate_call_test_with_outputs(path: &str) {
 }
 
 fn generate_call_test_with_predicate(path: &str) {
-    let file_name = format!("{}/call_with_predicate.bin", path);
+    let file_name = format!("{path}/call_with_predicate.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -144,7 +144,7 @@ fn generate_call_test_with_predicate(path: &str) {
 }
 
 fn generate_call_test_with_inputs_and_outputs(path: &str) {
-    let file_name = format!("{}/call_with_inputs_and_outputs.bin", path);
+    let file_name = format!("{path}/call_with_inputs_and_outputs.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -181,7 +181,7 @@ fn generate_call_test_with_inputs_and_outputs(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/call/", directory);
+    let directory = format!("{directory}/call/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 
