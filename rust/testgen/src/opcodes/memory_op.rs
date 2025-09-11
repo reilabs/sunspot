@@ -11,7 +11,7 @@ use acir::{
 use tracing::trace;
 
 fn generate_memory_op_test_without_predicate(path: &str) {
-    let file_name = format!("{}/memory_op_without_predicate.bin", path);
+    let file_name = format!("{path}/memory_op_without_predicate.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -60,7 +60,7 @@ fn generate_memory_op_test_without_predicate(path: &str) {
 }
 
 fn generate_memory_op_test_with_predicate(path: &str) {
-    let file_name = format!("{}/memory_op_with_predicate.bin", path);
+    let file_name = format!("{path}/memory_op_with_predicate.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -113,7 +113,7 @@ fn generate_memory_op_test_with_predicate(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/memory_op/", directory);
+    let directory = format!("{directory}/memory_op/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

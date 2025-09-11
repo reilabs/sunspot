@@ -5,7 +5,7 @@ mod witness;
 pub fn generate_tests(path: &str) {
     trace!("Running testgen...");
     // Add your test generation logic here
-    let directory = format!("{}/shared/", path);
+    let directory = format!("{path}/shared/");
 
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");

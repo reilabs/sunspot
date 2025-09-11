@@ -4,7 +4,7 @@ use acir::circuit::ExpressionWidth;
 use tracing::trace;
 
 fn generate_expression_width_test_unbounded(path: &str) {
-    let file_name = format!("{}/expression_width_unbounded.bin", path);
+    let file_name = format!("{path}/expression_width_unbounded.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -27,7 +27,7 @@ fn generate_expression_width_test_unbounded(path: &str) {
 }
 
 pub fn generate_expression_width_test_bounded(path: &str) {
-    let file_name = format!("{}/expression_width_bounded.bin", path);
+    let file_name = format!("{path}/expression_width_bounded.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -51,7 +51,7 @@ pub fn generate_expression_width_test_bounded(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/expression_width/", directory);
+    let directory = format!("{directory}/expression_width/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

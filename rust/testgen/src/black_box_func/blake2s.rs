@@ -4,7 +4,7 @@ use acir::{circuit::opcodes::{BlackBoxFuncCall, FunctionInput}, native_types::Wi
 use tracing::trace;
 
 fn generate_blake2s_test_empty(path: &str) {
-    let file_name = format!("{}/blake2s_test_empty.bin", path);
+    let file_name = format!("{path}/blake2s_test_empty.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -38,7 +38,7 @@ fn generate_blake2s_test_empty(path: &str) {
 }
 
 fn generate_blake2s_test_with_inputs(path: &str) {
-    let file_name = format!("{}/blake2s_test_with_inputs.bin", path);
+    let file_name = format!("{path}/blake2s_test_with_inputs.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -76,7 +76,7 @@ fn generate_blake2s_test_with_inputs(path: &str) {
 
 pub fn generate_tests(root: &str) {
     // Check if the directory exists
-    let directory_path = format!("{}/blake2s", root);
+    let directory_path = format!("{root}/blake2s");
     if !std::path::Path::new(&directory_path).exists() {
         // Create the directory
         std::fs::create_dir_all(&directory_path).expect("Failed to create directory");

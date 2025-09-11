@@ -5,7 +5,7 @@ use tracing::trace;
 
 fn generate_zero_witness_test(path: &str) {
     // Check if file exists - if it does, recreate a new one
-    let file_path = format!("{}/witness_zero.bin", path);
+    let file_path = format!("{path}/witness_zero.bin");
     if std::path::Path::new(&file_path).exists() {
         std::fs::remove_file(&file_path).expect("Failed to remove existing file");
     }
@@ -18,7 +18,7 @@ fn generate_zero_witness_test(path: &str) {
     let config = bincode::config::standard()
         .with_little_endian()
         .with_fixed_int_encoding();
-    let data = bincode::serde::encode_to_vec(witness, config.clone())
+    let data = bincode::serde::encode_to_vec(witness, config)
         .expect("msg: Failed to serialize witness");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
@@ -31,7 +31,7 @@ fn generate_zero_witness_test(path: &str) {
 
 fn generate_witness_test_0x1234(path: &str) {
     // Check if file exists - if it does, recreate a new one
-    let file_path = format!("{}/witness_1234.bin", path);
+    let file_path = format!("{path}/witness_1234.bin");
     if std::path::Path::new(&file_path).exists() {
         std::fs::remove_file(&file_path).expect("Failed to remove existing file");
     }
@@ -44,7 +44,7 @@ fn generate_witness_test_0x1234(path: &str) {
     let config = bincode::config::standard()
         .with_little_endian()
         .with_fixed_int_encoding();
-    let data = bincode::serde::encode_to_vec(witness, config.clone())
+    let data = bincode::serde::encode_to_vec(witness, config)
         .expect("msg: Failed to serialize witness");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
@@ -57,7 +57,7 @@ fn generate_witness_test_0x1234(path: &str) {
 
 fn generate_witness_test_0x12345678(path: &str) {
     // Check if file exists - if it does, recreate a new one
-    let file_path = format!("{}/witness_12345678.bin", path);
+    let file_path = format!("{path}/witness_12345678.bin");
     if std::path::Path::new(&file_path).exists() {
         std::fs::remove_file(&file_path).expect("Failed to remove existing file");
     }
@@ -70,7 +70,7 @@ fn generate_witness_test_0x12345678(path: &str) {
     let config = bincode::config::standard()
         .with_little_endian()
         .with_fixed_int_encoding();
-    let data = bincode::serde::encode_to_vec(witness, config.clone())
+    let data = bincode::serde::encode_to_vec(witness, config)
         .expect("msg: Failed to serialize witness");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
@@ -82,7 +82,7 @@ fn generate_witness_test_0x12345678(path: &str) {
 }
 
 pub fn generate_witness_tests(path: &str) {
-    let directory = format!("{}/witness/", path);
+    let directory = format!("{path}/witness/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(directory.clone()).expect("Failed to create directory");
     // Generate zero witness test

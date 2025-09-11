@@ -4,7 +4,7 @@ use brillig::MemoryAddress;
 use tracing::trace;
 
 fn generate_test_memory_address_direct_zero(path: &str) {
-    let file_name = format!("{}/memory_address_direct_zero.bin", path);
+    let file_name = format!("{path}/memory_address_direct_zero.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -17,7 +17,7 @@ fn generate_test_memory_address_direct_zero(path: &str) {
         .with_fixed_int_encoding()
         .with_little_endian();
     let data =
-        bincode::serde::encode_to_vec(&memory_address, config).expect("Failed to encode data");
+        bincode::serde::encode_to_vec(memory_address, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -28,7 +28,7 @@ fn generate_test_memory_address_direct_zero(path: &str) {
 }
 
 fn generate_test_memory_address_direct_0x1234(path: &str) {
-    let file_name = format!("{}/memory_address_direct_0x1234.bin", path);
+    let file_name = format!("{path}/memory_address_direct_0x1234.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -41,7 +41,7 @@ fn generate_test_memory_address_direct_0x1234(path: &str) {
         .with_fixed_int_encoding()
         .with_little_endian();
     let data =
-        bincode::serde::encode_to_vec(&memory_address, config).expect("Failed to encode data");
+        bincode::serde::encode_to_vec(memory_address, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -52,7 +52,7 @@ fn generate_test_memory_address_direct_0x1234(path: &str) {
 }
 
 fn generate_test_memory_address_relative_zero(path: &str) {
-    let file_name = format!("{}/memory_address_relative_zero.bin", path);
+    let file_name = format!("{path}/memory_address_relative_zero.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -65,7 +65,7 @@ fn generate_test_memory_address_relative_zero(path: &str) {
         .with_fixed_int_encoding()
         .with_little_endian();
     let data =
-        bincode::serde::encode_to_vec(&memory_address, config).expect("Failed to encode data");
+        bincode::serde::encode_to_vec(memory_address, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -76,7 +76,7 @@ fn generate_test_memory_address_relative_zero(path: &str) {
 }
 
 fn generate_test_memory_address_relative_0x1234(path: &str) {
-    let file_name = format!("{}/memory_address_relative_0x1234.bin", path);
+    let file_name = format!("{path}/memory_address_relative_0x1234.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -89,7 +89,7 @@ fn generate_test_memory_address_relative_0x1234(path: &str) {
         .with_fixed_int_encoding()
         .with_little_endian();
     let data =
-        bincode::serde::encode_to_vec(&memory_address, config).expect("Failed to encode data");
+        bincode::serde::encode_to_vec(memory_address, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -100,7 +100,7 @@ fn generate_test_memory_address_relative_0x1234(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/memory_address/", directory);
+    let directory = format!("{directory}/memory_address/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

@@ -4,7 +4,7 @@ use brillig::{HeapVector, MemoryAddress};
 use tracing::trace;
 
 fn generate_test_heap_vector_zero(path: &str) {
-    let file_name = format!("{}/heap_vector_zero.bin", path);
+    let file_name = format!("{path}/heap_vector_zero.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -20,7 +20,7 @@ fn generate_test_heap_vector_zero(path: &str) {
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
         .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&heap_vector, config).expect("Failed to encode data");
+    let data = bincode::serde::encode_to_vec(heap_vector, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -31,7 +31,7 @@ fn generate_test_heap_vector_zero(path: &str) {
 }
 
 fn generate_test_heap_vector_1234(path: &str) {
-    let file_name = format!("{}/heap_vector_1234.bin", path);
+    let file_name = format!("{path}/heap_vector_1234.bin");
     // check if the file exists
     if std::path::Path::new(&file_name).exists() {
         std::fs::remove_file(&file_name).expect("Failed to remove file");
@@ -47,7 +47,7 @@ fn generate_test_heap_vector_1234(path: &str) {
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
         .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&heap_vector, config).expect("Failed to encode data");
+    let data = bincode::serde::encode_to_vec(heap_vector, config).expect("Failed to encode data");
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -58,7 +58,7 @@ fn generate_test_heap_vector_1234(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/heap_vector/", directory);
+    let directory = format!("{directory}/heap_vector/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 

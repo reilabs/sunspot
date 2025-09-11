@@ -1,17 +1,14 @@
-use std::hash::sha256_compression;
-
-fn main(data1: Field, data2: pub Field) {
-    // Convert the Field to bytes (assuming 16 bytes for AES128, adjust as needed)
-    let data_bytes1: [u8; 16] = data1.to_le_bytes();
-    let hash1 = sha256(data_bytes1);
-    let data_bytes2: [u8; 16] = data2.to_le_bytes();
-    let hash2 = sha256_compression(data_bytes2);
-    assert_eq(hash1, hash2);
+use std::{aes128::{aes128_encrypt}};
+fn main(inputs: [u8; 4]) {
+    let iv: [u8; 16] = [0; 16]; // Initialisation vector
+    let key: [u8; 16] = [0; 16]; // AES key
+    let ciphertext = aes128_encrypt::<4>(inputs, iv, key);
+    assert_eq(ciphertext, [181, 52, 14, 195, 227, 220, 39, 229, 171, 134, 202, 77, 26, 234, 135, 83])
 }
 
 #[test]
 fn test_main() {
-   //main(1, 2);
+   main([0, 12, 3, 15]);
 
     // Uncomment to make test fail
     // main(1, 1);

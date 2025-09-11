@@ -1,4 +1,4 @@
-# gnark integration for Noir
+# `gnark` integration for Noir
 
 This project provides a Noir interface for the gnark library, allowing Noir programs to utilize zk-SNARKs for zero-knowledge proofs. It includes implementations of various cryptographic functions and primitives, enabling developers to create privacy-preserving applications.
 

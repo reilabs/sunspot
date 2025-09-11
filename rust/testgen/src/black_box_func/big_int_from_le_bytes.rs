@@ -4,7 +4,7 @@ use acir::{circuit::opcodes::{BlackBoxFuncCall, FunctionInput}, native_types::Wi
 use tracing::trace;
 
 fn generate_big_int_from_le_bytes_test_empty(path: &str) {
-    let file_name = format!("{}/big_int_from_le_bytes_test.bin", path);
+    let file_name = format!("{path}/big_int_from_le_bytes_test.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -40,7 +40,7 @@ fn generate_big_int_from_le_bytes_test_empty(path: &str) {
 }
 
 fn generate_big_int_from_le_bytes_test_with_inputs_and_modulus(path: &str) {
-    let file_name = format!("{}/big_int_from_le_bytes_test_with_inputs_and_modulus.bin", path);
+    let file_name = format!("{path}/big_int_from_le_bytes_test_with_inputs_and_modulus.bin");
 
     // Check if the file already exists
     if std::path::Path::new(&file_name).exists() {
@@ -77,7 +77,7 @@ fn generate_big_int_from_le_bytes_test_with_inputs_and_modulus(path: &str) {
 
 pub fn generate_tests(root: &str) {
     // Check if the directory exists
-    let directory_path = format!("{}/big_int_from_le_bytes", root);
+    let directory_path = format!("{root}/big_int_from_le_bytes");
     if !std::path::Path::new(&directory_path).exists() {
         // Create the directory
         std::fs::create_dir_all(&directory_path).expect("Failed to create directory");

@@ -1,3 +1,4 @@
+// Package deals with bn254 field elements and utility
 package bn254
 
 import (
@@ -19,18 +20,18 @@ const BN254_MODULUS_STRING = "21888242871839275222246405745257275088548364400416
 var Bn254Modulus, _ = new(big.Int).SetString(BN254_MODULUS_STRING, 10)
 
 type BN254Field struct {
-	Modulus big.Int
+	value big.Int
 }
 
 func Zero() *BN254Field {
 	return &BN254Field{
-		Modulus: *new(big.Int).SetUint64(0),
+		value: *new(big.Int).SetUint64(0),
 	}
 }
 
 func One() *BN254Field {
 	return &BN254Field{
-		Modulus: *new(big.Int).SetInt64(1),
+		value: *new(big.Int).SetInt64(1),
 	}
 }
 
@@ -49,19 +50,19 @@ func (b *BN254Field) UnmarshalReader(r io.Reader) error {
 	str := string(bn254Bytes)
 
 	if len(str) >= 2 && strings.HasPrefix(str, "0x") {
-		if _, ok := b.Modulus.SetString(str[2:], 16); !ok {
-			return fmt.Errorf("failed to set BN254 field modulus from hex string: %s", str)
+		if _, ok := b.value.SetString(str[2:], 16); !ok {
+			return fmt.Errorf("failed to set BN254 field element from hex string: %s", str)
 		}
 	} else if strings.ContainsAny(str, "abcdefABCDEF") {
-		if _, ok := b.Modulus.SetString(str, 16); !ok {
-			return fmt.Errorf("failed to set BN254 field modulus from hex string: %s", str)
+		if _, ok := b.value.SetString(str, 16); !ok {
+			return fmt.Errorf("failed to set BN254 element from hex string: %s", str)
 		}
 	} else {
-		if _, ok := b.Modulus.SetString(str, 16); !ok {
-			return fmt.Errorf("failed to set BN254 field modulus from string: %s", str)
+		if _, ok := b.value.SetString(str, 16); !ok {
+			return fmt.Errorf("failed to set BN254 element value from string: %s", str)
 		}
 	}
-	log.Trace().Msg("BN254 field modulus set to: " + b.Modulus.String())
+	log.Trace().Msg("BN254 field element value set to: " + b.value.String())
 
 	return nil
 }
@@ -72,7 +73,7 @@ func (b BN254Field) Equals(other shr.ACIRField) bool {
 
 func (b BN254Field) ToElement() shr.GenericFPElement {
 	var element fp.Element
-	element.SetBigInt(&b.Modulus)
+	element.SetBigInt(&b.value)
 	return shr.GenericFPElement{
 		Kind:           shr.GenericFPElementKindBN254,
 		BN254FpElement: &element,
@@ -81,14 +82,14 @@ func (b BN254Field) ToElement() shr.GenericFPElement {
 
 func (b BN254Field) ToFrontendVariable() frontend.Variable {
 	var element fr.Element
-	element.SetBigInt(&b.Modulus)
+	element.SetBigInt(&b.value)
 	return element
 }
 
 func (b BN254Field) String() string {
-	return b.Modulus.String()
+	return b.value.String()
 }
 
 func (b BN254Field) ToBigInt() *big.Int {
-	return new(big.Int).Set(&b.Modulus)
+	return new(big.Int).Set(&b.value)
 }

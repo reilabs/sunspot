@@ -5,7 +5,7 @@ use brillig::{BinaryIntOp, IntegerBitSize, MemoryAddress, Opcode};
 use tracing::trace;
 
 fn generate_test_binary_int_op_add(path: &str) {
-    let file_name = format!("{}/add.bin", path);
+    let file_name = format!("{path}/add.bin");
 
     // Check if the file already exists
     if path::Path::new(&file_name).exists() {
@@ -38,7 +38,7 @@ fn generate_test_binary_int_op_add(path: &str) {
 }
 
 fn generate_test_binary_int_op_less_than_equals(path: &str) {
-    let file_name = format!("{}/less_than_equals.bin", path);
+    let file_name = format!("{path}/less_than_equals.bin");
 
     // Check if the file already exists
     if path::Path::new(&file_name).exists() {
@@ -71,7 +71,7 @@ fn generate_test_binary_int_op_less_than_equals(path: &str) {
 }
 
 pub fn generate_tests(directory: &str) {
-    let directory = format!("{}/binary_int_op/", directory);
+    let directory = format!("{directory}/binary_int_op/");
     // Create the directory if it doesn't exist
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 
