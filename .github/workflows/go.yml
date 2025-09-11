@@ -65,6 +65,9 @@ jobs:
         cd ../xor
         nargo compile
         nargo execute
+        cd ../sha256
+        nargo compile
+        nargo execute
         cd ../../real_world/provekit_basic
         nargo compile
         nargo execute
