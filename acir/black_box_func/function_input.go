@@ -9,6 +9,9 @@ import (
 	"github.com/consensys/gnark/frontend"
 )
 
+// Function input represents a type that can be either a constant or a witness index
+// An internal representation for the following docs
+// https://noir-lang.github.io/noir/docs/acir/circuit/opcodes/struct.FunctionInput.html
 type FunctionInput[T shr.ACIRField] struct {
 	FunctionInputKind FunctionInputKind
 	ConstantInput     *T
