@@ -32,5 +32,5 @@ type ACIRField interface {
 	Equals(other ACIRField) bool
 	ToFrontendVariable() frontend.Variable
 	String() string
-	ToBigInt() *big.Int // Added ToBigInt method to convert to *big.Int
+	ToBigInt() *big.Int
 }
