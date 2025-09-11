@@ -50,19 +50,19 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	var numPrivateParameters uint32
+	var numPrivateParameters uint64
 	if err := binary.Read(r, binary.LittleEndian, &numPrivateParameters); err != nil {
 		return err
 	}
 	log.Trace().Msg("Unmarshalling Circuit with number of private parameters: " + fmt.Sprint(numPrivateParameters))
 	c.PrivateParameters = *btree.New(2)
-	for i := uint32(0); i < numPrivateParameters; i++ {
+	for i := uint64(0); i < numPrivateParameters; i++ {
 		log.Trace().Msg("Unmarshalling PrivateParameter at index: " + fmt.Sprint(i))
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
 			return err
 		}
-		log.Trace().Msg("Unmarshalling PrivateParameter: " + fmt.Sprintf("%x", witness))
+		log.Trace().Msg("Unmarshalling PrivateParameter: " + fmt.Sprint(witness))
 		c.PrivateParameters.ReplaceOrInsert(witness)
 	}
 

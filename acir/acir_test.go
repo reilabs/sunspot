@@ -49,21 +49,21 @@ func TestACIRPolynomial(t *testing.T) {
 	)
 }
 
-//	func TestACIRKeccakF1600(t *testing.T) {
-//		testProveAndVerify(
-//			t,
-//			"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.json",
-//			"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.gz",
-//		)
-//	}
-
-func TestACIRAES128Encrypt(t *testing.T) {
+func TestACIRKeccakF1600(t *testing.T) {
 	testProveAndVerify(
 		t,
-		"../noir-samples/black_box_functions/aes128encrypt/target/aes128encrypt.json",
-		"../noir-samples/black_box_functions/aes128encrypt/target/aes128encrypt.gz",
+		"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.json",
+		"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.gz",
 	)
 }
+
+//	func TestACIRAES128Encrypt(t *testing.T) {
+//		testProveAndVerify(
+//			t,
+//			"../noir-samples/black_box_functions/aes128encrypt/target/aes128encrypt.json",
+//			"../noir-samples/black_box_functions/aes128encrypt/target/aes128encrypt.gz",
+//		)
+//	}
 func TestACIRRange(t *testing.T) {
 	testProveAndVerify(
 		t,
@@ -71,6 +71,14 @@ func TestACIRRange(t *testing.T) {
 		"../noir-samples/black_box_functions/range/target/range.gz",
 	)
 }
+
+// func TestACIR128BitMul(t *testing.T) {
+// 	testProveAndVerify(
+// 		t,
+// 		"../noir-samples/black_box_functions/big_int/big_int_add/target/big_int_add.json",
+// 		"../noir-samples/black_box_functions/big_int/big_int_add/target/big_int_add.gz",
+// 	)
+// }
 
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
