@@ -66,13 +66,13 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 		c.PrivateParameters.ReplaceOrInsert(witness)
 	}
 
-	var numPublicParameters uint32
+	var numPublicParameters uint64
 	if err := binary.Read(r, binary.LittleEndian, &numPublicParameters); err != nil {
 		return err
 	}
 	log.Trace().Msg("Unmarshalling Circuit with number of public parameters: " + fmt.Sprint(numPublicParameters))
 	c.PublicParameters = *btree.New(2)
-	for i := uint32(0); i < numPublicParameters; i++ {
+	for i := uint64(0); i < numPublicParameters; i++ {
 		log.Trace().Msg("Unmarshalling PublicParameter at index: " + fmt.Sprint(i))
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
