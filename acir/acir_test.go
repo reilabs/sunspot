@@ -80,14 +80,6 @@ func TestACIRRange(t *testing.T) {
 	)
 }
 
-// func TestACIR128BitMul(t *testing.T) {
-// 	testProveAndVerify(
-// 		t,
-// 		"../noir-samples/black_box_functions/big_int/big_int_add/target/big_int_add.json",
-// 		"../noir-samples/black_box_functions/big_int/big_int_add/target/big_int_add.gz",
-// 	)
-// }
-
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
