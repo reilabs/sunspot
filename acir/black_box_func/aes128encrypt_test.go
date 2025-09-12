@@ -12,8 +12,7 @@ func TestAES128EncryptUnmarshalReaderEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
-
-	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{function: &AES128Encrypt[*bn254.BN254Field]{}}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
@@ -59,7 +58,7 @@ func TestAES128EncryptUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{function: &AES128Encrypt[*bn254.BN254Field]{}}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
