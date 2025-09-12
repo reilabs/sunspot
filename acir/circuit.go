@@ -16,7 +16,7 @@ import (
 
 type Circuit[T shr.ACIRField] struct {
 	CurrentWitnessIndex uint32                                     `json:"current_witness_index"`
-	Opcodes             []ops.Opcode[T]                            `json:"opcodes"`            // Opcodes in the circuit
+	Opcodes             []ops.Opcode                               `json:"opcodes"`            // Opcodes in the circuit
 	ExpressionWidth     exp.ExpressionWidth                        `json:"expression_width"`   // Width of the expressions in the circuit
 	PrivateParameters   btree.BTree                                `json:"private_parameters"` // Witnesses
 	PublicParameters    btree.BTree                                `json:"public_parameters"`  // Witnesses
@@ -37,12 +37,17 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 	}
 	log.Trace().Msg("Unmarshalling Circuit with number of opcodes: " + fmt.Sprint(numOpcodes))
 
-	c.Opcodes = make([]ops.Opcode[T], numOpcodes)
+	c.Opcodes = make([]ops.Opcode, numOpcodes)
 	for i := uint64(0); i < numOpcodes; i++ {
 		log.Trace().Msg("Unmarshalling Opcode at index: " + fmt.Sprint(i))
-		if err := c.Opcodes[i].UnmarshalReader(r); err != nil {
-			return err
+		op, err := NewOpcode[T](r)
+		if err != nil {
+			return fmt.Errorf("failed to create opcode: %w", err)
 		}
+		if err := op.UnmarshalReader(r); err != nil {
+			return fmt.Errorf("failed to unmarshal opcode at index %d: %w", i, err)
+		}
+		c.Opcodes[i] = op
 	}
 
 	log.Trace().Msg("Unmarshalling expression width")
@@ -179,4 +184,19 @@ func (c *Circuit[T]) FeedConstantsAsWitnesses() []*big.Int {
 		values = append(values, opcode.FeedConstantsAsWitnesses()...)
 	}
 	return values
+}
+
+func NewOpcode[T shr.ACIRField](r io.Reader) (ops.Opcode, error) {
+	var kind uint32
+	if err := binary.Read(r, binary.LittleEndian, &kind); err != nil {
+		return nil, err
+	}
+	switch kind {
+	case 0:
+		expr := new(exp.Expression[T])
+		return expr, nil
+	default:
+		panic(fmt.Sprintf("unknown opcode kind: %d", kind))
+	}
+
 }

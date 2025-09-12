@@ -1,4 +1,4 @@
-package opcodes
+package memory_init
 
 import (
 	shr "nr-groth16/acir/shared"
@@ -13,18 +13,15 @@ func TestMemoryInitUnmarshalReaderBlockTest(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[*bn254.BN254Field]
+	var opcode MemoryInit[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
 	}
 
-	expectedOpcode := Opcode[*bn254.BN254Field]{
-		Kind: ACIROpcodeMemoryInit,
-		MemoryInit: &MemoryInit[*bn254.BN254Field]{
-			BlockType: ACIRMemoryBlockMemory,
-			BlockID:   0,
-			Init:      []shr.Witness{},
-		},
+	expectedOpcode := MemoryInit[*bn254.BN254Field]{
+		BlockType: ACIRMemoryBlockMemory,
+		BlockID:   0,
+		Init:      []shr.Witness{},
 	}
 
 	if !opcode.Equals(&expectedOpcode) {
@@ -40,22 +37,18 @@ func TestMemoryInitUnmarshalReaderCallDataTest(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[*bn254.BN254Field]
+	var opcode MemoryInit[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
 	}
 
-	expectedOpcode := Opcode[*bn254.BN254Field]{
-		Kind: ACIROpcodeMemoryInit,
-		MemoryInit: &MemoryInit[*bn254.BN254Field]{
-			BlockType: ACIRMemoryBlockCallData,
-			BlockID:   1,
-			Init:      []shr.Witness{0, 1, 2},
-			CallData:  new(uint32),
-		},
+	expectedOpcode := MemoryInit[*bn254.BN254Field]{
+		BlockType: ACIRMemoryBlockCallData,
+		BlockID:   1,
+		Init:      []shr.Witness{0, 1, 2},
+		CallData:  new(uint32),
 	}
-
-	*expectedOpcode.MemoryInit.CallData = 1234
+	*expectedOpcode.CallData = 1234
 
 	if !opcode.Equals(&expectedOpcode) {
 		t.Errorf("Expected opcode to be %v, got %v", expectedOpcode, opcode)
@@ -70,19 +63,16 @@ func TestMemoryInitUnmarshalReaderReturnDataTest(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[*bn254.BN254Field]
+	var opcode MemoryInit[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
 	}
 
-	expectedOpcode := Opcode[*bn254.BN254Field]{
-		Kind: ACIROpcodeMemoryInit,
-		MemoryInit: &MemoryInit[*bn254.BN254Field]{
-			BlockType: ACIRMemoryBlockReturnData,
-			BlockID:   2,
-			Init:      []shr.Witness{0, 1, 2},
-			CallData:  nil,
-		},
+	expectedOpcode := MemoryInit[*bn254.BN254Field]{
+		BlockType: ACIRMemoryBlockReturnData,
+		BlockID:   2,
+		Init:      []shr.Witness{0, 1, 2},
+		CallData:  nil,
 	}
 
 	if !opcode.Equals(&expectedOpcode) {

@@ -2,8 +2,11 @@ package expression
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
+	"nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
@@ -18,6 +21,10 @@ type Expression[T shr.ACIRField] struct {
 	constantWitnessID  shr.Witness            // Constant term in the expression
 }
 
+func (e *Expression[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+	api.AssertIsEqual(e.Calculate(api, witnesses), 0)
+	return nil
+}
 func (e *Expression[T]) UnmarshalReader(r io.Reader) error {
 	e.Constant = shr.MakeNonNil(e.Constant) // Ensure Constant is non-nil
 
@@ -65,26 +72,31 @@ func (e *Expression[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (e *Expression[T]) Equals(other *Expression[T]) bool {
-	if len(e.MulTerms) != len(other.MulTerms) {
+func (e *Expression[T]) Equals(other opcodes.Opcode) bool {
+	value, ok := other.(*Expression[T])
+	if !ok {
+		return false
+	}
+
+	if len(e.MulTerms) != len(value.MulTerms) {
 		return false
 	}
 	for i := range e.MulTerms {
-		if !e.MulTerms[i].Equals(&other.MulTerms[i]) {
+		if !e.MulTerms[i].Equals(&value.MulTerms[i]) {
 			return false
 		}
 	}
 
-	if len(e.LinearCombinations) != len(other.LinearCombinations) {
+	if len(e.LinearCombinations) != len(value.LinearCombinations) {
 		return false
 	}
 	for i := range e.LinearCombinations {
-		if !e.LinearCombinations[i].Equals(&other.LinearCombinations[i]) {
+		if !e.LinearCombinations[i].Equals(&value.LinearCombinations[i]) {
 			return false
 		}
 	}
 
-	return e.Constant.Equals(other.Constant)
+	return e.Constant.Equals(value.Constant)
 }
 
 func (e *Expression[T]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
@@ -124,7 +136,7 @@ func (e *Expression[T]) FillWitnessTree(tree *btree.BTree) bool {
 	return true
 }
 
-func (e *Expression[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
+func (e Expression[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
 	if tree == nil {
 		return false
 	}
@@ -134,4 +146,16 @@ func (e *Expression[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BT
 	log.Trace().Msgf("Collecting constant %s as witness with ID %d", e.Constant.ToBigInt().String(), e.constantWitnessID)
 
 	return true
+}
+
+func (e *Expression[T]) FeedConstantsAsWitnesses() []*big.Int {
+	values := make([]*big.Int, 0)
+	values = append(values, e.Constant.ToBigInt())
+	return values
+}
+
+func (e *Expression[T]) MarshalJSON() ([]byte, error) {
+	stringMap := make(map[string]interface{})
+	stringMap["assert_zero"] = e
+	return json.Marshal(stringMap)
 }

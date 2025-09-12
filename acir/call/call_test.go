@@ -1,4 +1,4 @@
-package opcodes
+package call
 
 import (
 	exp "nr-groth16/acir/expression"
@@ -14,19 +14,16 @@ func TestCallUnmarshalReaderEmpty(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[*bn254.BN254Field]
+	var opcode Call[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal call: %v", err)
 	}
 
-	expectedOpcode := Opcode[*bn254.BN254Field]{
-		Kind: ACIROpcodeCall,
-		Call: &Call[*bn254.BN254Field]{
-			ID:        0,
-			Inputs:    []shr.Witness{},
-			Outputs:   []shr.Witness{},
-			Predicate: nil,
-		},
+	expectedOpcode := Call[*bn254.BN254Field]{
+		ID:        0,
+		Inputs:    []shr.Witness{},
+		Outputs:   []shr.Witness{},
+		Predicate: nil,
 	}
 
 	if !opcode.Equals(&expectedOpcode) {
@@ -42,19 +39,16 @@ func TestCallUnmarshalReaderWithInputs(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[*bn254.BN254Field]
+	var opcode Call[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal call: %v", err)
 	}
 
-	expectedOpcode := Opcode[*bn254.BN254Field]{
-		Kind: ACIROpcodeCall,
-		Call: &Call[*bn254.BN254Field]{
-			ID:        1,
-			Inputs:    []shr.Witness{0, 1, 2, 3, 4},
-			Outputs:   []shr.Witness{},
-			Predicate: nil,
-		},
+	expectedOpcode := Call[*bn254.BN254Field]{
+		ID:        1,
+		Inputs:    []shr.Witness{0, 1, 2, 3, 4},
+		Outputs:   []shr.Witness{},
+		Predicate: nil,
 	}
 
 	if !opcode.Equals(&expectedOpcode) {
@@ -70,19 +64,16 @@ func TestCallUnmarshalReaderWithOutputs(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[*bn254.BN254Field]
+	var opcode Call[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal call: %v", err)
 	}
 
-	expectedOpcode := Opcode[*bn254.BN254Field]{
-		Kind: ACIROpcodeCall,
-		Call: &Call[*bn254.BN254Field]{
-			ID:        2,
-			Inputs:    []shr.Witness{},
-			Outputs:   []shr.Witness{0, 1},
-			Predicate: nil,
-		},
+	expectedOpcode := Call[*bn254.BN254Field]{
+		ID:        2,
+		Inputs:    []shr.Witness{},
+		Outputs:   []shr.Witness{0, 1},
+		Predicate: nil,
 	}
 
 	if !opcode.Equals(&expectedOpcode) {
@@ -98,23 +89,20 @@ func TestCallUnmarshalReaderWithPredicate(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[*bn254.BN254Field]
+	var opcode Call[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal call: %v", err)
 	}
 
-	expectedOpcode := Opcode[*bn254.BN254Field]{
-		Kind: ACIROpcodeCall,
-		Call: &Call[*bn254.BN254Field]{
-			ID:      3,
-			Inputs:  []shr.Witness{},
-			Outputs: []shr.Witness{},
-			Predicate: &exp.Expression[*bn254.BN254Field]{
-				MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
-				LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-				Constant:           bn254.Zero(),
-			}, // Assuming a valid predicate expression
-		},
+	expectedOpcode := Call[*bn254.BN254Field]{
+		ID:      3,
+		Inputs:  []shr.Witness{},
+		Outputs: []shr.Witness{},
+		Predicate: &exp.Expression[*bn254.BN254Field]{
+			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
+			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+			Constant:           bn254.Zero(),
+		}, // Assuming a valid predicate expression
 	}
 
 	if !opcode.Equals(&expectedOpcode) {
@@ -130,23 +118,20 @@ func TestCallUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var opcode Opcode[*bn254.BN254Field]
+	var opcode Call[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal call: %v", err)
 	}
 
-	expectedOpcode := Opcode[*bn254.BN254Field]{
-		Kind: ACIROpcodeCall,
-		Call: &Call[*bn254.BN254Field]{
-			ID:      4,
-			Inputs:  []shr.Witness{0, 1},
-			Outputs: []shr.Witness{2, 3},
-			Predicate: &exp.Expression[*bn254.BN254Field]{
-				MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
-				LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-				Constant:           bn254.Zero(),
-			}, // Assuming a valid predicate expression
-		},
+	expectedOpcode := Call[*bn254.BN254Field]{
+		ID:      4,
+		Inputs:  []shr.Witness{0, 1},
+		Outputs: []shr.Witness{2, 3},
+		Predicate: &exp.Expression[*bn254.BN254Field]{
+			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
+			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+			Constant:           bn254.Zero(),
+		}, // Assuming a valid predicate expression
 	}
 
 	if !opcode.Equals(&expectedOpcode) {
