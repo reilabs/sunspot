@@ -1,6 +1,7 @@
 package call
 
 import (
+	"encoding/binary"
 	exp "nr-groth16/acir/expression"
 	shr "nr-groth16/acir/shared"
 	"nr-groth16/bn254"
@@ -13,7 +14,11 @@ func TestCallUnmarshalReaderEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
-
+	// read the encoded call type before reading the actual content
+	var kind uint32
+	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
+		t.Fatal("was not able to read type")
+	}
 	var opcode Call[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal call: %v", err)
@@ -37,6 +42,11 @@ func TestCallUnmarshalReaderWithInputs(t *testing.T) {
 	file, err := os.Open("../../binaries/opcodes/call/call_with_inputs.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
+	}
+	// read the encoded call type before reading the actual content
+	var kind uint32
+	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
+		t.Fatal("was not able to read type")
 	}
 
 	var opcode Call[*bn254.BN254Field]
@@ -64,6 +74,11 @@ func TestCallUnmarshalReaderWithOutputs(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
+	// read the encoded call type before reading the actual content
+	var kind uint32
+	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
+		t.Fatal("was not able to read type")
+	}
 	var opcode Call[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal call: %v", err)
@@ -87,6 +102,12 @@ func TestCallUnmarshalReaderWithPredicate(t *testing.T) {
 	file, err := os.Open("../../binaries/opcodes/call/call_with_predicate.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
+	}
+
+	// read the encoded call type before reading the actual content
+	var kind uint32
+	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
+		t.Fatal("was not able to read type")
 	}
 
 	var opcode Call[*bn254.BN254Field]
@@ -118,6 +139,11 @@ func TestCallUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
+	// read the encoded call type before reading the actual content
+	var kind uint32
+	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
+		t.Fatal("was not able to read type")
+	}
 	var opcode Call[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal call: %v", err)
