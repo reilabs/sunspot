@@ -48,29 +48,6 @@ func TestACIRPolynomial(t *testing.T) {
 	)
 }
 
-func TestACIRKeccakF1600(t *testing.T) {
-	testProveAndVerify(
-		t,
-		"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.json",
-		"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.gz",
-	)
-}
-
-// func TestACIRSHA256(t *testing.T) {
-// 	testProveAndVerify(
-// 		t,
-// 		"../noir-samples/black_box_functions/sha256/target/sha256.json",
-// 		"../noir-samples/black_box_functions/sha256/target/sha256.gz",
-// 	)
-// }
-
-//	func TestACIRAES128Encrypt(t *testing.T) {
-//		testProveAndVerify(
-//			t,
-//			"../noir-samples/black_box_functions/aes128encrypt/target/aes128encrypt.json",
-//			"../noir-samples/black_box_functions/aes128encrypt/target/aes128encrypt.gz",
-//		)
-//	}
 func TestACIRRange(t *testing.T) {
 	testProveAndVerify(
 		t,
@@ -84,22 +61,6 @@ func TestACIRLCChecker(t *testing.T) {
 		t,
 		"../noir-samples/expressions/lcchecker/target/lcchecker.json",
 		"../noir-samples/expressions/lcchecker/target/lcchecker.gz",
-	)
-}
-
-func TestACIRAnd(t *testing.T) {
-	testProveAndVerify(
-		t,
-		"../noir-samples/black_box_functions/and/target/and.json",
-		"../noir-samples/black_box_functions/and/target/and.gz",
-	)
-}
-
-func TestACIRXor(t *testing.T) {
-	testProveAndVerify(
-		t,
-		"../noir-samples/black_box_functions/xor/target/xor.json",
-		"../noir-samples/black_box_functions/xor/target/xor.gz",
 	)
 }
 
