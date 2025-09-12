@@ -1,10 +1,16 @@
-package opcodes
+package memory_op
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"io"
+	"math/big"
 	exp "nr-groth16/acir/expression"
+	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 )
 
 type MemoryOp[T shr.ACIRField] struct {
@@ -45,22 +51,50 @@ func (m *MemoryOp[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (m *MemoryOp[T]) Equals(other *MemoryOp[T]) bool {
-	if m.BlockID != other.BlockID {
+func (m *MemoryOp[T]) Equals(other ops.Opcode) bool {
+	mem_op, ok := other.(*MemoryOp[T])
+	if !ok {
+		return false
+	}
+	if m.BlockID != mem_op.BlockID {
 		return false
 	}
 
-	if !m.Operation.Equals(&other.Operation) || !m.Index.Equals(&other.Index) || !m.Value.Equals(&other.Value) {
+	if !m.Operation.Equals(&mem_op.Operation) || !m.Index.Equals(&mem_op.Index) || !m.Value.Equals(&mem_op.Value) {
 		return false
 	}
 
-	if m.Predicate == nil && other.Predicate == nil {
+	if m.Predicate == nil && mem_op.Predicate == nil {
 		return true
 	}
 
-	if m.Predicate == nil || other.Predicate == nil {
+	if m.Predicate == nil || mem_op.Predicate == nil {
 		return false
 	}
 
-	return m.Predicate.Equals(other.Predicate)
+	return m.Predicate.Equals(mem_op.Predicate)
+}
+
+func (*MemoryOp[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
+	return !(tree == nil)
+}
+
+func (o *MemoryOp[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+	panic("MemoryInit opcode is not implemented yet") // TODO: Implement MemoryInit calculation
+	//return o.MemoryInit.Calculate(api, witnesses)
+}
+
+func (o *MemoryOp[T]) FeedConstantsAsWitnesses() []*big.Int {
+	values := make([]*big.Int, 0)
+	return values
+}
+
+func (o *MemoryOp[T]) FillWitnessTree(tree *btree.BTree) bool {
+	return !(tree == nil)
+}
+
+func (o MemoryOp[T]) MarshalJSON() ([]byte, error) {
+	stringMap := make(map[string]interface{})
+	stringMap["memory_op"] = o
+	return json.Marshal(stringMap)
 }

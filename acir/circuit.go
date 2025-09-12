@@ -6,6 +6,7 @@ import (
 	"io"
 	"math/big"
 	exp "nr-groth16/acir/expression"
+	mem_op "nr-groth16/acir/memory_op"
 	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
@@ -195,8 +196,10 @@ func NewOpcode[T shr.ACIRField](r io.Reader) (ops.Opcode, error) {
 	case 0:
 		expr := new(exp.Expression[T])
 		return expr, nil
+	case 2:
+		mem := new(mem_op.MemoryOp[T])
+		return mem, nil
 	default:
 		panic(fmt.Sprintf("unknown opcode kind: %d", kind))
 	}
-
 }

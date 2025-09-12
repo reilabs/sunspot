@@ -1,6 +1,7 @@
-package opcodes
+package memory_op
 
 import (
+	"encoding/binary"
 	exp "nr-groth16/acir/expression"
 	"nr-groth16/bn254"
 	"os"
@@ -13,7 +14,18 @@ func TestMemoryOpWithoutPredicate(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
+	var kind uint32
+	err = binary.Read(file, binary.LittleEndian, &kind)
+	if err != nil {
+		t.Fatalf("Failed to read opcode number: %v", err)
+	}
+
+	if kind != 2 {
+		t.Fatal("Failed: mem op code should be 2")
+	}
+
 	var opcode MemoryOp[*bn254.BN254Field]
+
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory operation: %v", err)
 	}
@@ -49,6 +61,16 @@ func TestMemoryOpWithPredicate(t *testing.T) {
 	file, err := os.Open("../../binaries/opcodes/memory_op/memory_op_with_predicate.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
+	}
+
+	var kind uint32
+	err = binary.Read(file, binary.LittleEndian, &kind)
+	if err != nil {
+		t.Fatalf("Failed to read opcode number: %v", err)
+	}
+
+	if kind != 2 {
+		t.Fatal("Failed: mem op code should be 2")
 	}
 
 	var opcode MemoryOp[*bn254.BN254Field]
