@@ -1,6 +1,7 @@
 package blackboxfunc
 
 import (
+	"encoding/binary"
 	shr "nr-groth16/acir/shared"
 	"nr-groth16/bn254"
 	"os"
@@ -12,6 +13,15 @@ func TestAES128EncryptUnmarshalReaderEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
+
+	var kind uint32
+	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
+		t.Fatal("was not able to read type")
+	}
+	if kind != 0 {
+		t.Fatalf("The kind of error code should have been 0, was %d", kind)
+	}
+
 	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{function: &AES128Encrypt[*bn254.BN254Field]{}}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
@@ -57,7 +67,13 @@ func TestAES128EncryptUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
-
+	var kind uint32
+	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
+		t.Fatal("was not able to read type")
+	}
+	if kind != 0 {
+		t.Fatalf("The kind of error code should have been 0, was %d", kind)
+	}
 	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{function: &AES128Encrypt[*bn254.BN254Field]{}}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
