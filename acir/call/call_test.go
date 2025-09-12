@@ -14,11 +14,7 @@ func TestCallUnmarshalReaderEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
-	// read the encoded call type before reading the actual content
-	var kind uint32
-	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
-		t.Fatal("was not able to read type")
-	}
+	shr.ParseThrough32bits(t, file)
 	var opcode Call[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal call: %v", err)
@@ -75,10 +71,7 @@ func TestCallUnmarshalReaderWithOutputs(t *testing.T) {
 	}
 
 	// read the encoded call type before reading the actual content
-	var kind uint32
-	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
-		t.Fatal("was not able to read type")
-	}
+	shr.ParseThrough32bits(t, file)
 	var opcode Call[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal call: %v", err)

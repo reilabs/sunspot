@@ -1,7 +1,6 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	shr "nr-groth16/acir/shared"
 	"nr-groth16/bn254"
 	"os"
@@ -15,10 +14,7 @@ func TestBlake3UnmarshalReaderEmpty(t *testing.T) {
 	}
 
 	// read the encoded black box function type before reading the actual content
-	var kind uint32
-	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
-		t.Fatal("was not able to read type")
-	}
+	kind := shr.ParseThrough32bits(t, file)
 	if kind != 5 {
 		t.Fatalf("The kind of error code should have been 5, was %d", kind)
 	}
@@ -51,10 +47,7 @@ func TestBlake3UnmarshalReaderWithInputs(t *testing.T) {
 	}
 
 	// read the encoded black box function type before reading the actual content
-	var kind uint32
-	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
-		t.Fatal("was not able to read type")
-	}
+	kind := shr.ParseThrough32bits(t, file)
 	if kind != 5 {
 		t.Fatalf("The kind of error code should have been 5, was %d", kind)
 	}

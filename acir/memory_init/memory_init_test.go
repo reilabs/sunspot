@@ -14,10 +14,7 @@ func TestMemoryInitUnmarshalReaderBlockTest(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 	// read the encoded call type before reading the actual content
-	var kind uint32
-	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
-		t.Fatal("was not able to read type")
-	}
+	shr.ParseThrough32bits(t, file)
 	var opcode MemoryInit[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
@@ -42,10 +39,7 @@ func TestMemoryInitUnmarshalReaderCallDataTest(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 	// read the encoded call type before reading the actual content
-	var kind uint32
-	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
-		t.Fatal("was not able to read type")
-	}
+	shr.ParseThrough32bits(t, file)
 	var opcode MemoryInit[*bn254.BN254Field]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)

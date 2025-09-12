@@ -1,8 +1,8 @@
 package memory_op
 
 import (
-	"encoding/binary"
 	exp "nr-groth16/acir/expression"
+	shr "nr-groth16/acir/shared"
 	"nr-groth16/bn254"
 	"os"
 	"testing"
@@ -14,12 +14,7 @@ func TestMemoryOpWithoutPredicate(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var kind uint32
-	err = binary.Read(file, binary.LittleEndian, &kind)
-	if err != nil {
-		t.Fatalf("Failed to read opcode number: %v", err)
-	}
-
+	kind := shr.ParseThrough32bits(t, file)
 	if kind != 2 {
 		t.Fatal("Failed: mem op code should be 2")
 	}
@@ -63,12 +58,7 @@ func TestMemoryOpWithPredicate(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var kind uint32
-	err = binary.Read(file, binary.LittleEndian, &kind)
-	if err != nil {
-		t.Fatalf("Failed to read opcode number: %v", err)
-	}
-
+	kind := shr.ParseThrough32bits(t, file)
 	if kind != 2 {
 		t.Fatal("Failed: mem op code should be 2")
 	}
