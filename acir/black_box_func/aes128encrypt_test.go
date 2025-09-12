@@ -38,8 +38,7 @@ func TestAES128EncryptUnmarshalReaderEmpty(t *testing.T) {
 	}
 
 	expected := BlackBoxFuncCall[*bn254.BN254Field]{
-		Kind: ACIRBlackBoxFuncKindAES128Encrypt,
-		AES128Encrypt: &AES128Encrypt[*bn254.BN254Field]{
+		function: &AES128Encrypt[*bn254.BN254Field]{
 			Inputs:  []FunctionInput[*bn254.BN254Field]{},
 			Iv:      expectedIv,
 			Key:     expectedKey,
@@ -105,8 +104,7 @@ func TestAES128EncryptUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		shr.Witness(3456),
 	}
 	expected := BlackBoxFuncCall[*bn254.BN254Field]{
-		Kind: ACIRBlackBoxFuncKindAES128Encrypt,
-		AES128Encrypt: &AES128Encrypt[*bn254.BN254Field]{
+		function: &AES128Encrypt[*bn254.BN254Field]{
 			Inputs:  expectedInputs,
 			Iv:      expectedIv,
 			Key:     expectedKey,

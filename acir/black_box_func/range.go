@@ -21,8 +21,9 @@ func (a *Range[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a Range[T]) Equals(other Range[T]) bool {
-	return a.Input.Equals(&other.Input)
+func (a Range[T]) Equals(other BlackBoxFunction) bool {
+	value, ok := other.(*Range[T])
+	return ok && a.Input.Equals(&value.Input)
 }
 
 func (a Range[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {

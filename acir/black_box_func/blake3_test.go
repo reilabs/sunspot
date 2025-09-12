@@ -18,19 +18,16 @@ func TestBlake3UnmarshalReaderEmpty(t *testing.T) {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
 
-	expectedFunctionCall := BlackBoxFuncCall[*bn254.BN254Field]{
-		Kind: ACIRBlackBoxFuncKindBlake3,
-		Blake3: &Blake3[*bn254.BN254Field]{
-			Inputs:  []FunctionInput[*bn254.BN254Field]{},
-			Outputs: [32]shr.Witness{},
-		},
+	expectedFunctionCall := &Blake3[*bn254.BN254Field]{
+		Inputs:  []FunctionInput[*bn254.BN254Field]{},
+		Outputs: [32]shr.Witness{},
 	}
 
 	for i := 0; i < 32; i++ {
-		expectedFunctionCall.Blake3.Outputs[i] = shr.Witness(0)
+		expectedFunctionCall.Outputs[i] = shr.Witness(0)
 	}
 
-	if !blackBoxFuncCall.Equals(expectedFunctionCall) {
+	if !blackBoxFuncCall.Equals(BlackBoxFuncCall[*bn254.BN254Field]{function: expectedFunctionCall}) {
 		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expectedFunctionCall, blackBoxFuncCall)
 	}
 
@@ -50,30 +47,26 @@ func TestBlake3UnmarshalReaderWithInputs(t *testing.T) {
 
 	expectedWitness1 := shr.Witness(1234)
 	expectedWitness2 := shr.Witness(5678)
-	expectedFunctionCall := BlackBoxFuncCall[*bn254.BN254Field]{
-		Kind: ACIRBlackBoxFuncKindBlake3,
-		Blake3: &Blake3[*bn254.BN254Field]{
-			Inputs: []FunctionInput[*bn254.BN254Field]{
-				{
-					FunctionInputKind: ACIRFunctionInputKindWitness,
-					Witness:           &expectedWitness1,
-					NumberOfBits:      1024,
-				},
-				{
-					FunctionInputKind: ACIRFunctionInputKindWitness,
-					Witness:           &expectedWitness2,
-					NumberOfBits:      2048,
-				},
+	expectedFunctionCall := &Blake3[*bn254.BN254Field]{
+		Inputs: []FunctionInput[*bn254.BN254Field]{
+			{
+				FunctionInputKind: ACIRFunctionInputKindWitness,
+				Witness:           &expectedWitness1,
+				NumberOfBits:      1024,
 			},
-			Outputs: [32]shr.Witness{},
+			{
+				FunctionInputKind: ACIRFunctionInputKindWitness,
+				Witness:           &expectedWitness2,
+				NumberOfBits:      2048,
+			},
 		},
+		Outputs: [32]shr.Witness{},
 	}
-
 	for i := 0; i < 32; i++ {
-		expectedFunctionCall.Blake3.Outputs[i] = shr.Witness(1234)
+		expectedFunctionCall.Outputs[i] = shr.Witness(1234)
 	}
 
-	if !blackBoxFuncCall.Equals(expectedFunctionCall) {
+	if !blackBoxFuncCall.Equals(BlackBoxFuncCall[*bn254.BN254Field]{function: expectedFunctionCall}) {
 		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expectedFunctionCall, blackBoxFuncCall)
 	}
 

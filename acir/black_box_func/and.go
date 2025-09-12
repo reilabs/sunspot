@@ -27,8 +27,9 @@ func (a *And[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *And[T]) Equals(other *And[T]) bool {
-	return a.Lhs.Equals(&other.Lhs) && a.Rhs.Equals(&other.Rhs) && a.Output.Equals(&other.Output)
+func (a *And[T]) Equals(other BlackBoxFunction) bool {
+	value, ok := other.(*And[T])
+	return ok && a.Lhs.Equals(&value.Lhs) && a.Rhs.Equals(&value.Rhs) && a.Output.Equals(&value.Output)
 }
 
 func (a *And[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {

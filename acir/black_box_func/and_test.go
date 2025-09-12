@@ -21,8 +21,7 @@ func TestAndUnmarshalReader(t *testing.T) {
 	expectedWitnessLhs := shr.Witness(1234)
 	expectedWitnessRhs := shr.Witness(2345)
 	expectedFunctionCall := BlackBoxFuncCall[*bn254.BN254Field]{
-		Kind: ACIRBlackBoxFuncKindAnd,
-		And: &And[*bn254.BN254Field]{
+		function: &And[*bn254.BN254Field]{
 			Lhs: FunctionInput[*bn254.BN254Field]{
 				FunctionInputKind: ACIRFunctionInputKindWitness,
 				Witness:           &expectedWitnessLhs,
