@@ -20,6 +20,7 @@ type BlackBoxFunction interface {
 
 // Struct that implements the Opcode interface
 // Allows us to create generic behaviour for all black box functions
+// TODO: revisit and think about this design
 type BlackBoxFuncCall[T shr.ACIRField] struct {
 	function BlackBoxFunction
 }
