@@ -209,7 +209,6 @@ func NewOpcode[T shr.ACIRField](r io.Reader) (ops.Opcode, error) {
 		return mem, nil
 
 	case 4:
-		fmt.Println("we are here")
 		return &brillig.BrilligCall[T]{}, nil
 
 	default:
