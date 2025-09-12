@@ -2,6 +2,7 @@ package blackboxfunc
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"io"
 	"math/big"
 	"nr-groth16/acir/opcodes"
@@ -24,7 +25,7 @@ type BlackBoxFuncCall[T shr.ACIRField] struct {
 }
 
 func (b BlackBoxFuncCall[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
-	panic("unimplemented")
+	return true
 }
 
 func (b BlackBoxFuncCall[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
@@ -40,15 +41,19 @@ func (b BlackBoxFuncCall[T]) Equals(other opcodes.Opcode) bool {
 }
 
 func (b BlackBoxFuncCall[T]) FeedConstantsAsWitnesses() []*big.Int {
-	panic("unimplemented")
+	values := make([]*big.Int, 0)
+	return values
 }
 
 func (b BlackBoxFuncCall[T]) FillWitnessTree(tree *btree.BTree) bool {
-	panic("unimplemented")
+	return !(tree == nil)
+
 }
 
 func (b BlackBoxFuncCall[T]) MarshalJSON() ([]byte, error) {
-	panic("unimplemented")
+	stringMap := make(map[string]interface{})
+	stringMap["black_box_func_call"] = b
+	return json.Marshal(stringMap)
 }
 
 func (b BlackBoxFuncCall[T]) UnmarshalReader(r io.Reader) error {
@@ -62,12 +67,7 @@ func NewBlackBoxFunction[T shr.ACIRField](r io.Reader) (*BlackBoxFuncCall[T], er
 	}
 	switch kind {
 	case 3:
-
 		function := &Range[T]{}
-		err := function.UnmarshalReader(r)
-		if err != nil {
-			return nil, err
-		}
 		return &BlackBoxFuncCall[T]{function}, nil
 
 	default:
