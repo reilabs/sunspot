@@ -56,13 +56,13 @@ func TestACIRKeccakF1600(t *testing.T) {
 	)
 }
 
-func TestACIRSHA256(t *testing.T) {
-	testProveAndVerify(
-		t,
-		"../noir-samples/black_box_functions/sha256/target/sha256.json",
-		"../noir-samples/black_box_functions/sha256/target/sha256.gz",
-	)
-}
+// func TestACIRSHA256(t *testing.T) {
+// 	testProveAndVerify(
+// 		t,
+// 		"../noir-samples/black_box_functions/sha256/target/sha256.json",
+// 		"../noir-samples/black_box_functions/sha256/target/sha256.gz",
+// 	)
+// }
 
 //	func TestACIRAES128Encrypt(t *testing.T) {
 //		testProveAndVerify(

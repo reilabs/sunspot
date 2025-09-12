@@ -9,12 +9,6 @@ This project provides a Noir interface for the gnark library, allowing Noir prog
 |--------|-----------|
 |AES128Encrypt|Yes|
 |AND|Yes|
-|BigIntAdd|Yes|
-|BigIntDiv|Yes|
-|BigIntFromLEBytes|No|
-|BigIntMul|Yes|
-|BigIntSub|Yes|
-|BigIntToLEBytes|No|
 |Blake2s|Yes|
 |Blake3|Yes|
 |ECDSA SECP256K1|Yes|

@@ -24,12 +24,6 @@ type BlackBoxFuncCall[T shr.ACIRField] struct {
 	EmbeddedCurveAdd     *EmbeddedCurveAdd[T]
 	Keccakf1600          *Keccakf1600[T]
 	RecursiveAggregation *RecursiveAggregation[T]
-	BigIntAdd            *BigIntAdd
-	BigIntSub            *BigIntSub
-	BigIntMul            *BigIntMul
-	BigIntDiv            *BigIntDiv
-	BigIntFromLEBytes    *BigIntFromLEBytes[T]
-	BigIntToLEBytes      *BigIntToLEBytes
 	Poseidon2Permutation *Poseidon2Permutation[T]
 	Sha256Compression    *SHA256Compression[T]
 }
@@ -108,36 +102,6 @@ func (a *BlackBoxFuncCall[T]) UnmarshalReader(r io.Reader) error {
 		if err := a.RecursiveAggregation.UnmarshalReader(r); err != nil {
 			return err
 		}
-	case ACIRBlackBoxFuncKindBigIntAdd:
-		a.BigIntAdd = &BigIntAdd{}
-		if err := a.BigIntAdd.UnmarshalReader(r); err != nil {
-			return err
-		}
-	case ACIRBlackBoxFuncKindBigIntSub:
-		a.BigIntSub = &BigIntSub{}
-		if err := a.BigIntSub.UnmarshalReader(r); err != nil {
-			return err
-		}
-	case ACIRBlackBoxFuncKindBigIntMul:
-		a.BigIntMul = &BigIntMul{}
-		if err := a.BigIntMul.UnmarshalReader(r); err != nil {
-			return err
-		}
-	case ACIRBlackBoxFuncKindBigIntDiv:
-		a.BigIntDiv = &BigIntDiv{}
-		if err := a.BigIntDiv.UnmarshalReader(r); err != nil {
-			return err
-		}
-	case ACIRBlackBoxFuncKindBigIntFromLeBytes:
-		a.BigIntFromLEBytes = &BigIntFromLEBytes[T]{}
-		if err := a.BigIntFromLEBytes.UnmarshalReader(r); err != nil {
-			return err
-		}
-	case ACIRBlackBoxFuncKindBigIntToLeBytes:
-		a.BigIntToLEBytes = &BigIntToLEBytes{}
-		if err := a.BigIntToLEBytes.UnmarshalReader(r); err != nil {
-			return err
-		}
 	case ACIRBlackBoxFuncKindPoseidon2Permutation:
 		a.Poseidon2Permutation = &Poseidon2Permutation[T]{}
 		if err := a.Poseidon2Permutation.UnmarshalReader(r); err != nil {
@@ -183,18 +147,6 @@ func (a BlackBoxFuncCall[T]) Define(api frontend.API, witnesses map[shr.Witness]
 		return fmt.Errorf("Keccakf1600 is not implemented yet")
 	case ACIRBlackBoxFuncKindRecursiveAggregation:
 		return fmt.Errorf("RecursiveAggregation is not implemented yet")
-	case ACIRBlackBoxFuncKindBigIntAdd:
-		return a.BigIntAdd.Define(api, witnesses)
-	case ACIRBlackBoxFuncKindBigIntSub:
-		return a.BigIntSub.Define(api, witnesses)
-	case ACIRBlackBoxFuncKindBigIntMul:
-		return a.BigIntMul.Define(api, witnesses)
-	case ACIRBlackBoxFuncKindBigIntDiv:
-		return a.BigIntDiv.Define(api, witnesses)
-	case ACIRBlackBoxFuncKindBigIntFromLeBytes:
-		return fmt.Errorf("BigIntFromLEBytes is not implemented yet")
-	case ACIRBlackBoxFuncKindBigIntToLeBytes:
-		return fmt.Errorf("BigIntToLEBytes is not implemented yet")
 	case ACIRBlackBoxFuncKindPoseidon2Permutation:
 		return a.Poseidon2Permutation.Define(api, witnesses)
 	case ACIRBlackBoxFuncKindSha256Compression:
@@ -271,36 +223,6 @@ func (a BlackBoxFuncCall[T]) Equals(other BlackBoxFuncCall[T]) bool {
 			return a.RecursiveAggregation == nil && other.RecursiveAggregation == nil
 		}
 		return a.RecursiveAggregation.Equals(other.RecursiveAggregation)
-	case ACIRBlackBoxFuncKindBigIntAdd:
-		if a.BigIntAdd == nil || other.BigIntAdd == nil {
-			return a.BigIntAdd == nil && other.BigIntAdd == nil
-		}
-		return a.BigIntAdd.Equals(other.BigIntAdd)
-	case ACIRBlackBoxFuncKindBigIntSub:
-		if a.BigIntSub == nil || other.BigIntSub == nil {
-			return a.BigIntSub == nil && other.BigIntSub == nil
-		}
-		return a.BigIntSub.Equals(other.BigIntSub)
-	case ACIRBlackBoxFuncKindBigIntMul:
-		if a.BigIntMul == nil || other.BigIntMul == nil {
-			return a.BigIntMul == nil && other.BigIntMul == nil
-		}
-		return a.BigIntMul.Equals(other.BigIntMul)
-	case ACIRBlackBoxFuncKindBigIntDiv:
-		if a.BigIntDiv == nil || other.BigIntDiv == nil {
-			return a.BigIntDiv == nil && other.BigIntDiv == nil
-		}
-		return a.BigIntDiv.Equals(other.BigIntDiv)
-	case ACIRBlackBoxFuncKindBigIntFromLeBytes:
-		if a.BigIntFromLEBytes == nil || other.BigIntFromLEBytes == nil {
-			return a.BigIntFromLEBytes == nil && other.BigIntFromLEBytes == nil
-		}
-		return a.BigIntFromLEBytes.Equals(other.BigIntFromLEBytes)
-	case ACIRBlackBoxFuncKindBigIntToLeBytes:
-		if a.BigIntToLEBytes == nil || other.BigIntToLEBytes == nil {
-			return a.BigIntToLEBytes == nil && other.BigIntToLEBytes == nil
-		}
-		return a.BigIntToLEBytes.Equals(other.BigIntToLEBytes)
 	case ACIRBlackBoxFuncKindPoseidon2Permutation:
 		if a.Poseidon2Permutation == nil || other.Poseidon2Permutation == nil {
 			return a.Poseidon2Permutation == nil && other.Poseidon2Permutation == nil
