@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type Blake3[T shr.ACIRField] struct {
@@ -31,21 +33,26 @@ func (a *Blake3[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *Blake3[T]) Equals(other *Blake3[T]) bool {
-	if len(a.Inputs) != len(other.Inputs) {
+func (a *Blake3[T]) Equals(other BlackBoxFunction) bool {
+	value, ok := other.(*Blake3[T])
+	if !ok || len(a.Inputs) != len(value.Inputs) {
 		return false
 	}
 	for i := range a.Inputs {
-		if !a.Inputs[i].Equals(&other.Inputs[i]) {
+		if !a.Inputs[i].Equals(&value.Inputs[i]) {
 			return false
 		}
 	}
 
 	for i := 0; i < 32; i++ {
-		if a.Outputs[i] != other.Outputs[i] {
+		if a.Outputs[i] != value.Outputs[i] {
 			return false
 		}
 	}
 
 	return true
+}
+
+func (a *Blake3[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+	panic("not yet implemented")
 }

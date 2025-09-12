@@ -13,7 +13,11 @@ func TestAndUnmarshalReader(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
+	kind := shr.ParseThrough32bits(t, file)
+	if kind != 1 {
+		t.Fatalf("The kind of error code should have been 0, was %d", kind)
+	}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{function: &And[*bn254.BN254Field]{}}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
@@ -21,8 +25,7 @@ func TestAndUnmarshalReader(t *testing.T) {
 	expectedWitnessLhs := shr.Witness(1234)
 	expectedWitnessRhs := shr.Witness(2345)
 	expectedFunctionCall := BlackBoxFuncCall[*bn254.BN254Field]{
-		Kind: ACIRBlackBoxFuncKindAnd,
-		And: &And[*bn254.BN254Field]{
+		function: &And[*bn254.BN254Field]{
 			Lhs: FunctionInput[*bn254.BN254Field]{
 				FunctionInputKind: ACIRFunctionInputKindWitness,
 				Witness:           &expectedWitnessLhs,

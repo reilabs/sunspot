@@ -1,0 +1,100 @@
+package memory_op
+
+import (
+	exp "nr-groth16/acir/expression"
+	shr "nr-groth16/acir/shared"
+	"nr-groth16/bn254"
+	"os"
+	"testing"
+)
+
+func TestMemoryOpWithoutPredicate(t *testing.T) {
+	file, err := os.Open("../../binaries/opcodes/memory_op/memory_op_without_predicate.bin")
+	if err != nil {
+		t.Fatalf("Failed to open file: %v", err)
+	}
+
+	kind := shr.ParseThrough32bits(t, file)
+	if kind != 2 {
+		t.Fatal("Failed: mem op code should be 2")
+	}
+
+	var opcode MemoryOp[*bn254.BN254Field]
+
+	if err := opcode.UnmarshalReader(file); err != nil {
+		t.Fatalf("Failed to unmarshal memory operation: %v", err)
+	}
+
+	expectedOpcode := MemoryOp[*bn254.BN254Field]{
+		BlockID: 0,
+		Operation: exp.Expression[*bn254.BN254Field]{
+			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
+			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+			Constant:           bn254.Zero(),
+		},
+		Index: exp.Expression[*bn254.BN254Field]{
+			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
+			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+			Constant:           bn254.Zero(),
+		},
+		Value: exp.Expression[*bn254.BN254Field]{
+			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
+			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+			Constant:           bn254.Zero(),
+		},
+		Predicate: nil,
+	}
+
+	if !opcode.Equals(&expectedOpcode) {
+		t.Errorf("Expected opcode to be %v, got %v", expectedOpcode, opcode)
+	}
+
+	defer file.Close()
+}
+
+func TestMemoryOpWithPredicate(t *testing.T) {
+	file, err := os.Open("../../binaries/opcodes/memory_op/memory_op_with_predicate.bin")
+	if err != nil {
+		t.Fatalf("Failed to open file: %v", err)
+	}
+
+	kind := shr.ParseThrough32bits(t, file)
+	if kind != 2 {
+		t.Fatal("Failed: mem op code should be 2")
+	}
+
+	var opcode MemoryOp[*bn254.BN254Field]
+	if err := opcode.UnmarshalReader(file); err != nil {
+		t.Fatalf("Failed to unmarshal memory operation: %v", err)
+	}
+
+	expectedOpcode := MemoryOp[*bn254.BN254Field]{
+		BlockID: 1,
+		Operation: exp.Expression[*bn254.BN254Field]{
+			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
+			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+			Constant:           bn254.Zero(),
+		},
+		Index: exp.Expression[*bn254.BN254Field]{
+			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
+			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+			Constant:           bn254.Zero(),
+		},
+		Value: exp.Expression[*bn254.BN254Field]{
+			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
+			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+			Constant:           bn254.Zero(),
+		},
+		Predicate: &exp.Expression[*bn254.BN254Field]{
+			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
+			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+			Constant:           bn254.Zero(),
+		},
+	}
+
+	if !opcode.Equals(&expectedOpcode) {
+		t.Errorf("Expected opcode to be %v, got %v", expectedOpcode, opcode)
+	}
+
+	defer file.Close()
+}

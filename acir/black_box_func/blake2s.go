@@ -33,18 +33,19 @@ func (a *Blake2s[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *Blake2s[T]) Equals(other *Blake2s[T]) bool {
-	if len(a.Inputs) != len(other.Inputs) {
+func (a *Blake2s[T]) Equals(other BlackBoxFunction) bool {
+	value, ok := other.(*Blake2s[T])
+	if !ok || len(a.Inputs) != len(value.Inputs) {
 		return false
 	}
 	for i := range a.Inputs {
-		if !a.Inputs[i].Equals(&other.Inputs[i]) {
+		if !a.Inputs[i].Equals(&value.Inputs[i]) {
 			return false
 		}
 	}
 
 	for i := 0; i < 32; i++ {
-		if a.Outputs[i] != other.Outputs[i] {
+		if a.Outputs[i] != value.Outputs[i] {
 			return false
 		}
 	}

@@ -1,4 +1,4 @@
-package opcodes
+package memory_init
 
 import (
 	"encoding/binary"

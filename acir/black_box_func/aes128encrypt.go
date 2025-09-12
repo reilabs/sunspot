@@ -57,33 +57,34 @@ func (a *AES128Encrypt[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *AES128Encrypt[T]) Equals(other *AES128Encrypt[T]) bool {
-	if len(a.Inputs) != len(other.Inputs) {
+func (a *AES128Encrypt[T]) Equals(other BlackBoxFunction) bool {
+	value, ok := other.(*AES128Encrypt[T])
+	if !ok || len(a.Inputs) != len(value.Inputs) {
 		return false
 	}
 	for i := range a.Inputs {
-		if !a.Inputs[i].Equals(&other.Inputs[i]) {
+		if !a.Inputs[i].Equals(&value.Inputs[i]) {
 			return false
 		}
 	}
 
 	for i := uint32(0); i < 16; i++ {
-		if !a.Iv[i].Equals(&other.Iv[i]) {
+		if !a.Iv[i].Equals(&value.Iv[i]) {
 			return false
 		}
 	}
 
 	for i := uint32(0); i < 16; i++ {
-		if !a.Key[i].Equals(&other.Key[i]) {
+		if !a.Key[i].Equals(&value.Key[i]) {
 			return false
 		}
 	}
 
-	if len(a.Outputs) != len(other.Outputs) {
+	if len(a.Outputs) != len(value.Outputs) {
 		return false
 	}
 	for i := range a.Outputs {
-		if !a.Outputs[i].Equals(&other.Outputs[i]) {
+		if !a.Outputs[i].Equals(&value.Outputs[i]) {
 			return false
 		}
 	}

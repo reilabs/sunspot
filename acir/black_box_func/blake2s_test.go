@@ -13,24 +13,25 @@ func TestBlake2sUnmarshalReaderEmpty(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
+	kind := shr.ParseThrough32bits(t, file)
+	if kind != 4 {
+		t.Fatalf("The kind of error code should have been 4, was %d", kind)
+	}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{function: &Blake2s[*bn254.BN254Field]{}}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
 
-	expectedFunctionCall := BlackBoxFuncCall[*bn254.BN254Field]{
-		Kind: ACIRBlackBoxFuncKindBlake2s,
-		Blake2s: &Blake2s[*bn254.BN254Field]{
-			Inputs:  []FunctionInput[*bn254.BN254Field]{},
-			Outputs: [32]shr.Witness{},
-		},
+	expectedFunctionCall := &Blake2s[*bn254.BN254Field]{
+		Inputs:  []FunctionInput[*bn254.BN254Field]{},
+		Outputs: [32]shr.Witness{},
 	}
 
 	for i := 0; i < 32; i++ {
-		expectedFunctionCall.Blake2s.Outputs[i] = shr.Witness(0)
+		expectedFunctionCall.Outputs[i] = shr.Witness(0)
 	}
 
-	if !blackBoxFuncCall.Equals(expectedFunctionCall) {
+	if !blackBoxFuncCall.Equals(BlackBoxFuncCall[*bn254.BN254Field]{function: expectedFunctionCall}) {
 		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expectedFunctionCall, blackBoxFuncCall)
 	}
 
@@ -43,37 +44,38 @@ func TestBlake2sUnmarshalReaderWithInputs(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
+	kind := shr.ParseThrough32bits(t, file)
+	if kind != 4 {
+		t.Fatalf("The kind of error code should have been 4, was %d", kind)
+	}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{function: &Blake2s[*bn254.BN254Field]{}}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
 
 	expectedWitness1 := shr.Witness(1234)
 	expectedWitness2 := shr.Witness(5678)
-	expectedFunctionCall := BlackBoxFuncCall[*bn254.BN254Field]{
-		Kind: ACIRBlackBoxFuncKindBlake2s,
-		Blake2s: &Blake2s[*bn254.BN254Field]{
-			Inputs: []FunctionInput[*bn254.BN254Field]{
-				{
-					FunctionInputKind: ACIRFunctionInputKindWitness,
-					Witness:           &expectedWitness1,
-					NumberOfBits:      1024,
-				},
-				{
-					FunctionInputKind: ACIRFunctionInputKindWitness,
-					Witness:           &expectedWitness2,
-					NumberOfBits:      2048,
-				},
+	expectedFunctionCall := &Blake2s[*bn254.BN254Field]{
+		Inputs: []FunctionInput[*bn254.BN254Field]{
+			{
+				FunctionInputKind: ACIRFunctionInputKindWitness,
+				Witness:           &expectedWitness1,
+				NumberOfBits:      1024,
 			},
-			Outputs: [32]shr.Witness{},
+			{
+				FunctionInputKind: ACIRFunctionInputKindWitness,
+				Witness:           &expectedWitness2,
+				NumberOfBits:      2048,
+			},
 		},
+		Outputs: [32]shr.Witness{},
 	}
 
 	for i := 0; i < 32; i++ {
-		expectedFunctionCall.Blake2s.Outputs[i] = shr.Witness(1234)
+		expectedFunctionCall.Outputs[i] = shr.Witness(1234)
 	}
 
-	if !blackBoxFuncCall.Equals(expectedFunctionCall) {
+	if !blackBoxFuncCall.Equals(BlackBoxFuncCall[*bn254.BN254Field]{function: expectedFunctionCall}) {
 		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expectedFunctionCall, blackBoxFuncCall)
 	}
 
