@@ -196,21 +196,18 @@ func NewOpcode[T shr.ACIRField](r io.Reader) (ops.Opcode, error) {
 	}
 	switch kind {
 	case 0:
-		expr := new(exp.Expression[T])
-		return expr, nil
+		return new(exp.Expression[T]), nil
 	case 1:
 		bbf, err := bbf.NewBlackBoxFunction[T](r)
 		if err != nil {
 			return nil, err
 		}
-		return bbf, nil
+		return bbf, fmt.Errorf("unable to get opcode, error with black box:  %v", err)
 	case 2:
 		mem := new(mem_op.MemoryOp[T])
 		return mem, nil
-
 	case 4:
 		return &brillig.BrilligCall[T]{}, nil
-
 	default:
 		panic(fmt.Sprintf("unknown opcode kind: %d", kind))
 	}
