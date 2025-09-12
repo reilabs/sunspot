@@ -1,6 +1,7 @@
 package blackboxfunc
 
 import (
+	"encoding/binary"
 	shr "nr-groth16/acir/shared"
 	"nr-groth16/bn254"
 	"os"
@@ -13,7 +14,14 @@ func TestBlake2sUnmarshalReaderEmpty(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
+	var kind uint32
+	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
+		t.Fatal("was not able to read type")
+	}
+	if kind != 4 {
+		t.Fatalf("The kind of error code should have been 4, was %d", kind)
+	}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{function: &Blake2s[*bn254.BN254Field]{}}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
@@ -40,7 +48,14 @@ func TestBlake2sUnmarshalReaderWithInputs(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{}
+	var kind uint32
+	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
+		t.Fatal("was not able to read type")
+	}
+	if kind != 4 {
+		t.Fatalf("The kind of error code should have been 4, was %d", kind)
+	}
+	blackBoxFuncCall := BlackBoxFuncCall[*bn254.BN254Field]{function: &Blake2s[*bn254.BN254Field]{}}
 	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
