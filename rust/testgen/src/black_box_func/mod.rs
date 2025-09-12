@@ -4,12 +4,6 @@ use tracing::trace;
 
 mod aes128encrypt;
 mod and;
-mod big_int_add;
-mod big_int_div;
-mod big_int_from_le_bytes;
-mod big_int_mul;
-mod big_int_sub;
-mod big_int_to_le_bytes;
 mod black_box_func_call;
 mod black_box_func_kind;
 mod blake2s;
@@ -36,12 +30,6 @@ pub fn generate_tests(root: &str) {
 
     aes128encrypt::generate_tests(&directory_path);
     and::generate_tests(&directory_path);
-    big_int_add::generate_tests(&directory_path);
-    big_int_div::generate_tests(&directory_path);
-    big_int_from_le_bytes::generate_tests(&directory_path);
-    big_int_mul::generate_tests(&directory_path);
-    big_int_sub::generate_tests(&directory_path);
-    big_int_to_le_bytes::generate_tests(&directory_path);
     black_box_func_call::generate_tests(&directory_path);
     black_box_func_kind::generate_tests(&directory_path);
     blake2s::generate_tests(&directory_path);

@@ -20,12 +20,6 @@ const (
 	ACIRBlackBoxFuncKindEmbeddedCurveAdd
 	ACIRBlackBoxFuncKindKeccakf1600
 	ACIRBlackBoxFuncKindRecursiveAggregation
-	ACIRBlackBoxFuncKindBigIntAdd
-	ACIRBlackBoxFuncKindBigIntSub
-	ACIRBlackBoxFuncKindBigIntMul
-	ACIRBlackBoxFuncKindBigIntDiv
-	ACIRBlackBoxFuncKindBigIntFromLeBytes
-	ACIRBlackBoxFuncKindBigIntToLeBytes
 	ACIRBlackBoxFuncKindPoseidon2Permutation
 	ACIRBlackBoxFuncKindSha256Compression
 )
