@@ -200,9 +200,9 @@ func NewOpcode[T shr.ACIRField](r io.Reader) (ops.Opcode, error) {
 	case 1:
 		bbf, err := bbf.NewBlackBoxFunction[T](r)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to get opcode, error with black box:  %v", err)
 		}
-		return bbf, fmt.Errorf("unable to get opcode, error with black box:  %v", err)
+		return bbf, nil
 	case 2:
 		mem := new(mem_op.MemoryOp[T])
 		return mem, nil
