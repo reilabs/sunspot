@@ -70,11 +70,8 @@ func NewBlackBoxFunction[T shr.ACIRField](r io.Reader) (*BlackBoxFuncCall[T], er
 	case 3:
 		function := &Range[T]{}
 		return &BlackBoxFuncCall[T]{function}, nil
-
-	case 14:
-
+	case 10:
 		return &BlackBoxFuncCall[T]{&Keccakf1600[T]{}}, nil
-
 	default:
 		panic("unimplemented")
 	}
