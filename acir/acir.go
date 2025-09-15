@@ -233,7 +233,10 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 		return true
 	})
 
-	a.Program.Define(builder, witnessMap)
+	err = a.Program.Define(builder, witnessMap)
+	if err != nil {
+		return nil, err
+	}
 
 	return builder.Compile()
 }
