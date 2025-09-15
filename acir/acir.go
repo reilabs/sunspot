@@ -164,7 +164,6 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-	fmt.Println("bytecode", reader)
 	return reader, err
 }
 

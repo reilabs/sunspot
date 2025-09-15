@@ -6,6 +6,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 )
 
 type Blake2s[T shr.ACIRField] struct {
@@ -63,4 +64,8 @@ func (a *Blake2s[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend
 	// This is a placeholder for the actual implementation.
 	// api.Blake2s(a.Inputs, a.Outputs[:])
 	return nil
+}
+
+func (a *Blake2s[T]) FillWitnessTree(tree *btree.BTree) bool {
+	return tree != nil
 }

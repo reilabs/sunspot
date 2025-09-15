@@ -6,6 +6,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 )
 
 type And[T shr.ACIRField] struct {
@@ -59,4 +60,8 @@ func (a *And[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Var
 	}
 
 	return nil
+}
+
+func (a *And[T]) FillWitnessTree(tree *btree.BTree) bool {
+	return tree != nil
 }
