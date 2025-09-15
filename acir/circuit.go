@@ -150,9 +150,6 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 
 func (c *Circuit[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
 	for _, opcode := range c.Opcodes {
-		//if index != 1 || index == 4 || index == 5 || index == 6 || index == 8 {
-		//	continue
-		//}
 		if err := opcode.Define(api, witnesses); err != nil {
 			return err
 		}

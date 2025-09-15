@@ -164,7 +164,6 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-	fmt.Println("bytecode", reader)
 	return reader, err
 }
 
@@ -233,7 +232,10 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 		return true
 	})
 
-	a.Program.Define(builder, witnessMap)
+	err = a.Program.Define(builder, witnessMap)
+	if err != nil {
+		return nil, err
+	}
 
 	return builder.Compile()
 }

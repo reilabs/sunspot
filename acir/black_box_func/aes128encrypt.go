@@ -8,6 +8,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 )
 
 type AES128Encrypt[T shr.ACIRField] struct {
@@ -90,6 +91,10 @@ func (a *AES128Encrypt[T]) Equals(other BlackBoxFunction) bool {
 	}
 
 	return true
+}
+
+func (a *AES128Encrypt[T]) FillWitnessTree(tree *btree.BTree) bool {
+	return tree != nil
 }
 
 func AESShiftRows(state [16]frontend.Variable) [16]frontend.Variable {

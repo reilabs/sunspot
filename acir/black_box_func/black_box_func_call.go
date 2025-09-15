@@ -16,6 +16,7 @@ type BlackBoxFunction interface {
 	UnmarshalReader(r io.Reader) error
 	Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error
 	Equals(other BlackBoxFunction) bool
+	FillWitnessTree(tree *btree.BTree) bool
 }
 
 // Struct that implements the Opcode interface
@@ -47,8 +48,7 @@ func (b BlackBoxFuncCall[T]) FeedConstantsAsWitnesses() []*big.Int {
 }
 
 func (b BlackBoxFuncCall[T]) FillWitnessTree(tree *btree.BTree) bool {
-	return !(tree == nil)
-
+	return b.function.FillWitnessTree(tree)
 }
 
 func (b BlackBoxFuncCall[T]) MarshalJSON() ([]byte, error) {
@@ -70,7 +70,8 @@ func NewBlackBoxFunction[T shr.ACIRField](r io.Reader) (*BlackBoxFuncCall[T], er
 	case 3:
 		function := &Range[T]{}
 		return &BlackBoxFuncCall[T]{function}, nil
-
+	case 10:
+		return &BlackBoxFuncCall[T]{&Keccakf1600[T]{}}, nil
 	default:
 		panic("unimplemented")
 	}

@@ -7,6 +7,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
 
@@ -15,7 +16,6 @@ type Range[T shr.ACIRField] struct {
 }
 
 func (a *Range[T]) UnmarshalReader(r io.Reader) error {
-	fmt.Println("unmarshalling range")
 	if err := a.Input.UnmarshalReader(r); err != nil {
 		return err
 	}
@@ -52,4 +52,14 @@ func (a Range[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Va
 	api.AssertIsLessOrEqual(big.NewInt(0), w) // Ensure w is non-negative
 
 	return nil
+}
+
+func (a *Range[T]) FillWitnessTree(tree *btree.BTree) bool {
+	fmt.Println("Adding range to witness")
+	if tree == nil {
+		return false
+	}
+	fmt.Println(*a.Input.Witness)
+	tree.ReplaceOrInsert(*a.Input.Witness)
+	return true
 }

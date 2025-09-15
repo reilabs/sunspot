@@ -6,6 +6,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 )
 
 type Blake3[T shr.ACIRField] struct {
@@ -55,4 +56,8 @@ func (a *Blake3[T]) Equals(other BlackBoxFunction) bool {
 
 func (a *Blake3[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
 	panic("not yet implemented")
+}
+
+func (a *Blake3[T]) FillWitnessTree(tree *btree.BTree) bool {
+	return tree != nil
 }
