@@ -56,6 +56,15 @@ func TestACIRRange(t *testing.T) {
 	)
 }
 
+func TestACIRKeccakF1600(t *testing.T) {
+	testProveAndVerify(
+
+		t,
+		"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.json",
+		"../noir-samples/black_box_functions/keccak_f1600/target/keccak_f1600.gz",
+	)
+}
+
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
