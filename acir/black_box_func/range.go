@@ -15,7 +15,6 @@ type Range[T shr.ACIRField] struct {
 }
 
 func (a *Range[T]) UnmarshalReader(r io.Reader) error {
-	fmt.Println("unmarshalling range")
 	if err := a.Input.UnmarshalReader(r); err != nil {
 		return err
 	}
