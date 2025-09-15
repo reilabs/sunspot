@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/frontend"
 )
 
 type Keccakf1600[T shr.ACIRField] struct {
@@ -25,22 +27,28 @@ func (a *Keccakf1600[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *Keccakf1600[T]) Equals(other *Keccakf1600[T]) bool {
-	if len(a.Inputs) != len(other.Inputs) {
+func (a *Keccakf1600[T]) Equals(other BlackBoxFunction) bool {
+	value, ok := other.(*Keccakf1600[T])
+	if !ok || len(a.Inputs) != len(value.Inputs) {
 		return false
 	}
 
 	for i := 0; i < 25; i++ {
-		if !a.Inputs[i].Equals(&other.Inputs[i]) {
+		if !a.Inputs[i].Equals(&value.Inputs[i]) {
 			return false
 		}
 	}
 
 	for i := 0; i < 25; i++ {
-		if a.Outputs[i] != other.Outputs[i] {
+		if a.Outputs[i] != value.Outputs[i] {
 			return false
 		}
 	}
 
 	return true
+}
+
+func (a *Keccakf1600[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+
+	return nil
 }
