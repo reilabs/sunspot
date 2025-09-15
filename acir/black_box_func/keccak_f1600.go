@@ -84,7 +84,6 @@ func (a *Keccakf1600[T]) FillWitnessTree(tree *btree.BTree) bool {
 	if tree == nil {
 		return false
 	}
-	fmt.Println("Adding witnesses from keccak")
 	for _, input := range a.Inputs {
 
 		tree.ReplaceOrInsert(*input.Witness)

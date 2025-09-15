@@ -55,7 +55,6 @@ func (a Range[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Va
 }
 
 func (a *Range[T]) FillWitnessTree(tree *btree.BTree) bool {
-	fmt.Println("Adding range to witness")
 	if tree == nil {
 		return false
 	}
