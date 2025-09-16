@@ -6,6 +6,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 )
 
 type Xor[T shr.ACIRField] struct {
@@ -27,11 +28,13 @@ func (a *Xor[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *Xor[T]) Equals(other *Xor[T]) bool {
-	if !a.Lhs.Equals(&other.Lhs) || !a.Rhs.Equals(&other.Rhs) {
+func (a *Xor[T]) Equals(other BlackBoxFunction) bool {
+	value, ok := other.(*Xor[T])
+
+	if !ok || !a.Lhs.Equals(&value.Lhs) || !a.Rhs.Equals(&value.Rhs) {
 		return false
 	}
-	return a.Output == other.Output
+	return a.Output == value.Output
 }
 
 func (a *Xor[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
@@ -60,4 +63,15 @@ func (a *Xor[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Var
 	}
 
 	return nil
+}
+
+func (a *Xor[T]) FillWitnessTree(tree *btree.BTree) bool {
+	if tree == nil {
+		return false
+	}
+
+	tree.ReplaceOrInsert(*a.Lhs.Witness)
+	tree.ReplaceOrInsert(*a.Rhs.Witness)
+
+	return true
 }

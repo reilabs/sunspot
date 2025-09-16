@@ -63,5 +63,13 @@ func (a *And[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Var
 }
 
 func (a *And[T]) FillWitnessTree(tree *btree.BTree) bool {
-	return tree != nil
+	if tree == nil {
+		return false
+	}
+
+	tree.ReplaceOrInsert(*a.Lhs.Witness)
+	tree.ReplaceOrInsert(*a.Rhs.Witness)
+	tree.ReplaceOrInsert(a.Output)
+
+	return true
 }
