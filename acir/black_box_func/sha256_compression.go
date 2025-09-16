@@ -81,7 +81,7 @@ func (a *SHA256Compression[T]) Define(api frontend.API, witnesses map[shr.Witnes
 		if err != nil {
 			return err
 		}
-		copy(inputs[i*4:i*4+4], uapi.UnpackLSB(uapi.ValueOf(variable)))
+		copy(inputs[i*4:i*4+4], uapi.UnpackMSB(uapi.ValueOf(variable)))
 	}
 
 	if err != nil {
