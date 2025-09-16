@@ -1,10 +1,5 @@
-use std::convert::AsPrimitive;
-
-fn main(x: Field, y: pub Field, z: Field) {
-    let lhs: u64 = x.as_();
-    let rhs: u64 = y.as_();
-    let z: u64 = z.as_();
-    assert(lhs & rhs == z);
+fn main(x: u64, y: pub u64, z: u64) {
+    assert(x & y == z);
 }
 
 #[test]
