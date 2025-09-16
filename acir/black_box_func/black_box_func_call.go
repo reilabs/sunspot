@@ -3,6 +3,7 @@ package blackboxfunc
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/big"
 	"nr-groth16/acir/opcodes"
@@ -72,8 +73,10 @@ func NewBlackBoxFunction[T shr.ACIRField](r io.Reader) (*BlackBoxFuncCall[T], er
 		return &BlackBoxFuncCall[T]{function}, nil
 	case 10:
 		return &BlackBoxFuncCall[T]{&Keccakf1600[T]{}}, nil
+	case 19:
+		return &BlackBoxFuncCall[T]{&SHA256Compression[T]{}}, nil
 	default:
-		panic("unimplemented")
+		return nil, fmt.Errorf("blackbox opcode %d not yet implemented", kind)
 	}
 }
 
