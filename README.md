@@ -7,16 +7,22 @@ This project provides a Noir interface for the gnark library, allowing Noir prog
 
 |Function|Implemented|
 |--------|-----------|
-|AES128Encrypt|Yes|
+|AES128Encrypt|No|
 |AND|Yes|
-|Blake2s|Yes|
-|Blake3|Yes|
-|ECDSA SECP256K1|Yes|
-|ECDSA SECP256R1|Yes|
-|Keccak F1600|No|
-|MultiScalarMul|No|
-|Poseidon2Permutation|WIP|
-|Range|Yes|
-|RecursiveAggregation|No|
-|SHA256Compression|Yes|
 |XOR|Yes|
+|Range|Yes|
+|SHA256Hash|No|
+|Blake2s|No|
+|Blake3|No|
+|SchnorrVerify|No|
+|PedersenCommitment|No|
+|PedersenHash|No|
+|ECDSA SECP256K1|No|
+|ECDSA SECP256R1|No|
+|MultiScalarMul|No|
+|Keccak256|No|
+|KeccakF1600|Yes|
+|RecursiveAggregation|No|
+|EmbeddedCurveAdd|No|
+|Poseidon2Permutation|No|
+|SHA256Compression|Yes|
