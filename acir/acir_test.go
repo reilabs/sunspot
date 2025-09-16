@@ -56,6 +56,22 @@ func TestACIRRange(t *testing.T) {
 	)
 }
 
+func TestACIRAnd(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/and/target/and.json",
+		"../noir-samples/black_box_functions/and/target/and.gz",
+	)
+}
+
+func TestACIRXor(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/xor/target/xor.json",
+		"../noir-samples/black_box_functions/xor/target/xor.gz",
+	)
+}
+
 func TestACIRKeccakF1600(t *testing.T) {
 	testProveAndVerify(
 		t,

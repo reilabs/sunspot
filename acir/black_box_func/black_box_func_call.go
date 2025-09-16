@@ -68,9 +68,12 @@ func NewBlackBoxFunction[T shr.ACIRField](r io.Reader) (*BlackBoxFuncCall[T], er
 		return nil, err
 	}
 	switch kind {
+	case 1:
+		return &BlackBoxFuncCall[T]{&And[T]{}}, nil
+	case 2:
+		return &BlackBoxFuncCall[T]{&Xor[T]{}}, nil
 	case 3:
-		function := &Range[T]{}
-		return &BlackBoxFuncCall[T]{function}, nil
+		return &BlackBoxFuncCall[T]{&Range[T]{}}, nil
 	case 10:
 		return &BlackBoxFuncCall[T]{&Keccakf1600[T]{}}, nil
 	case 19:
