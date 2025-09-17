@@ -70,7 +70,10 @@ jobs:
         cd ../sha256
         nargo compile
         nargo execute
-        cd ../../real_world/provekit_basic
+        cd ../../memory
+        nargo compile
+        nargo execute
+        cd ../real_world/provekit_basic
         nargo compile
         nargo execute
 

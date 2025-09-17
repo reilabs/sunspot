@@ -8,11 +8,13 @@ import (
 	bbf "nr-groth16/acir/black_box_func"
 	"nr-groth16/acir/brillig"
 	exp "nr-groth16/acir/expression"
+	"nr-groth16/acir/memory_init"
 	mem_op "nr-groth16/acir/memory_op"
 	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/lookup/logderivlookup"
 	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
@@ -26,6 +28,7 @@ type Circuit[T shr.ACIRField] struct {
 	ReturnValues        btree.BTree                                `json:"return_values"`      // Witnesses
 	AssertMessages      map[ops.OpcodeLocation]AssertionPayload[T] `json:"assert_messages"`    // Assert messages for the circuit
 	Recursive           bool                                       `json:"recursive"`          // Whether the circuit is recursive
+	MemoryBlocks        map[uint32]*logderivlookup.Table
 }
 
 func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
@@ -149,7 +152,20 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 }
 
 func (c *Circuit[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+	c.MemoryBlocks = make(map[uint32]*logderivlookup.Table)
 	for _, opcode := range c.Opcodes {
+
+		mem_init, ok := opcode.(*memory_init.MemoryInit[T])
+		if ok {
+			table := logderivlookup.New(api)
+			mem_init.Table = table
+			c.MemoryBlocks[mem_init.BlockID] = table
+		}
+		mem_op, ok := opcode.(*mem_op.MemoryOp[T])
+		if ok {
+			mem_op.Table = c.MemoryBlocks[mem_op.BlockID]
+		}
+
 		if err := opcode.Define(api, witnesses); err != nil {
 			return err
 		}
@@ -193,7 +209,7 @@ func NewOpcode[T shr.ACIRField](r io.Reader) (ops.Opcode, error) {
 	}
 	switch kind {
 	case 0:
-		return new(exp.Expression[T]), nil
+		return &exp.Expression[T]{}, nil
 	case 1:
 		bbf, err := bbf.NewBlackBoxFunction[T](r)
 		if err != nil {
@@ -201,11 +217,12 @@ func NewOpcode[T shr.ACIRField](r io.Reader) (ops.Opcode, error) {
 		}
 		return bbf, nil
 	case 2:
-		mem := new(mem_op.MemoryOp[T])
-		return mem, nil
+		return &mem_op.MemoryOp[T]{}, nil
+	case 3:
+		return &memory_init.MemoryInit[T]{}, nil
 	case 4:
 		return &brillig.BrilligCall[T]{}, nil
 	default:
-		panic(fmt.Sprintf("unknown opcode kind: %d", kind))
+		return nil, fmt.Errorf("unknown opcode kind: %d", kind)
 	}
 }

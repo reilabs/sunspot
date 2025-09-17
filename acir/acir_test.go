@@ -56,6 +56,14 @@ func TestACIRRange(t *testing.T) {
 	)
 }
 
+func TestACIRMemory(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/memory/target/memory.json",
+		"../noir-samples/memory/target/memory.gz",
+	)
+}
+
 func TestACIRAnd(t *testing.T) {
 	testProveAndVerify(
 		t,
