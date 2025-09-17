@@ -3,6 +3,7 @@ package memory_op
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/big"
 	exp "nr-groth16/acir/expression"
@@ -76,21 +77,20 @@ func (m *MemoryOp[T]) Equals(other ops.Opcode) bool {
 }
 
 func (*MemoryOp[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
-	return !(tree == nil)
+	return tree != nil
 }
 
 func (o *MemoryOp[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
-	panic("MemoryInit opcode is not implemented yet") // TODO: Implement MemoryInit calculation
-	//return o.MemoryInit.Calculate(api, witnesses)
+	return fmt.Errorf("memory operation constraints not yet defined")
 }
 
 func (o *MemoryOp[T]) FeedConstantsAsWitnesses() []*big.Int {
-	values := make([]*big.Int, 0)
-	return values
+	return make([]*big.Int, 0)
 }
 
 func (o *MemoryOp[T]) FillWitnessTree(tree *btree.BTree) bool {
-	return !(tree == nil)
+	return o.Index.FillWitnessTree(tree) && o.Operation.FillWitnessTree(tree) && o.Value.FillWitnessTree(tree) && o.Predicate.FillWitnessTree(tree)
+
 }
 
 func (o MemoryOp[T]) MarshalJSON() ([]byte, error) {
