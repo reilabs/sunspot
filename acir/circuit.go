@@ -8,6 +8,7 @@ import (
 	bbf "nr-groth16/acir/black_box_func"
 	"nr-groth16/acir/brillig"
 	exp "nr-groth16/acir/expression"
+	"nr-groth16/acir/memory_init"
 	mem_op "nr-groth16/acir/memory_op"
 	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
@@ -193,7 +194,7 @@ func NewOpcode[T shr.ACIRField](r io.Reader) (ops.Opcode, error) {
 	}
 	switch kind {
 	case 0:
-		return new(exp.Expression[T]), nil
+		return &exp.Expression[T]{}, nil
 	case 1:
 		bbf, err := bbf.NewBlackBoxFunction[T](r)
 		if err != nil {
@@ -201,11 +202,12 @@ func NewOpcode[T shr.ACIRField](r io.Reader) (ops.Opcode, error) {
 		}
 		return bbf, nil
 	case 2:
-		mem := new(mem_op.MemoryOp[T])
-		return mem, nil
+		return &mem_op.MemoryOp[T]{}, nil
+	case 3:
+		return &memory_init.MemoryInit[T]{}, nil
 	case 4:
 		return &brillig.BrilligCall[T]{}, nil
 	default:
-		panic(fmt.Sprintf("unknown opcode kind: %d", kind))
+		return nil, fmt.Errorf("unknown opcode kind: %d", kind)
 	}
 }
