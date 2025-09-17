@@ -72,7 +72,6 @@ func (a *And[T]) FillWitnessTree(tree *btree.BTree) bool {
 	if a.Rhs.FunctionInputKind == 1 {
 		tree.ReplaceOrInsert(*a.Rhs.Witness)
 	}
-
 	tree.ReplaceOrInsert(a.Output)
 
 	return true

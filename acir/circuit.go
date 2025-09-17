@@ -16,7 +16,6 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/lookup/logderivlookup"
 	"github.com/google/btree"
-	"github.com/rs/zerolog/log"
 )
 
 type Circuit[T shr.ACIRField] struct {
@@ -35,17 +34,14 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &c.CurrentWitnessIndex); err != nil {
 		return err
 	}
-	log.Trace().Msg("Unmarshalling Circuit with current witness index: " + fmt.Sprint(c.CurrentWitnessIndex))
 
 	var numOpcodes uint64
 	if err := binary.Read(r, binary.LittleEndian, &numOpcodes); err != nil {
 		return err
 	}
-	log.Trace().Msg("Unmarshalling Circuit with number of opcodes: " + fmt.Sprint(numOpcodes))
 
 	c.Opcodes = make([]ops.Opcode, numOpcodes)
 	for i := uint64(0); i < numOpcodes; i++ {
-		log.Trace().Msg("Unmarshalling Opcode at index: " + fmt.Sprint(i))
 		op, err := NewOpcode[T](r)
 		if err != nil {
 			return fmt.Errorf("failed to create opcode: %w", err)
@@ -56,7 +52,6 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 		c.Opcodes[i] = op
 	}
 
-	log.Trace().Msg("Unmarshalling expression width")
 	if err := c.ExpressionWidth.UnmarshalReader(r); err != nil {
 		return err
 	}
@@ -65,15 +60,12 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &numPrivateParameters); err != nil {
 		return err
 	}
-	log.Trace().Msg("Unmarshalling Circuit with number of private parameters: " + fmt.Sprint(numPrivateParameters))
 	c.PrivateParameters = *btree.New(2)
 	for i := uint64(0); i < numPrivateParameters; i++ {
-		log.Trace().Msg("Unmarshalling PrivateParameter at index: " + fmt.Sprint(i))
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
 			return err
 		}
-		log.Trace().Msg("Unmarshalling PrivateParameter: " + fmt.Sprint(witness))
 		c.PrivateParameters.ReplaceOrInsert(witness)
 	}
 
@@ -81,15 +73,12 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &numPublicParameters); err != nil {
 		return err
 	}
-	log.Trace().Msg("Unmarshalling Circuit with number of public parameters: " + fmt.Sprint(numPublicParameters))
 	c.PublicParameters = *btree.New(2)
 	for i := uint64(0); i < numPublicParameters; i++ {
-		log.Trace().Msg("Unmarshalling PublicParameter at index: " + fmt.Sprint(i))
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
 			return err
 		}
-		log.Trace().Msg("Unmarshalling PublicParameter: " + fmt.Sprintf("%x", witness))
 		c.PublicParameters.ReplaceOrInsert(witness)
 	}
 
@@ -97,30 +86,22 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &numReturnValues); err != nil {
 		return err
 	}
-	log.Trace().Msg("Unmarshalling Circuit with number of return values: " + fmt.Sprint(numReturnValues))
 	c.ReturnValues = *btree.New(2)
 	for i := uint32(0); i < numReturnValues; i++ {
-		log.Trace().Msg("Unmarshalling ReturnValue at index: " + fmt.Sprint(i))
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
 			return err
 		}
-		log.Trace().Msg("Unmarshalling ReturnValue: " + fmt.Sprintf("%x", witness))
 		c.ReturnValues.ReplaceOrInsert(witness)
 	}
-
-	log.Trace().Msg("Unmarshalling Circuit with assert messages")
 
 	var numAssertMessages uint64
 	if err := binary.Read(r, binary.LittleEndian, &numAssertMessages); err != nil {
 		if err == io.EOF {
-			log.Trace().Msg("No assert messages found, continuing without them")
 			c.AssertMessages = make(map[ops.OpcodeLocation]AssertionPayload[T])
 			return nil
 		}
-		log.Trace().Msg("Error reading number of assert messages: " + err.Error())
 	}
-	log.Trace().Msg("Unmarshalling Circuit with number of assert messages: " + fmt.Sprintf("%x %d", numAssertMessages, numAssertMessages))
 
 	/*c.AssertMessages = make(map[ops.OpcodeLocation]AssertionPayload[T], numAssertMessages)
 	for i := uint64(0); i < numAssertMessages; i++ {
@@ -139,14 +120,12 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 	var recursiveFlag uint8
 	if err := binary.Read(r, binary.LittleEndian, &recursiveFlag); err != nil {
 		if err == io.EOF {
-			log.Trace().Msg("No recursive flag found, continuing without it")
 			c.Recursive = false
 			return nil
 		}
 		return err
 	}
 	c.Recursive = recursiveFlag != 0
-	log.Trace().Msg("Unmarshalling Circuit with recursive flag: " + fmt.Sprint(c.Recursive))
 
 	return nil
 }

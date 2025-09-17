@@ -12,7 +12,6 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark/frontend"
-	"github.com/rs/zerolog/log"
 )
 
 const BN254_MODULUS_STRING = "21888242871839275222246405745257275088548364400416034343698204186575808495617"
@@ -62,8 +61,6 @@ func (b *BN254Field) UnmarshalReader(r io.Reader) error {
 			return fmt.Errorf("failed to set BN254 element value from string: %s", str)
 		}
 	}
-	log.Trace().Msg("BN254 field element value set to: " + b.value.String())
-
 	return nil
 }
 

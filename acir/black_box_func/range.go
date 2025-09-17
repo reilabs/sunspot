@@ -8,7 +8,6 @@ import (
 
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"
-	"github.com/rs/zerolog/log"
 )
 
 type Range[T shr.ACIRField] struct {
@@ -45,8 +44,6 @@ func (a Range[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Va
 	max_value := big.NewInt(1)
 	max_value = max_value.Lsh(max_value, uint(a.Input.NumberOfBits)) // 2^n
 	max_value = max_value.Sub(max_value, big.NewInt(1))              // 2^n - 1
-	log.Trace().Msgf("IMPOSING RANGE CONSTRAINT: %s FOR %d", max_value.String(), a.Input.NumberOfBits)
-
 	_ = max_value
 	api.AssertIsLessOrEqual(w, max_value)
 	api.AssertIsLessOrEqual(big.NewInt(0), w) // Ensure w is non-negative
