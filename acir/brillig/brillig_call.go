@@ -78,11 +78,11 @@ func (o *BrilligCall[T]) MarshalJSON() ([]byte, error) {
 }
 
 func (o *BrilligCall[T]) FillWitnessTree(tree *btree.BTree) bool {
-	return !(tree == nil)
+	return tree != nil
 }
 
 func (o *BrilligCall[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
-	return !(tree == nil)
+	return tree != nil
 }
 
 func (o *BrilligCall[T]) FeedConstantsAsWitnesses() []*big.Int {
