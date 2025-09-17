@@ -11,14 +11,17 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/lookup/logderivlookup"
 	"github.com/google/btree"
 )
 
 type MemoryOp[T shr.ACIRField] struct {
 	BlockID   uint32
-	Operation exp.Expression[T]
-	Index     exp.Expression[T]
-	Value     exp.Expression[T]
+	Table     *logderivlookup.Table
+	Operation exp.Expression[T] // operation can be read (0) or write (1)
+	Index     exp.Expression[T] // witness value of expression is the operation index
+	Value     exp.Expression[T] // witness value of expression is the operation value
+	// predicate is an arithmetic expression that disables the execution of the opcode when the expression evaluates to zero
 	Predicate *exp.Expression[T]
 }
 
@@ -81,7 +84,20 @@ func (*MemoryOp[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree)
 }
 
 func (o *MemoryOp[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
-	return fmt.Errorf("memory operation constraints not yet defined")
+	if o.Predicate != nil && o.Predicate.Constant.ToBigInt() == big.NewInt(0) {
+		return nil
+	}
+	switch o.Operation.Constant.ToBigInt().Uint64() { // a bit convoluted but we need a primitve type for switch to work
+	case 0:
+		api.AssertIsEqual(o.Table.Lookup(o.Index.Calculate(api, witnesses))[0], o.Value.Calculate(api, witnesses))
+	case 1:
+		//TODO: fill this out with write-operation constraints
+		return nil
+	default:
+		return fmt.Errorf("unknown memory operation: %d", o.Operation.Constant.ToBigInt().Uint64())
+	}
+
+	return nil
 }
 
 func (o *MemoryOp[T]) FeedConstantsAsWitnesses() []*big.Int {
@@ -89,8 +105,10 @@ func (o *MemoryOp[T]) FeedConstantsAsWitnesses() []*big.Int {
 }
 
 func (o *MemoryOp[T]) FillWitnessTree(tree *btree.BTree) bool {
-	return o.Index.FillWitnessTree(tree) && o.Operation.FillWitnessTree(tree) && o.Value.FillWitnessTree(tree) && o.Predicate.FillWitnessTree(tree)
-
+	return (o.Predicate == nil || o.Predicate.FillWitnessTree(tree)) &&
+		o.Index.FillWitnessTree(tree) &&
+		o.Operation.FillWitnessTree(tree) &&
+		o.Value.FillWitnessTree(tree)
 }
 
 func (o MemoryOp[T]) MarshalJSON() ([]byte, error) {

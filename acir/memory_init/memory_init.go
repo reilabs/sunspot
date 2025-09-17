@@ -15,6 +15,7 @@ import (
 
 type MemoryInit[T shr.ACIRField] struct {
 	BlockID   uint32
+	Table     *logderivlookup.Table
 	Init      []shr.Witness
 	BlockType BlockKind
 	CallData  *uint32
@@ -87,9 +88,8 @@ func (m *MemoryInit[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BT
 }
 
 func (m *MemoryInit[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
-	t := logderivlookup.New(api)
 	for i := range m.Init {
-		t.Insert(m.Init[i])
+		m.Table.Insert(witnesses[m.Init[i]])
 	}
 	return nil
 }

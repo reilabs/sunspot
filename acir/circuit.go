@@ -14,6 +14,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/lookup/logderivlookup"
 	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
@@ -27,6 +28,7 @@ type Circuit[T shr.ACIRField] struct {
 	ReturnValues        btree.BTree                                `json:"return_values"`      // Witnesses
 	AssertMessages      map[ops.OpcodeLocation]AssertionPayload[T] `json:"assert_messages"`    // Assert messages for the circuit
 	Recursive           bool                                       `json:"recursive"`          // Whether the circuit is recursive
+	MemoryBlocks        map[uint32]*logderivlookup.Table
 }
 
 func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
@@ -150,7 +152,20 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 }
 
 func (c *Circuit[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+	c.MemoryBlocks = make(map[uint32]*logderivlookup.Table)
 	for _, opcode := range c.Opcodes {
+
+		mem_init, ok := opcode.(*memory_init.MemoryInit[T])
+		if ok {
+			table := logderivlookup.New(api)
+			mem_init.Table = table
+			c.MemoryBlocks[mem_init.BlockID] = table
+		}
+		mem_op, ok := opcode.(*mem_op.MemoryOp[T])
+		if ok {
+			mem_op.Table = c.MemoryBlocks[mem_op.BlockID]
+		}
+
 		if err := opcode.Define(api, witnesses); err != nil {
 			return err
 		}
