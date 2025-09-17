@@ -163,7 +163,7 @@ func (c *Circuit[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend
 		}
 		mem_op, ok := opcode.(*mem_op.MemoryOp[T])
 		if ok {
-			mem_op.Table = c.MemoryBlocks[mem_op.BlockID]
+			mem_op.Memory = c.MemoryBlocks
 		}
 
 		if err := opcode.Define(api, witnesses); err != nil {
