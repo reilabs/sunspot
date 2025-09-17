@@ -70,8 +70,13 @@ func (a *Xor[T]) FillWitnessTree(tree *btree.BTree) bool {
 		return false
 	}
 
-	tree.ReplaceOrInsert(*a.Lhs.Witness)
-	tree.ReplaceOrInsert(*a.Rhs.Witness)
+	if a.Lhs.FunctionInputKind == 1 {
+		tree.ReplaceOrInsert(*a.Lhs.Witness)
+	}
+	if a.Rhs.FunctionInputKind == 1 {
+		tree.ReplaceOrInsert(*a.Rhs.Witness)
+	}
+	tree.ReplaceOrInsert(a.Output)
 
 	return true
 }
