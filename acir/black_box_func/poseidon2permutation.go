@@ -63,6 +63,6 @@ func (a *Poseidon2Permutation[T]) Equals(other *Poseidon2Permutation[T]) bool {
 	return true
 }
 
-func (a *Poseidon2Permutation[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *Poseidon2Permutation[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
 	return nil
 }

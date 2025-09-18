@@ -64,7 +64,7 @@ func (a *SHA256Compression[T]) Equals(other BlackBoxFunction) bool {
 	return true
 }
 
-func (a *SHA256Compression[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *SHA256Compression[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.New[uints.U32](api)
 	var old_state [8]uints.U32
 	for i := 0; i < 8; i++ {

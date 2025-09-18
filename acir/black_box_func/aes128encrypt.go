@@ -181,7 +181,7 @@ func AESAddRoundKey(api frontend.API, state [16]frontend.Variable, roundKey [16]
 	return result
 }
 
-func (a *AES128Encrypt[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *AES128Encrypt[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
 	numBlocks := len(a.Inputs) / 16
 	var state [16]frontend.Variable
 	var results [16]frontend.Variable

@@ -38,7 +38,7 @@ func (a *Xor[T]) Equals(other BlackBoxFunction) bool {
 	return a.Output == value.Output
 }
 
-func (a *Xor[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *Xor[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.New[uints.U64](api)
 	if err != nil {
 		return err

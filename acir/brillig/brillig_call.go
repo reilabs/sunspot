@@ -66,7 +66,7 @@ func (b *BrilligCall[T]) UnmarshalReader(r io.Reader) error {
 func (o *BrilligCall[T]) Equals(other ops.Opcode) bool {
 	panic("unimplemented")
 }
-func (o *BrilligCall[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (o *BrilligCall[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
 	// do nothing: brillig calls are unconstrained
 	return nil
 }

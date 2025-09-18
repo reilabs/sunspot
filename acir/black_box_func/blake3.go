@@ -54,7 +54,7 @@ func (a *Blake3[T]) Equals(other BlackBoxFunction) bool {
 	return true
 }
 
-func (a *Blake3[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *Blake3[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
 	panic("not yet implemented")
 }
 

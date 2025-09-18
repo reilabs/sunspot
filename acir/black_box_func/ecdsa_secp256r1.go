@@ -75,6 +75,6 @@ func (a *ECDSASECP256R1[T]) Equals(other *ECDSASECP256R1[T]) bool {
 	return a.Output == other.Output
 }
 
-func (a *ECDSASECP256R1[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *ECDSASECP256R1[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
 	return nil
 }

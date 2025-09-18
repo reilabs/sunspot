@@ -130,7 +130,7 @@ func (c *Circuit[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (c *Circuit[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (c *Circuit[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
 	c.MemoryBlocks = make(map[uint32]*logderivlookup.Table)
 	for _, opcode := range c.Opcodes {
 

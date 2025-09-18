@@ -19,7 +19,7 @@ type Expression[T shr.ACIRField] struct {
 	constantWitnessID  shr.Witness            // Constant term in the expression
 }
 
-func (e *Expression[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (e *Expression[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
 	api.AssertIsEqual(e.Calculate(api, witnesses), 0)
 	return nil
 }
