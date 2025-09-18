@@ -3,7 +3,6 @@ package expression
 import (
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"io"
 	"math/big"
 	"nr-groth16/acir/opcodes"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"
-	"github.com/rs/zerolog/log"
 )
 
 type Expression[T shr.ACIRField] struct {
@@ -34,12 +32,10 @@ func (e *Expression[T]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	log.Trace().Msg("Unmarshalling Expression with " + fmt.Sprint(numMulTerms) + " MulTerms")
 	// Initialize the MulTerms slice with the read size
 	e.MulTerms = make([]MulTerm[T], numMulTerms)
 	// Unmarshal each MulTerm
 	for i := uint64(0); i < numMulTerms; i++ {
-		log.Trace().Msg("Unmarshalling MulTerm at index: " + fmt.Sprint(i))
 		if err := e.MulTerms[i].UnmarshalReader(r); err != nil {
 			return err
 		}
@@ -50,20 +46,16 @@ func (e *Expression[T]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &numLinearCombinations); err != nil {
 		return err
 	}
-
-	log.Trace().Msg("Unmarshalling Expression with " + fmt.Sprint(numLinearCombinations) + " LinearCombinations")
 	// Initialize the LinearCombinations slice with the read size
 	e.LinearCombinations = make([]LinearCombination[T], numLinearCombinations)
 
 	// Unmarshal each LinearCombination
 	for i := uint64(0); i < numLinearCombinations; i++ {
-		log.Trace().Msg("Unmarshalling LinearCombination at index: " + fmt.Sprint(i))
 		if err := e.LinearCombinations[i].UnmarshalReader(r); err != nil {
 			return err
 		}
 	}
 
-	log.Trace().Msg("Unmarshalling Expression with Constant value")
 	// Unmarshal the Constant value
 	if err := e.Constant.UnmarshalReader(r); err != nil {
 		return err
@@ -101,7 +93,6 @@ func (e *Expression[T]) Equals(other opcodes.Opcode) bool {
 
 func (e *Expression[T]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
 	sum := e.Constant.ToFrontendVariable()
-	log.Trace().Msg("EXPRESSION: Calculating Expression with " + fmt.Sprint(len(e.MulTerms)) + " MulTerms and " + fmt.Sprint(len(e.LinearCombinations)) + " LinearCombinations")
 	for _, term := range e.MulTerms {
 		sum = api.Add(sum, term.Calculate(api, witnesses))
 	}
@@ -109,10 +100,6 @@ func (e *Expression[T]) Calculate(api frontend.API, witnesses map[shr.Witness]fr
 		sum = api.Add(sum, lc.Calculate(api, witnesses))
 	}
 
-	log.Trace().Msg("EXPRESSION: Sum after all MulTerms and LinearCombinations: " + fmt.Sprint(sum))
-	log.Trace().Msg("EXPRESSION: Adding constant to sum: " + fmt.Sprint(e.Constant.ToBigInt().Uint64()))
-	//sum = api.Add(sum, witnesses[e.constantWitnessID])
-	log.Trace().Msg("EXPRESSION: Final sum after all MulTerms and LinearCombinations and Constant: " + fmt.Sprint(sum))
 	return sum
 }
 
@@ -143,7 +130,6 @@ func (e Expression[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTr
 
 	e.constantWitnessID = shr.Witness(start + uint32(tree.Len()))
 	tree.ReplaceOrInsert(e.constantWitnessID)
-	log.Trace().Msgf("Collecting constant %s as witness with ID %d", e.Constant.ToBigInt().String(), e.constantWitnessID)
 
 	return true
 }

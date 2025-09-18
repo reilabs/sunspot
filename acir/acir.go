@@ -178,7 +178,6 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 	witnessMap := make(map[shr.Witness]frontend.Variable)
 	for index, param := range a.ABI.Parameters {
 		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-			log.Trace().Msg("Adding public parameter to witness map: " + param.Name + " at index " + fmt.Sprint(index))
 			witnessMap[shr.Witness(index)] = builder.PublicVariable(
 				schema.LeafInfo{
 					FullName:   func() string { return param.Name },
@@ -192,7 +191,6 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 	if a.WitnessTree == nil {
 		return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
 	}
-	log.Trace().Msg("Processing witness tree with " + fmt.Sprint(a.WitnessTree.Len()))
 
 	a.WitnessTree.Ascend(func(it btree.Item) bool {
 		witness, ok := it.(shr.Witness)
@@ -200,9 +198,7 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 			log.Warn().Msgf("Item in witness tree is not of type shr.Witness: %T", it)
 			return true // Continue processing other items
 		}
-		log.Trace().Msgf("Processing witness item %d", it)
 		if _, ok := witnessMap[witness]; !ok {
-			log.Trace().Msgf("Adding witness to witness map, with key %d", witness)
 			witnessMap[witness] = builder.SecretVariable(
 				schema.LeafInfo{
 					FullName:   func() string { return fmt.Sprintf("__witness_%d", witness) },
@@ -219,9 +215,7 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 			log.Warn().Msgf("Item in constant witness tree is not of type shr.Witness: %T", it)
 			return true // Continue processing other items
 		}
-		log.Trace().Msgf("Processing constant witness item %d", it)
 		if _, ok := witnessMap[witness]; !ok {
-			log.Trace().Msgf("Adding constant witness to witness map, with key %d", witness)
 			witnessMap[witness] = builder.SecretVariable(
 				schema.LeafInfo{
 					FullName:   func() string { return fmt.Sprintf("__constant_%d", witness) },

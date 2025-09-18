@@ -2,7 +2,6 @@ package acir
 
 import (
 	"encoding/binary"
-	"fmt"
 	"io"
 	"math/big"
 	brl "nr-groth16/acir/brillig"
@@ -23,35 +22,20 @@ func (p *Program[T]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &funcCount); err != nil {
 		return err
 	}
-	log.Trace().Msg("Unmarshalling program with " + fmt.Sprint(funcCount) + " circuits")
 	p.Functions = make([]Circuit[T], funcCount)
 	for i := uint64(0); i < funcCount; i++ {
-		log.Trace().Msg("Unmarshalling circuit " + fmt.Sprint(i))
 		if err := p.Functions[i].UnmarshalReader(r); err != nil {
 			return err
 		}
 	}
-	log.Trace().Msg("Finished unmarshalling circuits")
 
 	var unconstrainedFuncCount uint64
 	if err := binary.Read(r, binary.BigEndian, &unconstrainedFuncCount); err != nil {
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
-			log.Trace().Msg("No unconstrained brillig bytecode functions found, returning nil")
 			return nil
 		}
-		log.Error().Err(err).Msg("Failed to read unconstrained brillig bytecode function count")
 		return err
 	}
-
-	log.Trace().Msg("Unmarshalling program with " + fmt.Sprintf("%x", unconstrainedFuncCount) + " unconstrained brillig bytecode functions")
-
-	/*p.UnconstrainedFunctions = make([]brl.BrilligBytecode[T], unconstrainedFuncCount)
-	for i := uint64(0); i < unconstrainedFuncCount; i++ {
-		log.Trace().Msg("Unmarshalling unconstrained brillig bytecode function " + fmt.Sprint(i))
-		if err := p.UnconstrainedFunctions[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}*/
 
 	return nil
 }
