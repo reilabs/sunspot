@@ -5,16 +5,17 @@ import (
 	"io"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 )
 
-type Poseidon2Permutation[T shr.ACIRField] struct {
+type Poseidon2Permutation[T shr.ACIRField, E constraint.Element] struct {
 	Inputs  []FunctionInput[T]
 	Outputs []shr.Witness
 	Len     uint32
 }
 
-func (a *Poseidon2Permutation[T]) UnmarshalReader(r io.Reader) error {
+func (a *Poseidon2Permutation[T, E]) UnmarshalReader(r io.Reader) error {
 	var NumInputs uint64
 	if err := binary.Read(r, binary.LittleEndian, &NumInputs); err != nil {
 		return err
@@ -43,7 +44,7 @@ func (a *Poseidon2Permutation[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *Poseidon2Permutation[T]) Equals(other *Poseidon2Permutation[T]) bool {
+func (a *Poseidon2Permutation[T, E]) Equals(other *Poseidon2Permutation[T, E]) bool {
 	if len(a.Inputs) != len(other.Inputs) || len(a.Outputs) != len(other.Outputs) || a.Len != other.Len {
 		return false
 	}
@@ -63,6 +64,6 @@ func (a *Poseidon2Permutation[T]) Equals(other *Poseidon2Permutation[T]) bool {
 	return true
 }
 
-func (a *Poseidon2Permutation[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *Poseidon2Permutation[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	return nil
 }

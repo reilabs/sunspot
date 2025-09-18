@@ -5,10 +5,11 @@ import (
 	"io"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 )
 
-type ECDSASECP256K1[T shr.ACIRField] struct {
+type ECDSASECP256K1[T shr.ACIRField, E constraint.Element] struct {
 	PublicKeyX    [32]FunctionInput[T]
 	PublicKeyY    [32]FunctionInput[T]
 	Signature     [64]FunctionInput[T]
@@ -16,7 +17,7 @@ type ECDSASECP256K1[T shr.ACIRField] struct {
 	Output        shr.Witness
 }
 
-func (a *ECDSASECP256K1[T]) UnmarshalReader(r io.Reader) error {
+func (a *ECDSASECP256K1[T, Equals]) UnmarshalReader(r io.Reader) error {
 	for i := 0; i < 32; i++ {
 		if err := a.PublicKeyX[i].UnmarshalReader(r); err != nil {
 			return err
@@ -47,7 +48,7 @@ func (a *ECDSASECP256K1[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *ECDSASECP256K1[T]) Equals(other *ECDSASECP256K1[T]) bool {
+func (a *ECDSASECP256K1[T, E]) Equals(other *ECDSASECP256K1[T, E]) bool {
 	if len(a.PublicKeyX) != len(other.PublicKeyX) ||
 		len(a.PublicKeyY) != len(other.PublicKeyY) ||
 		len(a.Signature) != len(other.Signature) ||
@@ -72,7 +73,7 @@ func (a *ECDSASECP256K1[T]) Equals(other *ECDSASECP256K1[T]) bool {
 	return a.Output == other.Output
 }
 
-func (a ECDSASECP256K1[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
+func (a ECDSASECP256K1[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 
 	return nil
 }

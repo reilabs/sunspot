@@ -8,12 +8,13 @@ import (
 	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/lookup/logderivlookup"
 	"github.com/google/btree"
 )
 
-type MemoryInit[T shr.ACIRField] struct {
+type MemoryInit[T shr.ACIRField, E constraint.Element] struct {
 	BlockID   uint32
 	Table     *logderivlookup.Table
 	Init      []shr.Witness
@@ -29,7 +30,7 @@ const (
 	ACIRMemoryBlockReturnData
 )
 
-func (m *MemoryInit[T]) UnmarshalReader(r io.Reader) error {
+func (m *MemoryInit[T, E]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &m.BlockID); err != nil {
 		return err
 	}
@@ -58,8 +59,8 @@ func (m *MemoryInit[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (m *MemoryInit[T]) Equals(other ops.Opcode) bool {
-	value, ok := other.(*MemoryInit[T])
+func (m *MemoryInit[T, E]) Equals(other ops.Opcode[E]) bool {
+	value, ok := other.(*MemoryInit[T, E])
 	if !ok || m.BlockID != value.BlockID || m.BlockType != value.BlockType {
 		return false
 	}
@@ -83,22 +84,22 @@ func (m *MemoryInit[T]) Equals(other ops.Opcode) bool {
 	return true
 }
 
-func (m *MemoryInit[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
+func (m *MemoryInit[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
 	return tree != nil
 }
 
-func (m *MemoryInit[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
+func (m *MemoryInit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	for i := range m.Init {
-		m.Table.Insert(witnesses[m.Init[i]])
+		(*m.Table).Insert(witnesses[m.Init[i]])
 	}
 	return nil
 }
 
-func (m *MemoryInit[T]) FeedConstantsAsWitnesses() []*big.Int {
+func (m *MemoryInit[T, E]) FeedConstantsAsWitnesses() []*big.Int {
 	return make([]*big.Int, 0)
 }
 
-func (m *MemoryInit[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (m *MemoryInit[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	if tree == nil {
 		return false
 	}
@@ -108,7 +109,7 @@ func (m *MemoryInit[T]) FillWitnessTree(tree *btree.BTree) bool {
 	return true
 }
 
-func (m *MemoryInit[T]) MarshalJSON() ([]byte, error) {
+func (m *MemoryInit[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap := make(map[string]interface{})
 	stringMap["assert_zero"] = m
 	return json.Marshal(stringMap)

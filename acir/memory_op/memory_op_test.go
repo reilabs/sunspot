@@ -6,9 +6,13 @@ import (
 	"nr-groth16/bn254"
 	"os"
 	"testing"
+
+	"github.com/consensys/gnark/constraint"
 )
 
 func TestMemoryOpWithoutPredicate(t *testing.T) {
+	type E = constraint.U64
+	type T = *bn254.BN254Field
 	file, err := os.Open("../../binaries/opcodes/memory_op/memory_op_without_predicate.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
@@ -19,27 +23,27 @@ func TestMemoryOpWithoutPredicate(t *testing.T) {
 		t.Fatal("Failed: mem op code should be 2")
 	}
 
-	var opcode MemoryOp[*bn254.BN254Field]
+	var opcode MemoryOp[T, E]
 
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory operation: %v", err)
 	}
 
-	expectedOpcode := MemoryOp[*bn254.BN254Field]{
+	expectedOpcode := MemoryOp[T, E]{
 		BlockID: 0,
-		Operation: exp.Expression[*bn254.BN254Field]{
+		Operation: exp.Expression[T, E]{
 			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
 			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
 			Constant:           bn254.Zero(),
 		},
-		Index: exp.Expression[*bn254.BN254Field]{
-			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
-			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+		Index: exp.Expression[T, E]{
+			MulTerms:           []exp.MulTerm[T]{},
+			LinearCombinations: []exp.LinearCombination[T]{},
 			Constant:           bn254.Zero(),
 		},
-		Value: exp.Expression[*bn254.BN254Field]{
-			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
-			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+		Value: exp.Expression[T, E]{
+			MulTerms:           []exp.MulTerm[T]{},
+			LinearCombinations: []exp.LinearCombination[T]{},
 			Constant:           bn254.Zero(),
 		},
 		Predicate: nil,
@@ -53,6 +57,8 @@ func TestMemoryOpWithoutPredicate(t *testing.T) {
 }
 
 func TestMemoryOpWithPredicate(t *testing.T) {
+	type E = constraint.U64
+	type T = *bn254.BN254Field
 	file, err := os.Open("../../binaries/opcodes/memory_op/memory_op_with_predicate.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
@@ -63,31 +69,31 @@ func TestMemoryOpWithPredicate(t *testing.T) {
 		t.Fatal("Failed: mem op code should be 2")
 	}
 
-	var opcode MemoryOp[*bn254.BN254Field]
+	var opcode MemoryOp[T, E]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory operation: %v", err)
 	}
 
-	expectedOpcode := MemoryOp[*bn254.BN254Field]{
+	expectedOpcode := MemoryOp[T, E]{
 		BlockID: 1,
-		Operation: exp.Expression[*bn254.BN254Field]{
-			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
-			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+		Operation: exp.Expression[T, E]{
+			MulTerms:           []exp.MulTerm[T]{},
+			LinearCombinations: []exp.LinearCombination[T]{},
 			Constant:           bn254.Zero(),
 		},
-		Index: exp.Expression[*bn254.BN254Field]{
-			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
-			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+		Index: exp.Expression[T, E]{
+			MulTerms:           []exp.MulTerm[T]{},
+			LinearCombinations: []exp.LinearCombination[T]{},
 			Constant:           bn254.Zero(),
 		},
-		Value: exp.Expression[*bn254.BN254Field]{
-			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
-			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+		Value: exp.Expression[T, E]{
+			MulTerms:           []exp.MulTerm[T]{},
+			LinearCombinations: []exp.LinearCombination[T]{},
 			Constant:           bn254.Zero(),
 		},
-		Predicate: &exp.Expression[*bn254.BN254Field]{
-			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
-			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
+		Predicate: &exp.Expression[T, E]{
+			MulTerms:           []exp.MulTerm[T]{},
+			LinearCombinations: []exp.LinearCombination[T]{},
 			Constant:           bn254.Zero(),
 		},
 	}

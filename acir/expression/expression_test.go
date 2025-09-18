@@ -11,25 +11,28 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/backend/witness"
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/consensys/gnark/frontend/schema"
 )
 
 func TestExpressionUnmarshalReaderEmpty(t *testing.T) {
+	type T = *bn254.BN254Field
+	type E = constraint.U64
 	file, err := os.Open("../../binaries/expression/expression/expression_empty.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var expr Expression[*bn254.BN254Field]
+	var expr Expression[T, E]
 	if err := expr.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal expression: %v", err)
 	}
 
-	expectedExpression := Expression[*bn254.BN254Field]{
-		MulTerms:           []MulTerm[*bn254.BN254Field]{},
-		LinearCombinations: []LinearCombination[*bn254.BN254Field]{},
+	expectedExpression := Expression[T, E]{
+		MulTerms:           []MulTerm[T]{},
+		LinearCombinations: []LinearCombination[T]{},
 		Constant:           bn254.Zero(),
 	}
 
@@ -41,19 +44,21 @@ func TestExpressionUnmarshalReaderEmpty(t *testing.T) {
 }
 
 func TestExpressionUnmarshalReaderWithLinearCombinations(t *testing.T) {
+	type T = *bn254.BN254Field
+	type E = constraint.U64
 	file, err := os.Open("../../binaries/expression/expression/expression_linear_combinations.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var expr Expression[*bn254.BN254Field]
+	var expr Expression[T, E]
 	if err := expr.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal expression: %v", err)
 	}
 
-	expectedExpression := Expression[*bn254.BN254Field]{
-		MulTerms: []MulTerm[*bn254.BN254Field]{},
-		LinearCombinations: []LinearCombination[*bn254.BN254Field]{
+	expectedExpression := Expression[T, E]{
+		MulTerms: []MulTerm[T]{},
+		LinearCombinations: []LinearCombination[T]{
 			{Term: bn254.One(), Witness: 0},
 			{Term: bn254.One(), Witness: 1234},
 			{Term: bn254.One(), Witness: 5678},
@@ -69,23 +74,25 @@ func TestExpressionUnmarshalReaderWithLinearCombinations(t *testing.T) {
 }
 
 func TestExpressionUnmarshalReaderWithMulTerms(t *testing.T) {
+	type T = *bn254.BN254Field
+	type E = constraint.U64
 	file, err := os.Open("../../binaries/expression/expression/expression_mul_terms.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var expr Expression[*bn254.BN254Field]
+	var expr Expression[T, E]
 	if err := expr.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal expression: %v", err)
 	}
 
-	expectedExpression := Expression[*bn254.BN254Field]{
-		MulTerms: []MulTerm[*bn254.BN254Field]{
+	expectedExpression := Expression[T, E]{
+		MulTerms: []MulTerm[T]{
 			{Term: bn254.One(), WitnessLeft: 0, WitnessRight: 1},
 			{Term: bn254.One(), WitnessLeft: 1234, WitnessRight: 5678},
 			{Term: bn254.One(), WitnessLeft: 5678, WitnessRight: 1234},
 		},
-		LinearCombinations: []LinearCombination[*bn254.BN254Field]{},
+		LinearCombinations: []LinearCombination[T]{},
 		Constant:           bn254.Zero(),
 	}
 
@@ -97,23 +104,25 @@ func TestExpressionUnmarshalReaderWithMulTerms(t *testing.T) {
 }
 
 func TestExpressionUnmarshalReaderMulTermsWithLinearCombinations(t *testing.T) {
+	type T = *bn254.BN254Field
+	type E = constraint.U64
 	file, err := os.Open("../../binaries/expression/expression/expression_mul_terms_with_linear_combinations.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	var expr Expression[*bn254.BN254Field]
+	var expr Expression[T, E]
 	if err := expr.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal expression: %v", err)
 	}
 
-	expectedExpression := Expression[*bn254.BN254Field]{
-		MulTerms: []MulTerm[*bn254.BN254Field]{
+	expectedExpression := Expression[T, E]{
+		MulTerms: []MulTerm[T]{
 			{Term: bn254.One(), WitnessLeft: 0, WitnessRight: 1},
 			{Term: bn254.One(), WitnessLeft: 1234, WitnessRight: 5678},
 			{Term: bn254.One(), WitnessLeft: 5678, WitnessRight: 1234},
 		},
-		LinearCombinations: []LinearCombination[*bn254.BN254Field]{
+		LinearCombinations: []LinearCombination[T]{
 			{Term: bn254.One(), Witness: 0},
 			{Term: bn254.One(), Witness: 1234},
 			{Term: bn254.One(), Witness: 5678},
@@ -129,16 +138,18 @@ func TestExpressionUnmarshalReaderMulTermsWithLinearCombinations(t *testing.T) {
 }
 
 func TestExpressionExecutionEmpty(t *testing.T) {
-	builder, err := r1cs.NewBuilder(ecc.BN254.ScalarField(), frontend.CompileConfig{
+	type T = *bn254.BN254Field
+	type E = constraint.U64
+	builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
 		CompressThreshold: 300,
 	})
 	if err != nil {
 		t.Fatalf("Failed to create R1CS builder: %v", err)
 	}
 
-	expression := Expression[*bn254.BN254Field]{
-		MulTerms:           []MulTerm[*bn254.BN254Field]{},
-		LinearCombinations: []LinearCombination[*bn254.BN254Field]{},
+	expression := Expression[T, E]{
+		MulTerms:           []MulTerm[T]{},
+		LinearCombinations: []LinearCombination[T]{},
 		Constant:           bn254.Zero(),
 	}
 
@@ -178,7 +189,9 @@ func TestExpressionExecutionEmpty(t *testing.T) {
 }
 
 func TestExpressionExecution(t *testing.T) {
-	builder, err := r1cs.NewBuilder(ecc.BN254.ScalarField(), frontend.CompileConfig{
+	type T = *bn254.BN254Field
+	type E = constraint.U64
+	builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
 		CompressThreshold: 300,
 	})
 	if err != nil {
@@ -206,15 +219,15 @@ func TestExpressionExecution(t *testing.T) {
 		3: pubVarZ,
 	}
 
-	expression := &Expression[*bn254.BN254Field]{
-		MulTerms: []MulTerm[*bn254.BN254Field]{
+	expression := &Expression[T, E]{
+		MulTerms: []MulTerm[T]{
 			{
 				Term:         bn254.One(),
 				WitnessLeft:  1,
 				WitnessRight: 2,
 			},
 		},
-		LinearCombinations: []LinearCombination[*bn254.BN254Field]{
+		LinearCombinations: []LinearCombination[T]{
 			{
 				Term:    bn254.One(),
 				Witness: 3,

@@ -9,18 +9,19 @@ import (
 	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"
 )
 
-type BrilligCall[T shr.ACIRField] struct {
+type BrilligCall[T shr.ACIRField, E constraint.Element] struct {
 	ID        uint32
-	Inputs    []BrilligInputs[T]
+	Inputs    []BrilligInputs[T, E]
 	Outputs   []BrilligOutputs
-	Predicate *exp.Expression[T]
+	Predicate *exp.Expression[T, E]
 }
 
-func (b *BrilligCall[T]) UnmarshalReader(r io.Reader) error {
+func (b *BrilligCall[T, E]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &b.ID); err != nil {
 		return err
 	}
@@ -29,7 +30,7 @@ func (b *BrilligCall[T]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &numInputs); err != nil {
 		return err
 	}
-	b.Inputs = make([]BrilligInputs[T], numInputs)
+	b.Inputs = make([]BrilligInputs[T, E], numInputs)
 	for i := uint64(0); i < numInputs; i++ {
 		if err := b.Inputs[i].UnmarshalReader(r); err != nil {
 			return err
@@ -52,7 +53,7 @@ func (b *BrilligCall[T]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 	if predicateExists == 1 {
-		b.Predicate = new(exp.Expression[T])
+		b.Predicate = new(exp.Expression[T, E])
 		if err := b.Predicate.UnmarshalReader(r); err != nil {
 			return err
 		}
@@ -63,29 +64,29 @@ func (b *BrilligCall[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (o *BrilligCall[T]) Equals(other ops.Opcode) bool {
+func (o *BrilligCall[T, E]) Equals(other ops.Opcode[E]) bool {
 	panic("unimplemented")
 }
-func (o *BrilligCall[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
+func (o *BrilligCall[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	// do nothing: brillig calls are unconstrained
 	return nil
 }
 
-func (o *BrilligCall[T]) MarshalJSON() ([]byte, error) {
+func (o *BrilligCall[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap := make(map[string]interface{})
 	stringMap["brillig_call"] = o
 	return json.Marshal(stringMap)
 }
 
-func (o *BrilligCall[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (o *BrilligCall[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return tree != nil
 }
 
-func (o *BrilligCall[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
+func (o *BrilligCall[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
 	return tree != nil
 }
 
-func (o *BrilligCall[T]) FeedConstantsAsWitnesses() []*big.Int {
+func (o *BrilligCall[T, E]) FeedConstantsAsWitnesses() []*big.Int {
 	values := make([]*big.Int, 0)
 	return values
 }

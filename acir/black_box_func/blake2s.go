@@ -5,16 +5,17 @@ import (
 	"io"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"
 )
 
-type Blake2s[T shr.ACIRField] struct {
+type Blake2s[T shr.ACIRField, E constraint.Element] struct {
 	Inputs  []FunctionInput[T]
 	Outputs [32]shr.Witness
 }
 
-func (a *Blake2s[T]) UnmarshalReader(r io.Reader) error {
+func (a *Blake2s[T, E]) UnmarshalReader(r io.Reader) error {
 	NumInputs := uint64(0)
 	if err := binary.Read(r, binary.LittleEndian, &NumInputs); err != nil {
 		return err
@@ -34,8 +35,8 @@ func (a *Blake2s[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *Blake2s[T]) Equals(other BlackBoxFunction) bool {
-	value, ok := other.(*Blake2s[T])
+func (a *Blake2s[T, E]) Equals(other BlackBoxFunction[E]) bool {
+	value, ok := other.(*Blake2s[T, E])
 	if !ok || len(a.Inputs) != len(value.Inputs) {
 		return false
 	}
@@ -54,7 +55,7 @@ func (a *Blake2s[T]) Equals(other BlackBoxFunction) bool {
 	return true
 }
 
-func (a *Blake2s[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *Blake2s[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 
 	for i := 0; i < 32; i++ {
 		api.AssertIsEqual(a.Outputs[i], witnesses[a.Outputs[i]])
@@ -66,6 +67,6 @@ func (a *Blake2s[T]) Define(api frontend.Builder, witnesses map[shr.Witness]fron
 	return nil
 }
 
-func (a *Blake2s[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *Blake2s[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return tree != nil
 }

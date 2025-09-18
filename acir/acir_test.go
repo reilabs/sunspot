@@ -4,6 +4,8 @@ import (
 	"nr-groth16/bn254"
 	"testing"
 
+	"github.com/consensys/gnark/constraint"
+
 	ecc_bn254 "github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark/backend/groth16"
 )
@@ -115,7 +117,8 @@ func TestACIRProveKitBasic(t *testing.T) {
 // Helper function for testing files,
 // Provide circuit and witness path and compile to r1cs, proves and verifies in groth16
 func testProveAndVerify(t *testing.T, acirPath string, witnessPath string) {
-	acir, err := LoadACIR[*bn254.BN254Field](acirPath)
+	type E = constraint.U64
+	acir, err := LoadACIR[*bn254.BN254Field, E](acirPath)
 
 	if err != nil {
 		t.Fatalf("Failed to load ACIR: %v", err)

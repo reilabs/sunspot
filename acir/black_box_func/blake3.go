@@ -5,16 +5,17 @@ import (
 	"io"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"
 )
 
-type Blake3[T shr.ACIRField] struct {
+type Blake3[T shr.ACIRField, E constraint.Element] struct {
 	Inputs  []FunctionInput[T]
 	Outputs [32]shr.Witness
 }
 
-func (a *Blake3[T]) UnmarshalReader(r io.Reader) error {
+func (a *Blake3[T, E]) UnmarshalReader(r io.Reader) error {
 	NumInputs := uint64(0)
 	if err := binary.Read(r, binary.LittleEndian, &NumInputs); err != nil {
 		return err
@@ -34,8 +35,8 @@ func (a *Blake3[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *Blake3[T]) Equals(other BlackBoxFunction) bool {
-	value, ok := other.(*Blake3[T])
+func (a *Blake3[T, E]) Equals(other BlackBoxFunction[E]) bool {
+	value, ok := other.(*Blake3[T, E])
 	if !ok || len(a.Inputs) != len(value.Inputs) {
 		return false
 	}
@@ -54,10 +55,10 @@ func (a *Blake3[T]) Equals(other BlackBoxFunction) bool {
 	return true
 }
 
-func (a *Blake3[T]) Define(api frontend.Builder, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *Blake3[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	panic("not yet implemented")
 }
 
-func (a *Blake3[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *Blake3[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return tree != nil
 }

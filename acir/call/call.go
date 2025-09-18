@@ -5,16 +5,18 @@ import (
 	"io"
 	exp "nr-groth16/acir/expression"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/constraint"
 )
 
-type Call[T shr.ACIRField] struct {
+type Call[T shr.ACIRField, E constraint.Element] struct {
 	ID        uint32
 	Inputs    []shr.Witness
 	Outputs   []shr.Witness
-	Predicate *exp.Expression[T]
+	Predicate *exp.Expression[T, E]
 }
 
-func (c *Call[T]) UnmarshalReader(r io.Reader) error {
+func (c *Call[T, E]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &c.ID); err != nil {
 		return err
 	}
@@ -42,7 +44,7 @@ func (c *Call[T]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 	if predicateExists == 1 {
-		c.Predicate = new(exp.Expression[T])
+		c.Predicate = new(exp.Expression[T, E])
 		if err := c.Predicate.UnmarshalReader(r); err != nil {
 			return err
 		}
@@ -51,7 +53,7 @@ func (c *Call[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (c *Call[T]) Equals(other *Call[T]) bool {
+func (c *Call[T, E]) Equals(other *Call[T, E]) bool {
 	if c.ID != other.ID {
 		return false
 	}

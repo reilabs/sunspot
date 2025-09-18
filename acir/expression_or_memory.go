@@ -6,11 +6,13 @@ import (
 	"io"
 	exp "nr-groth16/acir/expression"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/constraint"
 )
 
-type ExpressionOrMemory[T shr.ACIRField] struct {
+type ExpressionOrMemory[T shr.ACIRField, E constraint.Element] struct {
 	Kind       ExpressionOrMemoryKind
-	Expression *exp.Expression[T]
+	Expression *exp.Expression[T, E]
 	BlockId    *uint32
 }
 
@@ -21,14 +23,14 @@ const (
 	ACIRExpressionOrMemoryKindMemory
 )
 
-func (e *ExpressionOrMemory[T]) UnmarshalReader(r io.Reader) error {
+func (e *ExpressionOrMemory[T, E]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &e.Kind); err != nil {
 		return err
 	}
 
 	switch e.Kind {
 	case ACIRExpressionOrMemoryKindExpression:
-		e.Expression = new(exp.Expression[T])
+		e.Expression = new(exp.Expression[T, E])
 		if err := e.Expression.UnmarshalReader(r); err != nil {
 			return err
 		}

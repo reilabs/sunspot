@@ -24,11 +24,11 @@ import (
 )
 
 // Struct representation of an ACIR programme
-type ACIR[T shr.ACIRField] struct {
+type ACIR[T shr.ACIRField, E constraint.Element] struct {
 	NoirVersion         string                      `json:"noir_version"`
 	Hash                uint64                      `json:"hash"`
 	ABI                 hdr.ACIRABI                 `json:"abi"`
-	Program             Program[T]                  `json:"program"`
+	Program             Program[T, E]               `json:"program"`
 	DebugSymbols        string                      `json:"debug_symbols"`
 	FileMap             map[string]hdr.ACIRFileData `json:"file_map"`
 	WitnessTree         *btree.BTree                `json:"-"`
@@ -38,23 +38,23 @@ type ACIR[T shr.ACIRField] struct {
 }
 
 // Loads ACIR from disk and creates representation in memory
-func LoadACIR[T shr.ACIRField](fileName string) (ACIR[T], error) {
+func LoadACIR[T shr.ACIRField, E constraint.Element](fileName string) (ACIR[T, E], error) {
 	file, err := os.Open(fileName)
 	if err != nil {
-		return ACIR[T]{}, fmt.Errorf("failed to open ACIR file: %w", err)
+		return ACIR[T, E]{}, fmt.Errorf("failed to open ACIR file: %w", err)
 	}
 	defer file.Close()
 
-	var acir ACIR[T]
+	var acir ACIR[T, E]
 	if err := json.NewDecoder(file).Decode(&acir); err != nil {
-		return ACIR[T]{}, fmt.Errorf("failed to decode ACIR JSON: %w", err)
+		return ACIR[T, E]{}, fmt.Errorf("failed to decode ACIR JSON: %w", err)
 	}
 
 	return acir, nil
 }
 
 // Construct an ACIR instance from json data
-func (a *ACIR[T]) UnmarshalJSON(data []byte) error {
+func (a *ACIR[T, E]) UnmarshalJSON(data []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
@@ -167,8 +167,8 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	return reader, err
 }
 
-func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
-	builder, err := r1cs.NewBuilder(ecc.BN254.ScalarField(), frontend.CompileConfig{
+func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
+	builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
 		CompressThreshold: 300,
 	})
 	if err != nil {
@@ -234,7 +234,7 @@ func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
 	return builder.Compile()
 }
 
-func (a *ACIR[T]) GenerateWitness(inputs map[string]*big.Int, field *big.Int) (witness.Witness, error) {
+func (a *ACIR[T, E]) GenerateWitness(inputs map[string]*big.Int, field *big.Int) (witness.Witness, error) {
 	witness, err := witness.New(field)
 	if err != nil {
 		return nil, err
@@ -275,7 +275,7 @@ func (a *ACIR[T]) GenerateWitness(inputs map[string]*big.Int, field *big.Int) (w
 	return witness, nil
 }
 
-func (a *ACIR[T]) String() string {
+func (a *ACIR[T, E]) String() string {
 	jsonData, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
 		return fmt.Sprintf("Error marshalling ACIR: %v", err)
