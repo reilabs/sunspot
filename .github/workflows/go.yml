@@ -67,7 +67,7 @@ jobs:
         cd ../xor
         nargo compile
         nargo execute
-        cd ../sha256
+        cd ../sha256_compression
         nargo compile
         nargo execute
         cd ../../memory
