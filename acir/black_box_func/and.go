@@ -6,6 +6,7 @@ import (
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/math/uints"
 	"github.com/google/btree"
 )
 
@@ -34,29 +35,28 @@ func (a *And[T]) Equals(other BlackBoxFunction) bool {
 }
 
 func (a *And[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+	uapi, err := uints.New[uints.U64](api)
+	if err != nil {
+		return err
+	}
 	lhs, err := a.Lhs.ToVariable(witnesses)
 	if err != nil {
 		return err
 	}
-	lhs_binary := api.ToBinary(lhs)
+	lhs_b := uapi.ValueOf(lhs)
+
 	rhs, err := a.Rhs.ToVariable(witnesses)
 	if err != nil {
 		return err
 	}
-	rhs_binary := api.ToBinary(rhs)
+	rhs_b := uapi.ValueOf(rhs)
 	output, ok := witnesses[a.Output]
 	if !ok {
 		return fmt.Errorf("witness %d not found in witnesses map", a.Output)
 	}
-	output_binary := api.ToBinary(output)
-	verifiable_len := min(len(lhs_binary), len(rhs_binary), len(output_binary))
-	for i := 0; i < verifiable_len; i++ {
-		lhs_bit := lhs_binary[i]
-		rhs_bit := rhs_binary[i]
-		output_bit := output_binary[i]
+	output_b := uapi.ValueOf(output)
 
-		api.AssertIsEqual(api.And(lhs_bit, rhs_bit), output_bit)
-	}
+	uapi.AssertEq(output_b, uapi.And(lhs_b, rhs_b))
 
 	return nil
 }
