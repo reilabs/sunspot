@@ -3,10 +3,10 @@ package blackboxfunc
 import (
 	"fmt"
 	"io"
-	"math/big"
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/rangecheck"
 	"github.com/google/btree"
 )
 
@@ -41,13 +41,8 @@ func (a Range[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Va
 		return fmt.Errorf("witness %v not found in witnesses map", *witness)
 	}
 
-	max_value := big.NewInt(1)
-	max_value = max_value.Lsh(max_value, uint(a.Input.NumberOfBits)) // 2^n
-	max_value = max_value.Sub(max_value, big.NewInt(1))              // 2^n - 1
-	_ = max_value
-	api.AssertIsLessOrEqual(w, max_value)
-	api.AssertIsLessOrEqual(big.NewInt(0), w) // Ensure w is non-negative
-
+	rangechecker := rangecheck.New(api)
+	rangechecker.Check(w, int(a.Input.NumberOfBits))
 	return nil
 }
 
