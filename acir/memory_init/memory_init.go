@@ -88,7 +88,7 @@ func (m *MemoryInit[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree
 	return tree != nil
 }
 
-func (m *MemoryInit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+func (m *MemoryInit[T, E]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
 	for i := range m.Init {
 		(*m.Table).Insert(witnesses[m.Init[i]])
 	}

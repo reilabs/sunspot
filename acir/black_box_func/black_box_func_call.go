@@ -16,7 +16,7 @@ import (
 
 type BlackBoxFunction[E constraint.Element] interface {
 	UnmarshalReader(r io.Reader) error
-	Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error
+	Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error
 	Equals(other BlackBoxFunction[E]) bool
 	FillWitnessTree(tree *btree.BTree) bool
 }
@@ -32,7 +32,7 @@ func (b BlackBoxFuncCall[T, E]) CollectConstantsAsWitnesses(start uint32, tree *
 	return true
 }
 
-func (b BlackBoxFuncCall[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+func (b BlackBoxFuncCall[T, E]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
 	return b.function.Define(api, witnesses)
 }
 

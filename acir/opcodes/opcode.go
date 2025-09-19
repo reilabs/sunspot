@@ -13,7 +13,7 @@ import (
 type Opcode[E constraint.Element] interface {
 	UnmarshalReader(r io.Reader) error
 	Equals(other Opcode[E]) bool
-	Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error
+	Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error
 	MarshalJSON() ([]byte, error)
 	FillWitnessTree(tree *btree.BTree) bool
 	CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool

@@ -21,7 +21,7 @@ type Expression[T shr.ACIRField, E constraint.Element] struct {
 }
 
 func (e *Expression[T, E]) Define(
-	api frontend.Builder[E],
+	api frontend.API,
 	witnesses map[shr.Witness]frontend.Variable,
 ) error {
 	api.AssertIsEqual(e.Calculate(api, witnesses), 0)

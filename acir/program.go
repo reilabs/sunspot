@@ -42,7 +42,7 @@ func (p *Program[T, E]) UnmarshalReader(r io.Reader) error {
 }
 
 func (p *Program[T, E]) Define(
-	api frontend.Builder[E],
+	api frontend.API,
 	witnesses map[shr.Witness]frontend.Variable,
 ) error {
 	for _, circuit := range p.Functions {

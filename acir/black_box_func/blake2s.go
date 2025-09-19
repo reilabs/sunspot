@@ -55,7 +55,7 @@ func (a *Blake2s[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	return true
 }
 
-func (a *Blake2s[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+func (a *Blake2s[T, E]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
 
 	for i := 0; i < 32; i++ {
 		api.AssertIsEqual(a.Outputs[i], witnesses[a.Outputs[i]])
