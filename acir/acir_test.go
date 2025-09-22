@@ -98,6 +98,14 @@ func TestACIRSHA256(t *testing.T) {
 	)
 }
 
+func TestACIRSHA256Hash(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/sha256_hash/target/sha256_hash.json",
+		"../noir-samples/black_box_functions/sha256_hash/target/sha256_hash.gz",
+	)
+}
+
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
