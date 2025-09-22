@@ -169,7 +169,9 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 }
 
 func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
-
+	// Implement the NewBuilder[E] function from gnark
+	// This allows us to feed the builder into a circuit and call Compile
+	// on the builder
 	builder_generator := func(*big.Int, frontend.CompileConfig) (frontend.Builder[E], error) {
 		builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
 			CompressThreshold: 300,
@@ -300,6 +302,8 @@ func MyNewBuilder[E constraint.Element](field *big.Int, config frontend.CompileC
 
 }
 
+// We need the dummy circuit to feed in our custom builder
+// This makes sure that call deferred is actually called on our custom builder
 type DummyCircuit struct{}
 
 func (a *DummyCircuit) Define(frontend.API) error {
