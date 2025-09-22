@@ -84,7 +84,7 @@ func (*MemoryOp[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTr
 	return tree != nil
 }
 
-func (o *MemoryOp[T, E]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (o *MemoryOp[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	if o.Predicate != nil && o.Predicate.Constant.ToBigInt() == big.NewInt(0) {
 		return nil
 	}

@@ -35,7 +35,7 @@ func (a *And[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	return ok && a.Lhs.Equals(&value.Lhs) && a.Rhs.Equals(&value.Rhs) && a.Output.Equals(&value.Output)
 }
 
-func (a *And[T, E]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *And[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.New[uints.U64](api)
 	if err != nil {
 		return err

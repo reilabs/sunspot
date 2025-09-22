@@ -27,7 +27,7 @@ func (a Range[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	return ok && a.Input.Equals(&value.Input)
 }
 
-func (a Range[T, E]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a Range[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	if a.Input.FunctionInputKind == ACIRFunctionInputKindConstant {
 		return nil
 	}
