@@ -10,6 +10,7 @@ import (
 	"math/big"
 	hdr "nr-groth16/acir/header"
 	shr "nr-groth16/acir/shared"
+	"nr-groth16/bn254"
 	"os"
 	"strconv"
 
@@ -168,70 +169,75 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 }
 
 func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
-	builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
-		CompressThreshold: 300,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create R1CS builder: %w", err)
+
+	builder_generator := func(*big.Int, frontend.CompileConfig) (frontend.Builder[E], error) {
+		builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
+			CompressThreshold: 300,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create R1CS builder: %w", err)
+		}
+
+		witnessMap := make(map[shr.Witness]frontend.Variable)
+		for index, param := range a.ABI.Parameters {
+			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+				witnessMap[shr.Witness(index)] = builder.PublicVariable(
+					schema.LeafInfo{
+						FullName:   func() string { return param.Name },
+						Visibility: schema.Public,
+					},
+				)
+			}
+		}
+
+		a.WitnessTree, a.ConstantWitnessTree = a.Program.GetWitnessTree()
+		if a.WitnessTree == nil {
+			return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
+		}
+
+		a.WitnessTree.Ascend(func(it btree.Item) bool {
+			witness, ok := it.(shr.Witness)
+			if !ok {
+				log.Warn().Msgf("Item in witness tree is not of type shr.Witness: %T", it)
+				return true // Continue processing other items
+			}
+			if _, ok := witnessMap[witness]; !ok {
+				witnessMap[witness] = builder.SecretVariable(
+					schema.LeafInfo{
+						FullName:   func() string { return fmt.Sprintf("__witness_%d", witness) },
+						Visibility: schema.Secret,
+					},
+				)
+			}
+			return true
+		})
+
+		a.ConstantWitnessTree.Ascend(func(it btree.Item) bool {
+			witness, ok := it.(shr.Witness)
+			if !ok {
+				log.Warn().Msgf("Item in constant witness tree is not of type shr.Witness: %T", it)
+				return true // Continue processing other items
+			}
+			if _, ok := witnessMap[witness]; !ok {
+				witnessMap[witness] = builder.SecretVariable(
+					schema.LeafInfo{
+						FullName:   func() string { return fmt.Sprintf("__constant_%d", witness) },
+						Visibility: schema.Secret,
+					},
+				)
+			}
+			return true
+		})
+
+		err = a.Program.Define(builder, witnessMap)
+		if err != nil {
+			return nil, err
+		}
+		return builder, nil
 	}
 
-	witnessMap := make(map[shr.Witness]frontend.Variable)
-	for index, param := range a.ABI.Parameters {
-		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-			witnessMap[shr.Witness(index)] = builder.PublicVariable(
-				schema.LeafInfo{
-					FullName:   func() string { return param.Name },
-					Visibility: schema.Public,
-				},
-			)
-		}
-	}
+	return frontend.CompileGeneric(bn254.Bn254Modulus, builder_generator, &DummyCircuit{})
 
-	a.WitnessTree, a.ConstantWitnessTree = a.Program.GetWitnessTree()
-	if a.WitnessTree == nil {
-		return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
-	}
-
-	a.WitnessTree.Ascend(func(it btree.Item) bool {
-		witness, ok := it.(shr.Witness)
-		if !ok {
-			log.Warn().Msgf("Item in witness tree is not of type shr.Witness: %T", it)
-			return true // Continue processing other items
-		}
-		if _, ok := witnessMap[witness]; !ok {
-			witnessMap[witness] = builder.SecretVariable(
-				schema.LeafInfo{
-					FullName:   func() string { return fmt.Sprintf("__witness_%d", witness) },
-					Visibility: schema.Secret,
-				},
-			)
-		}
-		return true
-	})
-
-	a.ConstantWitnessTree.Ascend(func(it btree.Item) bool {
-		witness, ok := it.(shr.Witness)
-		if !ok {
-			log.Warn().Msgf("Item in constant witness tree is not of type shr.Witness: %T", it)
-			return true // Continue processing other items
-		}
-		if _, ok := witnessMap[witness]; !ok {
-			witnessMap[witness] = builder.SecretVariable(
-				schema.LeafInfo{
-					FullName:   func() string { return fmt.Sprintf("__constant_%d", witness) },
-					Visibility: schema.Secret,
-				},
-			)
-		}
-		return true
-	})
-
-	err = a.Program.Define(builder, witnessMap)
-	if err != nil {
-		return nil, err
-	}
-
-	return builder.Compile()
 }
 
 func (a *ACIR[T, E]) GenerateWitness(inputs map[string]*big.Int, field *big.Int) (witness.Witness, error) {
@@ -281,4 +287,21 @@ func (a *ACIR[T, E]) String() string {
 		return fmt.Sprintf("Error marshalling ACIR: %v", err)
 	}
 	return string(jsonData)
+}
+
+func MyNewBuilder[E constraint.Element](field *big.Int, config frontend.CompileConfig) *frontend.Builder[E] {
+	builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
+		CompressThreshold: 300,
+	})
+	if err != nil {
+		return nil
+	}
+	return &builder
+
+}
+
+type DummyCircuit struct{}
+
+func (a *DummyCircuit) Define(frontend.API) error {
+	return nil
 }
