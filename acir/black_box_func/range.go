@@ -5,28 +5,29 @@ import (
 	"io"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/rangecheck"
 	"github.com/google/btree"
 )
 
-type Range[T shr.ACIRField] struct {
+type Range[T shr.ACIRField, E constraint.Element] struct {
 	Input FunctionInput[T]
 }
 
-func (a *Range[T]) UnmarshalReader(r io.Reader) error {
+func (a *Range[T, E]) UnmarshalReader(r io.Reader) error {
 	if err := a.Input.UnmarshalReader(r); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a Range[T]) Equals(other BlackBoxFunction) bool {
-	value, ok := other.(*Range[T])
+func (a Range[T, E]) Equals(other BlackBoxFunction[E]) bool {
+	value, ok := other.(*Range[T, E])
 	return ok && a.Input.Equals(&value.Input)
 }
 
-func (a Range[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a Range[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	if a.Input.FunctionInputKind == ACIRFunctionInputKindConstant {
 		return nil
 	}
@@ -46,7 +47,7 @@ func (a Range[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Va
 	return nil
 }
 
-func (a *Range[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *Range[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	if tree == nil {
 		return false
 	}

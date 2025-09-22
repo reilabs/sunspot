@@ -5,19 +5,20 @@ import (
 	"io"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
 	"github.com/consensys/gnark/std/permutation/sha2"
 	"github.com/google/btree"
 )
 
-type SHA256Compression[T shr.ACIRField] struct {
+type SHA256Compression[T shr.ACIRField, E constraint.Element] struct {
 	Inputs     [16]FunctionInput[T]
 	HashValues [8]FunctionInput[T]
 	Outputs    [8]shr.Witness
 }
 
-func (a *SHA256Compression[T]) UnmarshalReader(r io.Reader) error {
+func (a *SHA256Compression[T, E]) UnmarshalReader(r io.Reader) error {
 	for i := 0; i < 16; i++ {
 		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
 			return err
@@ -37,8 +38,8 @@ func (a *SHA256Compression[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *SHA256Compression[T]) Equals(other BlackBoxFunction) bool {
-	value, ok := other.(*SHA256Compression[T])
+func (a *SHA256Compression[T, E]) Equals(other BlackBoxFunction[E]) bool {
+	value, ok := other.(*SHA256Compression[T, E])
 	if !ok || len(a.Inputs) != len(value.Inputs) || len(a.HashValues) != len(value.HashValues) {
 		return false
 	}
@@ -64,7 +65,7 @@ func (a *SHA256Compression[T]) Equals(other BlackBoxFunction) bool {
 	return true
 }
 
-func (a *SHA256Compression[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *SHA256Compression[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.New[uints.U32](api)
 	var old_state [8]uints.U32
 	for i := 0; i < 8; i++ {
@@ -95,6 +96,6 @@ func (a *SHA256Compression[T]) Define(api frontend.API, witnesses map[shr.Witnes
 	return nil
 }
 
-func (a *SHA256Compression[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *SHA256Compression[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return tree != nil
 }

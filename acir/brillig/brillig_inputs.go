@@ -6,12 +6,14 @@ import (
 	"io"
 	exp "nr-groth16/acir/expression"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/constraint"
 )
 
-type BrilligInputs[T shr.ACIRField] struct {
+type BrilligInputs[T shr.ACIRField, E constraint.Element] struct {
 	Kind    BrilligInputsKind
-	Single  *exp.Expression[T]
-	Array   *[]exp.Expression[T]
+	Single  *exp.Expression[T, E]
+	Array   *[]exp.Expression[T, E]
 	BlockID *uint32
 }
 
@@ -23,13 +25,13 @@ const (
 	ACIRBrilligInputsKindMemoryArray
 )
 
-func (b *BrilligInputs[T]) UnmarshalReader(r io.Reader) error {
+func (b *BrilligInputs[T, E]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &b.Kind); err != nil {
 		return err
 	}
 	switch b.Kind {
 	case ACIRBrilligInputsKindSingle:
-		b.Single = new(exp.Expression[T])
+		b.Single = new(exp.Expression[T, E])
 		if err := b.Single.UnmarshalReader(r); err != nil {
 			return err
 		}
@@ -38,8 +40,8 @@ func (b *BrilligInputs[T]) UnmarshalReader(r io.Reader) error {
 		if err := binary.Read(r, binary.LittleEndian, &numInputs); err != nil {
 			return err
 		}
-		b.Array = new([]exp.Expression[T])
-		*b.Array = make([]exp.Expression[T], numInputs)
+		b.Array = new([]exp.Expression[T, E])
+		*b.Array = make([]exp.Expression[T, E], numInputs)
 		for i := uint64(0); i < numInputs; i++ {
 			if err := (*b.Array)[i].UnmarshalReader(r); err != nil {
 				return err

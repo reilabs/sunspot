@@ -4,6 +4,8 @@ import (
 	"nr-groth16/bn254"
 	"testing"
 
+	"github.com/consensys/gnark/constraint"
+
 	ecc_bn254 "github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark/backend/groth16"
 )
@@ -91,8 +93,16 @@ func TestACIRKeccakF1600(t *testing.T) {
 func TestACIRSHA256(t *testing.T) {
 	testProveAndVerify(
 		t,
-		"../noir-samples/black_box_functions/sha256/target/sha256.json",
-		"../noir-samples/black_box_functions/sha256/target/sha256.gz",
+		"../noir-samples/black_box_functions/sha256_compression/target/sha256.json",
+		"../noir-samples/black_box_functions/sha256_compression/target/sha256.gz",
+	)
+}
+
+func TestACIRSHA256Hash(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/sha256_hash/target/sha256_hash.json",
+		"../noir-samples/black_box_functions/sha256_hash/target/sha256_hash.gz",
 	)
 }
 
@@ -115,7 +125,8 @@ func TestACIRProveKitBasic(t *testing.T) {
 // Helper function for testing files,
 // Provide circuit and witness path and compile to r1cs, proves and verifies in groth16
 func testProveAndVerify(t *testing.T, acirPath string, witnessPath string) {
-	acir, err := LoadACIR[*bn254.BN254Field](acirPath)
+	type E = constraint.U64
+	acir, err := LoadACIR[*bn254.BN254Field, E](acirPath)
 
 	if err != nil {
 		t.Fatalf("Failed to load ACIR: %v", err)

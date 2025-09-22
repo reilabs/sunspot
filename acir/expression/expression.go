@@ -8,22 +8,26 @@ import (
 	"nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"
 )
 
-type Expression[T shr.ACIRField] struct {
+type Expression[T shr.ACIRField, E constraint.Element] struct {
 	MulTerms           []MulTerm[T]           `json:"mul_terms"`           // Terms that are multiplied together
 	LinearCombinations []LinearCombination[T] `json:"linear_combinations"` // Linear combinations of variables
 	Constant           T                      `json:"constant"`
 	constantWitnessID  shr.Witness            // Constant term in the expression
 }
 
-func (e *Expression[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (e *Expression[T, E]) Define(
+	api frontend.Builder[E],
+	witnesses map[shr.Witness]frontend.Variable,
+) error {
 	api.AssertIsEqual(e.Calculate(api, witnesses), 0)
 	return nil
 }
-func (e *Expression[T]) UnmarshalReader(r io.Reader) error {
+func (e *Expression[T, E]) UnmarshalReader(r io.Reader) error {
 	e.Constant = shr.MakeNonNil(e.Constant) // Ensure Constant is non-nil
 
 	// Read the number of MulTerms
@@ -64,8 +68,8 @@ func (e *Expression[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (e *Expression[T]) Equals(other opcodes.Opcode) bool {
-	value, ok := other.(*Expression[T])
+func (e *Expression[T, E]) Equals(other opcodes.Opcode[E]) bool {
+	value, ok := other.(*Expression[T, E])
 	if !ok {
 		return false
 	}
@@ -91,7 +95,7 @@ func (e *Expression[T]) Equals(other opcodes.Opcode) bool {
 	return e.Constant.Equals(value.Constant)
 }
 
-func (e *Expression[T]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
+func (e *Expression[T, E]) Calculate(api frontend.API, witnesses map[shr.Witness]frontend.Variable) frontend.Variable {
 	sum := e.Constant.ToFrontendVariable()
 	for _, term := range e.MulTerms {
 		sum = api.Add(sum, term.Calculate(api, witnesses))
@@ -103,7 +107,7 @@ func (e *Expression[T]) Calculate(api frontend.API, witnesses map[shr.Witness]fr
 	return sum
 }
 
-func (e *Expression[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (e *Expression[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	if tree == nil {
 		return false
 	}
@@ -123,7 +127,7 @@ func (e *Expression[T]) FillWitnessTree(tree *btree.BTree) bool {
 	return true
 }
 
-func (e Expression[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
+func (e Expression[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
 	if tree == nil {
 		return false
 	}
@@ -134,13 +138,13 @@ func (e Expression[T]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTr
 	return true
 }
 
-func (e *Expression[T]) FeedConstantsAsWitnesses() []*big.Int {
+func (e *Expression[T, E]) FeedConstantsAsWitnesses() []*big.Int {
 	values := make([]*big.Int, 0)
 	values = append(values, e.Constant.ToBigInt())
 	return values
 }
 
-func (e *Expression[T]) MarshalJSON() ([]byte, error) {
+func (e *Expression[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap := make(map[string]interface{})
 	stringMap["assert_zero"] = e
 	return json.Marshal(stringMap)

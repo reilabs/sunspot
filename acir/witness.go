@@ -76,7 +76,7 @@ func LoadWitnessStackFromFile[T shr.ACIRField](filePath string, modulus *big.Int
 	return witnessStack, nil
 }
 
-func (acir *ACIR[T]) GetWitness(fileName string, field *big.Int) (witness.Witness, error) {
+func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Witness, error) {
 	witnessStack, err := LoadWitnessStackFromFile[T](fileName, field)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load witness stack from file %s: %w", fileName, err)

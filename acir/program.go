@@ -7,22 +7,23 @@ import (
 	brl "nr-groth16/acir/brillig"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
 
-type Program[T shr.ACIRField] struct {
-	Functions              []Circuit[T]             `json:"functions"`
+type Program[T shr.ACIRField, E constraint.Element] struct {
+	Functions              []Circuit[T, E]          `json:"functions"`
 	UnconstrainedFunctions []brl.BrilligBytecode[T] `json:"unconstrained_functions"`
 }
 
-func (p *Program[T]) UnmarshalReader(r io.Reader) error {
+func (p *Program[T, E]) UnmarshalReader(r io.Reader) error {
 	var funcCount uint64
 	if err := binary.Read(r, binary.LittleEndian, &funcCount); err != nil {
 		return err
 	}
-	p.Functions = make([]Circuit[T], funcCount)
+	p.Functions = make([]Circuit[T, E], funcCount)
 	for i := uint64(0); i < funcCount; i++ {
 		if err := p.Functions[i].UnmarshalReader(r); err != nil {
 			return err
@@ -40,7 +41,10 @@ func (p *Program[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (p *Program[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (p *Program[T, E]) Define(
+	api frontend.Builder[E],
+	witnesses map[shr.Witness]frontend.Variable,
+) error {
 	for _, circuit := range p.Functions {
 		if err := circuit.Define(api, witnesses); err != nil {
 			return err
@@ -49,7 +53,7 @@ func (p *Program[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend
 	return nil
 }
 
-func (p *Program[T]) GetWitnessTree() (*btree.BTree, *btree.BTree) {
+func (p *Program[T, E]) GetWitnessTree() (*btree.BTree, *btree.BTree) {
 	witnessTree := btree.New(2)
 	for _, circuit := range p.Functions {
 		circuit.FillWitnessTree(witnessTree)
@@ -69,7 +73,7 @@ func (p *Program[T]) GetWitnessTree() (*btree.BTree, *btree.BTree) {
 	return witnessTree, constantsTree
 }
 
-func (p *Program[T]) FeedConstantsAsWitnesses() []*big.Int {
+func (p *Program[T, E]) FeedConstantsAsWitnesses() []*big.Int {
 	values := make([]*big.Int, 0)
 
 	for _, circuit := range p.Functions {

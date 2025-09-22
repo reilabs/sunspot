@@ -10,6 +10,7 @@ import (
 	"math/big"
 	hdr "nr-groth16/acir/header"
 	shr "nr-groth16/acir/shared"
+	"nr-groth16/bn254"
 	"os"
 	"strconv"
 
@@ -24,11 +25,11 @@ import (
 )
 
 // Struct representation of an ACIR programme
-type ACIR[T shr.ACIRField] struct {
+type ACIR[T shr.ACIRField, E constraint.Element] struct {
 	NoirVersion         string                      `json:"noir_version"`
 	Hash                uint64                      `json:"hash"`
 	ABI                 hdr.ACIRABI                 `json:"abi"`
-	Program             Program[T]                  `json:"program"`
+	Program             Program[T, E]               `json:"program"`
 	DebugSymbols        string                      `json:"debug_symbols"`
 	FileMap             map[string]hdr.ACIRFileData `json:"file_map"`
 	WitnessTree         *btree.BTree                `json:"-"`
@@ -38,23 +39,23 @@ type ACIR[T shr.ACIRField] struct {
 }
 
 // Loads ACIR from disk and creates representation in memory
-func LoadACIR[T shr.ACIRField](fileName string) (ACIR[T], error) {
+func LoadACIR[T shr.ACIRField, E constraint.Element](fileName string) (ACIR[T, E], error) {
 	file, err := os.Open(fileName)
 	if err != nil {
-		return ACIR[T]{}, fmt.Errorf("failed to open ACIR file: %w", err)
+		return ACIR[T, E]{}, fmt.Errorf("failed to open ACIR file: %w", err)
 	}
 	defer file.Close()
 
-	var acir ACIR[T]
+	var acir ACIR[T, E]
 	if err := json.NewDecoder(file).Decode(&acir); err != nil {
-		return ACIR[T]{}, fmt.Errorf("failed to decode ACIR JSON: %w", err)
+		return ACIR[T, E]{}, fmt.Errorf("failed to decode ACIR JSON: %w", err)
 	}
 
 	return acir, nil
 }
 
 // Construct an ACIR instance from json data
-func (a *ACIR[T]) UnmarshalJSON(data []byte) error {
+func (a *ACIR[T, E]) UnmarshalJSON(data []byte) error {
 	var raw map[string]interface{}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
@@ -167,74 +168,81 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	return reader, err
 }
 
-func (a *ACIR[T]) Compile() (constraint.ConstraintSystem, error) {
-	builder, err := r1cs.NewBuilder(ecc.BN254.ScalarField(), frontend.CompileConfig{
-		CompressThreshold: 300,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create R1CS builder: %w", err)
+func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
+	// Implement the NewBuilder[E] function from gnark
+	// This allows us to feed the builder into a circuit and call Compile
+	// on the builder
+	builder_generator := func(*big.Int, frontend.CompileConfig) (frontend.Builder[E], error) {
+		builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
+			CompressThreshold: 300,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create R1CS builder: %w", err)
+		}
+
+		witnessMap := make(map[shr.Witness]frontend.Variable)
+		for index, param := range a.ABI.Parameters {
+			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+				witnessMap[shr.Witness(index)] = builder.PublicVariable(
+					schema.LeafInfo{
+						FullName:   func() string { return param.Name },
+						Visibility: schema.Public,
+					},
+				)
+			}
+		}
+
+		a.WitnessTree, a.ConstantWitnessTree = a.Program.GetWitnessTree()
+		if a.WitnessTree == nil {
+			return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
+		}
+
+		a.WitnessTree.Ascend(func(it btree.Item) bool {
+			witness, ok := it.(shr.Witness)
+			if !ok {
+				log.Warn().Msgf("Item in witness tree is not of type shr.Witness: %T", it)
+				return true // Continue processing other items
+			}
+			if _, ok := witnessMap[witness]; !ok {
+				witnessMap[witness] = builder.SecretVariable(
+					schema.LeafInfo{
+						FullName:   func() string { return fmt.Sprintf("__witness_%d", witness) },
+						Visibility: schema.Secret,
+					},
+				)
+			}
+			return true
+		})
+
+		a.ConstantWitnessTree.Ascend(func(it btree.Item) bool {
+			witness, ok := it.(shr.Witness)
+			if !ok {
+				log.Warn().Msgf("Item in constant witness tree is not of type shr.Witness: %T", it)
+				return true // Continue processing other items
+			}
+			if _, ok := witnessMap[witness]; !ok {
+				witnessMap[witness] = builder.SecretVariable(
+					schema.LeafInfo{
+						FullName:   func() string { return fmt.Sprintf("__constant_%d", witness) },
+						Visibility: schema.Secret,
+					},
+				)
+			}
+			return true
+		})
+
+		err = a.Program.Define(builder, witnessMap)
+		if err != nil {
+			return nil, err
+		}
+		return builder, nil
 	}
 
-	witnessMap := make(map[shr.Witness]frontend.Variable)
-	for index, param := range a.ABI.Parameters {
-		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-			witnessMap[shr.Witness(index)] = builder.PublicVariable(
-				schema.LeafInfo{
-					FullName:   func() string { return param.Name },
-					Visibility: schema.Public,
-				},
-			)
-		}
-	}
+	return frontend.CompileGeneric(bn254.Bn254Modulus, builder_generator, &DummyCircuit{})
 
-	a.WitnessTree, a.ConstantWitnessTree = a.Program.GetWitnessTree()
-	if a.WitnessTree == nil {
-		return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
-	}
-
-	a.WitnessTree.Ascend(func(it btree.Item) bool {
-		witness, ok := it.(shr.Witness)
-		if !ok {
-			log.Warn().Msgf("Item in witness tree is not of type shr.Witness: %T", it)
-			return true // Continue processing other items
-		}
-		if _, ok := witnessMap[witness]; !ok {
-			witnessMap[witness] = builder.SecretVariable(
-				schema.LeafInfo{
-					FullName:   func() string { return fmt.Sprintf("__witness_%d", witness) },
-					Visibility: schema.Secret,
-				},
-			)
-		}
-		return true
-	})
-
-	a.ConstantWitnessTree.Ascend(func(it btree.Item) bool {
-		witness, ok := it.(shr.Witness)
-		if !ok {
-			log.Warn().Msgf("Item in constant witness tree is not of type shr.Witness: %T", it)
-			return true // Continue processing other items
-		}
-		if _, ok := witnessMap[witness]; !ok {
-			witnessMap[witness] = builder.SecretVariable(
-				schema.LeafInfo{
-					FullName:   func() string { return fmt.Sprintf("__constant_%d", witness) },
-					Visibility: schema.Secret,
-				},
-			)
-		}
-		return true
-	})
-
-	err = a.Program.Define(builder, witnessMap)
-	if err != nil {
-		return nil, err
-	}
-
-	return builder.Compile()
 }
 
-func (a *ACIR[T]) GenerateWitness(inputs map[string]*big.Int, field *big.Int) (witness.Witness, error) {
+func (a *ACIR[T, E]) GenerateWitness(inputs map[string]*big.Int, field *big.Int) (witness.Witness, error) {
 	witness, err := witness.New(field)
 	if err != nil {
 		return nil, err
@@ -275,10 +283,29 @@ func (a *ACIR[T]) GenerateWitness(inputs map[string]*big.Int, field *big.Int) (w
 	return witness, nil
 }
 
-func (a *ACIR[T]) String() string {
+func (a *ACIR[T, E]) String() string {
 	jsonData, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
 		return fmt.Sprintf("Error marshalling ACIR: %v", err)
 	}
 	return string(jsonData)
+}
+
+func MyNewBuilder[E constraint.Element](field *big.Int, config frontend.CompileConfig) *frontend.Builder[E] {
+	builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
+		CompressThreshold: 300,
+	})
+	if err != nil {
+		return nil
+	}
+	return &builder
+
+}
+
+// We need the dummy circuit to feed in our custom builder
+// This makes sure that call deferred is actually called on our custom builder
+type DummyCircuit struct{}
+
+func (a *DummyCircuit) Define(frontend.API) error {
+	return nil
 }

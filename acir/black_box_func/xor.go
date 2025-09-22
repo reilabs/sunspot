@@ -5,18 +5,19 @@ import (
 	"io"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
 	"github.com/google/btree"
 )
 
-type Xor[T shr.ACIRField] struct {
+type Xor[T shr.ACIRField, E constraint.Element] struct {
 	Lhs    FunctionInput[T]
 	Rhs    FunctionInput[T]
 	Output shr.Witness
 }
 
-func (a *Xor[T]) UnmarshalReader(r io.Reader) error {
+func (a *Xor[T, E]) UnmarshalReader(r io.Reader) error {
 	if err := a.Lhs.UnmarshalReader(r); err != nil {
 		return err
 	}
@@ -29,8 +30,8 @@ func (a *Xor[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *Xor[T]) Equals(other BlackBoxFunction) bool {
-	value, ok := other.(*Xor[T])
+func (a *Xor[T, E]) Equals(other BlackBoxFunction[E]) bool {
+	value, ok := other.(*Xor[T, E])
 
 	if !ok || !a.Lhs.Equals(&value.Lhs) || !a.Rhs.Equals(&value.Rhs) {
 		return false
@@ -38,7 +39,7 @@ func (a *Xor[T]) Equals(other BlackBoxFunction) bool {
 	return a.Output == value.Output
 }
 
-func (a *Xor[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *Xor[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.New[uints.U64](api)
 	if err != nil {
 		return err
@@ -65,7 +66,7 @@ func (a *Xor[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Var
 	return nil
 }
 
-func (a *Xor[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *Xor[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	if tree == nil {
 		return false
 	}

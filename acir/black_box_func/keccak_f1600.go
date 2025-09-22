@@ -6,18 +6,19 @@ import (
 	"io"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
 	"github.com/consensys/gnark/std/permutation/keccakf"
 	"github.com/google/btree"
 )
 
-type Keccakf1600[T shr.ACIRField] struct {
+type Keccakf1600[T shr.ACIRField, E constraint.Element] struct {
 	Inputs  [25]FunctionInput[T]
 	Outputs [25]shr.Witness
 }
 
-func (a *Keccakf1600[T]) UnmarshalReader(r io.Reader) error {
+func (a *Keccakf1600[T, E]) UnmarshalReader(r io.Reader) error {
 	for i := 0; i < 25; i++ {
 		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
 			return err
@@ -31,8 +32,8 @@ func (a *Keccakf1600[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *Keccakf1600[T]) Equals(other BlackBoxFunction) bool {
-	value, ok := other.(*Keccakf1600[T])
+func (a *Keccakf1600[T, E]) Equals(other BlackBoxFunction[E]) bool {
+	value, ok := other.(*Keccakf1600[T, E])
 	if !ok || len(a.Inputs) != len(value.Inputs) {
 		return false
 	}
@@ -52,7 +53,7 @@ func (a *Keccakf1600[T]) Equals(other BlackBoxFunction) bool {
 	return true
 }
 
-func (a *Keccakf1600[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *Keccakf1600[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.New[uints.U64](api)
 	if err != nil {
 		return err
@@ -80,7 +81,7 @@ func (a *Keccakf1600[T]) Define(api frontend.API, witnesses map[shr.Witness]fron
 	return nil
 }
 
-func (a *Keccakf1600[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *Keccakf1600[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	if tree == nil {
 		return false
 	}

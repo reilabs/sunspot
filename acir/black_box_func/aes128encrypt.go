@@ -7,18 +7,19 @@ import (
 	"math/big"
 	shr "nr-groth16/acir/shared"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"
 )
 
-type AES128Encrypt[T shr.ACIRField] struct {
+type AES128Encrypt[T shr.ACIRField, E constraint.Element] struct {
 	Inputs  []FunctionInput[T]
 	Iv      [16]FunctionInput[T]
 	Key     [16]FunctionInput[T]
 	Outputs []shr.Witness
 }
 
-func (a *AES128Encrypt[T]) UnmarshalReader(r io.Reader) error {
+func (a *AES128Encrypt[T, E]) UnmarshalReader(r io.Reader) error {
 	InputsNum := uint64(0)
 	if err := binary.Read(r, binary.LittleEndian, &InputsNum); err != nil {
 		return err
@@ -58,8 +59,8 @@ func (a *AES128Encrypt[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *AES128Encrypt[T]) Equals(other BlackBoxFunction) bool {
-	value, ok := other.(*AES128Encrypt[T])
+func (a *AES128Encrypt[T, E]) Equals(other BlackBoxFunction[E]) bool {
+	value, ok := other.(*AES128Encrypt[T, E])
 	if !ok || len(a.Inputs) != len(value.Inputs) {
 		return false
 	}
@@ -93,7 +94,7 @@ func (a *AES128Encrypt[T]) Equals(other BlackBoxFunction) bool {
 	return true
 }
 
-func (a *AES128Encrypt[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *AES128Encrypt[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return tree != nil
 }
 
@@ -181,7 +182,7 @@ func AESAddRoundKey(api frontend.API, state [16]frontend.Variable, roundKey [16]
 	return result
 }
 
-func (a *AES128Encrypt[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *AES128Encrypt[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	numBlocks := len(a.Inputs) / 16
 	var state [16]frontend.Variable
 	var results [16]frontend.Variable

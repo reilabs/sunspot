@@ -7,10 +7,11 @@ import (
 
 	"github.com/rs/zerolog/log"
 
+	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 )
 
-type ECDSASECP256R1[T shr.ACIRField] struct {
+type ECDSASECP256R1[T shr.ACIRField, E constraint.Element] struct {
 	PublicKeyX    [32]FunctionInput[T]
 	PublicKeyY    [32]FunctionInput[T]
 	Signature     [64]FunctionInput[T]
@@ -18,7 +19,7 @@ type ECDSASECP256R1[T shr.ACIRField] struct {
 	Output        shr.Witness
 }
 
-func (a *ECDSASECP256R1[T]) UnmarshalReader(r io.Reader) error {
+func (a *ECDSASECP256R1[T, E]) UnmarshalReader(r io.Reader) error {
 	log.Trace().Msgf("Unmarshalling ECDSASECP256R1 function call")
 	for i := 0; i < 32; i++ {
 		if err := a.PublicKeyX[i].UnmarshalReader(r); err != nil {
@@ -50,7 +51,7 @@ func (a *ECDSASECP256R1[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *ECDSASECP256R1[T]) Equals(other *ECDSASECP256R1[T]) bool {
+func (a *ECDSASECP256R1[T, E]) Equals(other *ECDSASECP256R1[T, E]) bool {
 	if len(a.PublicKeyX) != len(other.PublicKeyX) ||
 		len(a.PublicKeyY) != len(other.PublicKeyY) ||
 		len(a.Signature) != len(other.Signature) ||
@@ -75,6 +76,6 @@ func (a *ECDSASECP256R1[T]) Equals(other *ECDSASECP256R1[T]) bool {
 	return a.Output == other.Output
 }
 
-func (a *ECDSASECP256R1[T]) Define(api frontend.API, witnesses map[shr.Witness]frontend.Variable) error {
+func (a *ECDSASECP256R1[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	return nil
 }

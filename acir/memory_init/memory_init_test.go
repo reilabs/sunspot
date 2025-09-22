@@ -6,21 +6,25 @@ import (
 	"nr-groth16/bn254"
 	"os"
 	"testing"
+
+	"github.com/consensys/gnark/constraint"
 )
 
 func TestMemoryInitUnmarshalReaderBlockTest(t *testing.T) {
+	type T = *bn254.BN254Field
+	type E = constraint.U64
 	file, err := os.Open("../../binaries/opcodes/memory_init/memory_init_memory_block.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 	// read the encoded call type before reading the actual content
 	shr.ParseThrough32bits(t, file)
-	var opcode MemoryInit[*bn254.BN254Field]
+	var opcode MemoryInit[T, E]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
 	}
 
-	expectedOpcode := MemoryInit[*bn254.BN254Field]{
+	expectedOpcode := MemoryInit[T, E]{
 		BlockType: ACIRMemoryBlockMemory,
 		BlockID:   0,
 		Init:      []shr.Witness{},
@@ -34,18 +38,20 @@ func TestMemoryInitUnmarshalReaderBlockTest(t *testing.T) {
 }
 
 func TestMemoryInitUnmarshalReaderCallDataTest(t *testing.T) {
+	type T = *bn254.BN254Field
+	type E = constraint.U64
 	file, err := os.Open("../../binaries/opcodes/memory_init/memory_init_calldata.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 	// read the encoded call type before reading the actual content
 	shr.ParseThrough32bits(t, file)
-	var opcode MemoryInit[*bn254.BN254Field]
+	var opcode MemoryInit[T, E]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
 	}
 
-	expectedOpcode := MemoryInit[*bn254.BN254Field]{
+	expectedOpcode := MemoryInit[T, E]{
 		BlockType: ACIRMemoryBlockCallData,
 		BlockID:   1,
 		Init:      []shr.Witness{0, 1, 2},
@@ -61,6 +67,8 @@ func TestMemoryInitUnmarshalReaderCallDataTest(t *testing.T) {
 }
 
 func TestMemoryInitUnmarshalReaderReturnDataTest(t *testing.T) {
+	type T = *bn254.BN254Field
+	type E = constraint.U64
 	file, err := os.Open("../../binaries/opcodes/memory_init/memory_init_return_data.bin")
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
@@ -70,12 +78,12 @@ func TestMemoryInitUnmarshalReaderReturnDataTest(t *testing.T) {
 	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
 		t.Fatal("was not able to read type")
 	}
-	var opcode MemoryInit[*bn254.BN254Field]
+	var opcode MemoryInit[T, E]
 	if err := opcode.UnmarshalReader(file); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
 	}
 
-	expectedOpcode := MemoryInit[*bn254.BN254Field]{
+	expectedOpcode := MemoryInit[T, E]{
 		BlockType: ACIRMemoryBlockReturnData,
 		BlockID:   2,
 		Init:      []shr.Witness{0, 1, 2},
