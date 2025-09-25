@@ -1,6 +1,7 @@
 package acir
 
 import (
+	"fmt"
 	"nr-groth16/bn254"
 	"testing"
 
@@ -106,6 +107,14 @@ func TestACIRSHA256Hash(t *testing.T) {
 	)
 }
 
+func TestACIRBlake2s(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/blake2s/target/blake2s.json",
+		"../noir-samples/black_box_functions/blake2s/target/blake2s.gz",
+	)
+}
+
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
@@ -136,7 +145,7 @@ func testProveAndVerify(t *testing.T, acirPath string, witnessPath string) {
 	if err != nil {
 		t.Fatalf("Failed to compile ACIR: %v", err)
 	}
-
+	fmt.Println(ccs.GetNbConstraints())
 	pk, vk, err := groth16.Setup(ccs)
 	if err != nil {
 		t.Fatalf("Failed to setup Groth16: %v", err)
