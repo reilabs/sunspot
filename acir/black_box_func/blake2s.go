@@ -110,7 +110,7 @@ func Blake2Permute(api frontend.API, uapi *uints.BinaryField[uints.U32], data []
 			}
 		}
 	}
-	h, err = F(api, uapi, h, data[len(data)-1], uints.NewU64(3), true)
+	h, err = F(api, uapi, h, data[len(data)-1], uints.NewU64(uint64(ll)), true)
 	if err != nil {
 		return nil, fmt.Errorf("error in the final F function in blake 2: %s", err)
 	}
