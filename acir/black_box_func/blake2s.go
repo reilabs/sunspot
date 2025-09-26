@@ -60,7 +60,6 @@ func (a *Blake2s[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return tree != nil
 }
 
-// Define builds the circuit constraints.
 func (a *Blake2s[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.New[uints.U32](api)
 	if err != nil {
@@ -161,20 +160,6 @@ func F(api frontend.API, uapi *uints.BinaryField[uints.U32], h []uints.U32, m []
 	return h[0:8], nil
 }
 
-// FUNCTION G( v[0..15], a, b, c, d, x, y )
-// |
-// |   v[a] := (v[a] + v[b] + x) mod 2**w
-// |   v[d] := (v[d] ^ v[a]) >>> R1
-// |   v[c] := (v[c] + v[d])     mod 2**w
-// |   v[b] := (v[b] ^ v[c]) >>> R2
-// |   v[a] := (v[a] + v[b] + y) mod 2**w
-// |   v[d] := (v[d] ^ v[a]) >>> R3
-// |   v[c] := (v[c] + v[d])     mod 2**w
-// |   v[b] := (v[b] ^ v[c]) >>> R4
-// |
-// |   RETURN v[0..15]
-// |
-// END FUNCTION.
 func G(uapi *uints.BinaryField[uints.U32], v []uints.U32, a, b, c, d uint32, x, y uints.U32) []uints.U32 {
 	v[a] = uapi.Add(v[a], v[b], x)
 	v[d] = RightRotation(uapi, uapi.Xor(v[d], v[a]), 16)
@@ -203,7 +188,7 @@ func LshiftU32(bf *uints.BinaryField[uints.U32], a uints.U32, c int) uints.U32 {
 		return uints.NewU32(0)
 	}
 	rot := bf.Lrot(a, c)
-	mask := ^((uint32(1) << c) - 1) // upper (32-c) bits = 1
+	mask := ^((uint32(1) << c) - 1)
 	return bf.And(rot, uints.NewU32(mask))
 }
 
@@ -235,7 +220,7 @@ func GetIV() []uints.U32 {
 
 // GetSigma returns the SIGMA slice for a given round
 func GetSigma(round int) []uint8 {
-	idx := round % len(SIGMA) // wrap around if round >= 10
+	idx := round % len(SIGMA)
 	result := make([]uint8, len(SIGMA[idx]))
 	copy(result, SIGMA[idx])
 	return result
@@ -247,7 +232,6 @@ func SplitIntoBlocks16(uapi_32 *uints.BinaryField[uints.U32], data []uints.U8) [
 	const wordsPerBlock = 16
 	const bytesPerBlock = wordsPerBlock * 4
 
-	// Round up to nearest multiple of 64
 	paddedLen := ((len(data) + bytesPerBlock - 1) / bytesPerBlock) * bytesPerBlock
 	padded := make([]uints.U8, paddedLen)
 	copy(padded, data)
@@ -260,10 +244,10 @@ func SplitIntoBlocks16(uapi_32 *uints.BinaryField[uints.U32], data []uints.U8) [
 			base := i*bytesPerBlock + j*4
 
 			word := uapi_32.PackMSB(
-				getByte(padded, base+3), // least significant
+				getByte(padded, base+3),
 				getByte(padded, base+2),
 				getByte(padded, base+1),
-				getByte(padded, base), // most significant
+				getByte(padded, base),
 			)
 			block[j] = word
 		}
@@ -273,7 +257,6 @@ func SplitIntoBlocks16(uapi_32 *uints.BinaryField[uints.U32], data []uints.U8) [
 	return blocks
 }
 
-// helper: safe byte fetch
 func getByte(data []uints.U8, idx int) uints.U8 {
 	if idx < 0 || idx >= len(data) || data[idx].Val == nil {
 		return uints.NewU8(0)
