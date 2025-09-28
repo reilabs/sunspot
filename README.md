@@ -11,8 +11,7 @@ This project provides a Noir interface for the gnark library, allowing Noir prog
 |AND|Yes|
 |XOR|Yes|
 |Range|Yes|
-|SHA256Hash|No|
-|Blake2s|No|
+|Blake2s|Yes|
 |Blake3|No|
 |SchnorrVerify|No|
 |PedersenCommitment|No|
@@ -24,5 +23,4 @@ This project provides a Noir interface for the gnark library, allowing Noir prog
 |KeccakF1600|Yes|
 |RecursiveAggregation|No|
 |EmbeddedCurveAdd|No|
-|Poseidon2Permutation|No|
 |SHA256Compression|Yes|
