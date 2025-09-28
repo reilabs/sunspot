@@ -106,6 +106,14 @@ func TestACIRSHA256Hash(t *testing.T) {
 	)
 }
 
+func TestACIRBlake2s(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/blake2s/target/blake2s.json",
+		"../noir-samples/black_box_functions/blake2s/target/blake2s.gz",
+	)
+}
+
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,

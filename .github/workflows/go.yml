@@ -73,6 +73,9 @@ jobs:
          cd ../sha256_hash
         nargo compile
         nargo execute
+        cd ../blake2s
+        nargo compile
+        nargo execute
         cd ../../memory
         nargo compile
         nargo execute
