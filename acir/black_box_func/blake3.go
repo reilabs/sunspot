@@ -71,7 +71,46 @@ func (a *Blake3[T, E]) Equals(other BlackBoxFunction[E]) bool {
 }
 
 func (a *Blake3[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
-	panic("not yet implemented")
+	bytesApi, err := uints.NewBytes(api)
+	if err != nil {
+		return fmt.Errorf("unable to create 64 bit operation API")
+	}
+
+	uapi, err := uints.NewBinaryField[uints.U32](api)
+	if err != nil {
+		return fmt.Errorf("unable to create 32 bit operation API")
+	}
+
+	uapi64, err := uints.NewBinaryField[uints.U64](api)
+	if err != nil {
+		return fmt.Errorf("unable to create 64 bit operation API")
+	}
+
+	data := make([]uints.U8, len(a.Inputs))
+
+	for i := range len(a.Inputs) {
+		input_var, err := a.Inputs[i].ToVariable(witnesses)
+		if err != nil {
+			return fmt.Errorf("blake input %d not found in witness map", i)
+		}
+		data[i] = bytesApi.ValueOf(input_var)
+	}
+	hasher := NewHasher()
+
+	hasher.Update(api, *uapi, *uapi64, data)
+	zeroByte := uints.NewU8(0)
+	output := make([]uints.U8, 32)
+
+	for i := range output {
+		output[i] = zeroByte
+	}
+
+	hasher.Finalize(api, *uapi, output)
+
+	for i := range 32 {
+		bytesApi.AssertIsEqual(bytesApi.ValueOf(witnesses[a.Outputs[i]]), output[i])
+	}
+	return nil
 }
 
 func (a *Blake3[T, E]) FillWitnessTree(tree *btree.BTree) bool {
