@@ -15,7 +15,7 @@ import (
 const (
 	OUT_LEN   = 32
 	BLOCK_LEN = 64
-	CHUNK_LEN = 102
+	CHUNK_LEN = 1024
 )
 
 const (
@@ -122,7 +122,9 @@ func Blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]ui
 	var v [16]uints.U32
 	var ret [8]uints.U32
 	uapi64, err := uints.NewBinaryField[uints.U64](api)
-
+	for i := range m {
+		api.Println(uapi.ToValue(m[i]))
+	}
 	if err != nil {
 		return ret, fmt.Errorf("unable to create 64 bit operation api in blake3")
 	}
@@ -139,6 +141,10 @@ func Blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]ui
 	v[13] = upperBytes
 	v[14] = len
 	v[15] = flags
+	api.Println("completed v")
+	for i := range v {
+		api.Println(uapi.ToValue(v[i]))
+	}
 
 	for range 7 {
 		v = G(&uapi, v, 0, 4, 8, 12, m[0], m[1])
@@ -199,7 +205,7 @@ func (o *Output) RootOutputBytes(api frontend.API, uapi uints.BinaryField[uints.
 		if end > len(out) {
 			end = len(out)
 		}
-		words, err := Blake3Compress(api, uapi, o.inputChainingValue, o.blockWords, uints.NewU64(outputBlockCounter), o.blockLen, uapi.Or(o.flags, uints.NewU32(8)))
+		words, err := Blake3Compress(api, uapi, o.inputChainingValue, o.blockWords, uints.NewU64(outputBlockCounter), o.blockLen, uapi.Or(o.flags, uints.NewU32(ROOT)))
 		if err != nil {
 			return err
 		}
@@ -232,7 +238,7 @@ func (c *ChunkState) Len() int {
 }
 func (c *ChunkState) startFlag() uints.U32 {
 	if c.blocksCompressed == 0 {
-		return uints.NewU32(1)
+		return uints.NewU32(CHUNK_START)
 	}
 	return uints.NewU32(0)
 }
@@ -270,20 +276,19 @@ func (c *ChunkState) Update(api frontend.API, uapi uints.BinaryField[uints.U32],
 func (c *ChunkState) Output(uapi uints.BinaryField[uints.U32]) *Output {
 	var blockWords [16]uints.U32
 	for i := range blockWords {
-		fmt.Println(i)
 		blockWords[i] = uapi.PackLSB(c.block[4*i : 4*i+4]...)
 	}
-	return &Output{inputChainingValue: c.chainingValue, blockWords: blockWords, counter: c.chunkCounter, blockLen: uints.NewU32(uint32(c.blockLen)), flags: uapi.Or(c.flags, c.startFlag(), uints.NewU32(1))}
+	return &Output{inputChainingValue: c.chainingValue, blockWords: blockWords, counter: c.chunkCounter, blockLen: uints.NewU32(uint32(c.blockLen)), flags: uapi.Or(c.flags, c.startFlag(), uints.NewU32(CHUNK_END))}
 }
 
 func parentOutput(uapi uints.BinaryField[uints.U32], left, right [8]uints.U32, keyWords [8]uints.U32, flags uints.U32) *Output {
 	var blockWords [16]uints.U32
 	copy(blockWords[0:8], left[:])
 	copy(blockWords[8:16], right[:])
-	return &Output{inputChainingValue: keyWords, blockWords: blockWords, counter: 0, blockLen: uints.NewU32(BLOCK_LEN), flags: uapi.Xor(uints.NewU32(PARENT), flags)}
+	return &Output{inputChainingValue: keyWords, blockWords: blockWords, counter: 0, blockLen: uints.NewU32(BLOCK_LEN), flags: uapi.Or(uints.NewU32(PARENT), flags)}
 }
-func parentCV(api frontend.API, uapi uints.BinaryField[uints.U32], left, right [8]uints.U32, keyWords [8]uints.U32, flags uints.U32) ([8]uints.U32, error) {
 
+func parentCV(api frontend.API, uapi uints.BinaryField[uints.U32], left, right [8]uints.U32, keyWords [8]uints.U32, flags uints.U32) ([8]uints.U32, error) {
 	chainingValue, err := parentOutput(uapi, left, right, keyWords, flags).ChainingValue(api, uapi)
 	if err != nil {
 		return chainingValue, err
@@ -313,7 +318,7 @@ func (h *Hasher) popStack() [8]uints.U32 {
 	h.cvStackLen--
 	return h.cvStack[h.cvStackLen]
 }
-func (h *Hasher) addChunkChainingValue(api frontend.API, uapi uints.BinaryField[uints.U32], uapi_64 uints.BinaryField[uints.U64], newCV [8]uints.U32, totalChunks uint64) error {
+func (h *Hasher) addChunkChainingValue(api frontend.API, uapi uints.BinaryField[uints.U32], newCV [8]uints.U32, totalChunks uint64) error {
 	for totalChunks&1 == 0 {
 		cvSlice, err := parentCV(api, uapi, h.popStack(), newCV, h.keyWords, h.flags)
 		if err != nil {
@@ -334,11 +339,12 @@ func (h *Hasher) Update(api frontend.API, uapi uints.BinaryField[uints.U32], uap
 				return err
 			}
 			totalChunks := h.chunkState.chunkCounter + 1
-			h.addChunkChainingValue(api, uapi, uapi_64, [8]uints.U32(chunkCV), totalChunks)
+			h.addChunkChainingValue(api, uapi, [8]uints.U32(chunkCV), totalChunks)
 			h.chunkState = NewChunkState(h.keyWords, totalChunks, h.flags)
 		}
 		want := CHUNK_LEN - h.chunkState.Len()
 		take := want
+
 		if take > len(input) {
 			take = len(input)
 		}
