@@ -243,7 +243,7 @@ func (c *ChunkState) Update(api frontend.API, uapi uints.BinaryField[uints.U32],
 		if c.blockLen == BLOCK_LEN {
 			var blockWords [16]uints.U32
 			for i := range blockWords {
-				blockWords[i] = uapi.PackLSB(c.block[4*i : 4*8+4]...)
+				blockWords[i] = uapi.PackLSB(c.block[4*i : 4*i+4]...)
 			}
 			c.chainingValue, err = Blake3Compress(api, uapi, c.chainingValue, blockWords, uints.NewU64(c.chunkCounter), uints.NewU32(BLOCK_LEN), uapi.Or(c.flags, c.startFlag()))
 			if err != nil {
