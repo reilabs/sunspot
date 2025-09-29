@@ -117,15 +117,19 @@ func Blake2Permute(api frontend.API, uapi *uints.BinaryField[uints.U32], data []
 
 }
 
-func F(api frontend.API, uapi *uints.BinaryField[uints.U32], h []uints.U32, m []uints.U32, t uints.U64, f bool) ([]uints.U32, error) {
-	v := make([]uints.U32, 16)
+func F(api frontend.API, uapi *uints.BinaryField[uints.U32], h [8]uints.U32, m []uints.U32, t uints.U64, f bool) ([8]uints.U32, error) {
+	var v [16]uints.U32
+	var ret [8]uints.U32
 	uapi64, err := uints.NewBinaryField[uints.U64](api)
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to create 64 bit operation api in blake2s")
+		return ret, fmt.Errorf("unable to create 64 bit operation api in blake2s")
 	}
 	copy(v[0:8], h[0:8])
-	copy(v[8:16], GetIV())
+	IV := GetIV()
+	for i := range IV {
+		v[i+8] = IV[i]
+	}
 
 	tBytes := uapi64.UnpackLSB(t)
 	lowerBytes := uapi.PackLSB(tBytes[0:4]...)
@@ -156,14 +160,15 @@ func F(api frontend.API, uapi *uints.BinaryField[uints.U32], h []uints.U32, m []
 	for i := 0; i < 8; i++ {
 		h[i] = uapi.Xor(h[i], v[i], v[i+8])
 	}
-
-	return h[0:8], nil
+	for i := range ret {
+		ret[i] = h[i]
+	}
+	return ret, nil
 }
 
-func G(uapi *uints.BinaryField[uints.U32], v []uints.U32, a, b, c, d uint32, x, y uints.U32) []uints.U32 {
+func G(uapi *uints.BinaryField[uints.U32], v [16]uints.U32, a, b, c, d uint32, x, y uints.U32) [16]uints.U32 {
 	v[a] = uapi.Add(v[a], v[b], x)
 	v[d] = RightRotation(uapi, uapi.Xor(v[d], v[a]), 16)
-
 	v[c] = uapi.Add(v[c], v[d])
 	v[b] = RightRotation(uapi, uapi.Xor(v[b], v[c]), 12)
 
@@ -205,8 +210,8 @@ var SIGMA = [][]uint8{
 	{10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0},
 }
 
-func GetIV() []uints.U32 {
-	return uints.NewU32Array([]uint32{
+func GetIV() [8]uints.U32 {
+	return [8]uints.U32(uints.NewU32Array([]uint32{
 		0x6A09E667,
 		0xBB67AE85,
 		0x3C6EF372,
@@ -215,7 +220,7 @@ func GetIV() []uints.U32 {
 		0x9B05688C,
 		0x1F83D9AB,
 		0x5BE0CD19,
-	})
+	}))
 }
 
 // GetSigma returns the SIGMA slice for a given round

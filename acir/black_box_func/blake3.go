@@ -95,6 +95,7 @@ func (a *Blake3[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness
 		}
 		data[i] = bytesApi.ValueOf(input_var)
 	}
+	data = PadTo64Bytes(data)
 	hasher := NewHasher()
 
 	hasher.Update(api, *uapi, *uapi64, data)
@@ -117,16 +118,19 @@ func (a *Blake3[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return tree != nil
 }
 
-func Blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h, m []uints.U32, t uints.U64, len, flags uints.U32) ([]uints.U32, error) {
-
-	v := make([]uints.U32, 16)
+func Blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]uints.U32, m [16]uints.U32, t uints.U64, len, flags uints.U32) ([8]uints.U32, error) {
+	var v [16]uints.U32
+	var ret [8]uints.U32
 	uapi64, err := uints.NewBinaryField[uints.U64](api)
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to create 64 bit operation api in blake3")
+		return ret, fmt.Errorf("unable to create 64 bit operation api in blake3")
 	}
 	copy(v[0:8], h[0:8])
-	copy(v[8:11], GetIV()[0:3])
+	IV := GetIV()
+	for i := range 4 {
+		v[8+i] = IV[i]
+	}
 
 	tBytes := uapi64.UnpackLSB(t)
 	lowerBytes := uapi.PackLSB(tBytes[0:4]...)
@@ -154,16 +158,19 @@ func Blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h, m []
 		v[i+8] = uapi.Xor(v[i+8], h[i])
 	}
 
-	return v, nil
+	for i := range ret {
+		ret[i] = v[i]
+	}
+	return ret, nil
 
 }
 
-func permuteMessage(input []uints.U32) []uints.U32 {
+func permuteMessage(input [16]uints.U32) [16]uints.U32 {
 	perm := []int{2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8}
 	if len(input) != len(perm) {
 		panic("input length must be 16")
 	}
-	output := make([]uints.U32, 16)
+	var output [16]uints.U32
 	for i, p := range perm {
 		output[p] = input[i]
 	}
@@ -171,17 +178,17 @@ func permuteMessage(input []uints.U32) []uints.U32 {
 }
 
 type Output struct {
-	inputChainingValue []uints.U32
-	blockWords         []uints.U32
+	inputChainingValue [8]uints.U32
+	blockWords         [16]uints.U32
 	counter            uint64
 	blockLen           uints.U32
 	flags              uints.U32
 }
 
-func (o *Output) ChainingValue(api frontend.API, uapi uints.BinaryField[uints.U32]) ([]uints.U32, error) {
+func (o *Output) ChainingValue(api frontend.API, uapi uints.BinaryField[uints.U32]) ([8]uints.U32, error) {
 	output, err := Blake3Compress(api, uapi, o.inputChainingValue, o.blockWords, uints.NewU64(o.counter), o.blockLen, o.flags)
 	if err != nil {
-		return nil, err
+		return output, err
 	}
 	return output, nil
 }
@@ -209,7 +216,7 @@ func (o *Output) RootOutputBytes(api frontend.API, uapi uints.BinaryField[uints.
 
 // ---------------- ChunkState ----------------
 type ChunkState struct {
-	chainingValue    []uints.U32
+	chainingValue    [8]uints.U32
 	chunkCounter     uint64
 	block            [BLOCK_LEN]uints.U8
 	blockLen         int
@@ -217,7 +224,7 @@ type ChunkState struct {
 	flags            uints.U32
 }
 
-func NewChunkState(keyWords []uints.U32, chunkCounter uint64, flags uints.U32) ChunkState {
+func NewChunkState(keyWords [8]uints.U32, chunkCounter uint64, flags uints.U32) ChunkState {
 	return ChunkState{chainingValue: keyWords, chunkCounter: chunkCounter, flags: flags}
 }
 func (c *ChunkState) Len() int {
@@ -238,7 +245,7 @@ func (c *ChunkState) Update(api frontend.API, uapi uints.BinaryField[uints.U32],
 			for i := range blockWords {
 				blockWords[i] = uapi.PackLSB(c.block[4*i : 4*8+4]...)
 			}
-			c.chainingValue, err = Blake3Compress(api, uapi, c.chainingValue, blockWords[:], uints.NewU64(c.chunkCounter), uints.NewU32(BLOCK_LEN), uapi.Or(c.flags, c.startFlag()))
+			c.chainingValue, err = Blake3Compress(api, uapi, c.chainingValue, blockWords, uints.NewU64(c.chunkCounter), uints.NewU32(BLOCK_LEN), uapi.Or(c.flags, c.startFlag()))
 			if err != nil {
 				return err
 			}
@@ -263,22 +270,23 @@ func (c *ChunkState) Update(api frontend.API, uapi uints.BinaryField[uints.U32],
 func (c *ChunkState) Output(uapi uints.BinaryField[uints.U32]) *Output {
 	var blockWords [16]uints.U32
 	for i := range blockWords {
-		blockWords[i] = uapi.PackLSB(c.block[4*i : 4*8+4]...)
+		fmt.Println(i)
+		blockWords[i] = uapi.PackLSB(c.block[4*i : 4*i+4]...)
 	}
-	return &Output{inputChainingValue: c.chainingValue, blockWords: blockWords[:], counter: c.chunkCounter, blockLen: uints.NewU32(uint32(c.blockLen)), flags: uapi.Or(c.flags, c.startFlag(), uints.NewU32(1))}
+	return &Output{inputChainingValue: c.chainingValue, blockWords: blockWords, counter: c.chunkCounter, blockLen: uints.NewU32(uint32(c.blockLen)), flags: uapi.Or(c.flags, c.startFlag(), uints.NewU32(1))}
 }
 
 func parentOutput(uapi uints.BinaryField[uints.U32], left, right [8]uints.U32, keyWords [8]uints.U32, flags uints.U32) *Output {
 	var blockWords [16]uints.U32
 	copy(blockWords[0:8], left[:])
 	copy(blockWords[8:16], right[:])
-	return &Output{inputChainingValue: keyWords[:], blockWords: blockWords[:], counter: 0, blockLen: uints.NewU32(BLOCK_LEN), flags: uapi.Xor(uints.NewU32(PARENT), flags)}
+	return &Output{inputChainingValue: keyWords, blockWords: blockWords, counter: 0, blockLen: uints.NewU32(BLOCK_LEN), flags: uapi.Xor(uints.NewU32(PARENT), flags)}
 }
-func parentCV(api frontend.API, uapi uints.BinaryField[uints.U32], left, right [8]uints.U32, keyWords [8]uints.U32, flags uints.U32) ([]uints.U32, error) {
+func parentCV(api frontend.API, uapi uints.BinaryField[uints.U32], left, right [8]uints.U32, keyWords [8]uints.U32, flags uints.U32) ([8]uints.U32, error) {
 
 	chainingValue, err := parentOutput(uapi, left, right, keyWords, flags).ChainingValue(api, uapi)
 	if err != nil {
-		return nil, err
+		return chainingValue, err
 	}
 	return chainingValue, nil
 }
@@ -327,7 +335,7 @@ func (h *Hasher) Update(api frontend.API, uapi uints.BinaryField[uints.U32], uap
 			}
 			totalChunks := h.chunkState.chunkCounter + 1
 			h.addChunkChainingValue(api, uapi, uapi_64, [8]uints.U32(chunkCV), totalChunks)
-			h.chunkState = NewChunkState(h.keyWords[:], totalChunks, h.flags)
+			h.chunkState = NewChunkState(h.keyWords, totalChunks, h.flags)
 		}
 		want := CHUNK_LEN - h.chunkState.Len()
 		take := want
@@ -351,4 +359,20 @@ func (h *Hasher) Finalize(api frontend.API, uapi uints.BinaryField[uints.U32], o
 	}
 	output.RootOutputBytes(api, uapi, out)
 	return nil
+}
+
+func PadTo64Bytes(data []uints.U8) []uints.U8 {
+
+	paddedLen := ((len(data) + BLOCK_LEN - 1) / BLOCK_LEN) * BLOCK_LEN
+
+	if len(data) == paddedLen {
+		return append([]uints.U8(nil), data...)
+	}
+
+	padded := make([]uints.U8, paddedLen)
+	for i := range padded {
+		padded[i] = getByte(data, i)
+	}
+
+	return padded
 }
