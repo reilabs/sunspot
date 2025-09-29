@@ -117,7 +117,7 @@ func (a *Blake3[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return tree != nil
 }
 
-func Blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]uints.U32, m [16]uints.U32, t uints.U64, len, flags uints.U32) ([8]uints.U32, error) {
+func blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]uints.U32, m [16]uints.U32, t uints.U64, len, flags uints.U32) ([8]uints.U32, error) {
 	var v [16]uints.U32
 	var ret [8]uints.U32
 	uapi64, err := uints.NewBinaryField[uints.U64](api)
@@ -184,7 +184,7 @@ type Output struct {
 }
 
 func (o *Output) ChainingValue(api frontend.API, uapi uints.BinaryField[uints.U32]) ([8]uints.U32, error) {
-	output, err := Blake3Compress(api, uapi, o.inputChainingValue, o.blockWords, uints.NewU64(o.counter), o.blockLen, o.flags)
+	output, err := blake3Compress(api, uapi, o.inputChainingValue, o.blockWords, uints.NewU64(o.counter), o.blockLen, o.flags)
 	if err != nil {
 		return output, err
 	}
@@ -198,8 +198,8 @@ func (o *Output) RootOutputBytes(api frontend.API, uapi uints.BinaryField[uints.
 			end = len(out)
 		}
 
-		o.blockWords = PadTo16Words(o.blockWords[:])
-		words, err := Blake3Compress(api, uapi, o.inputChainingValue, o.blockWords, uints.NewU64(outputBlockCounter), o.blockLen, uapi.Or(o.flags, uints.NewU32(ROOT)))
+		o.blockWords = padTo16Words(o.blockWords[:])
+		words, err := blake3Compress(api, uapi, o.inputChainingValue, o.blockWords, uints.NewU64(outputBlockCounter), o.blockLen, uapi.Or(o.flags, uints.NewU32(ROOT)))
 		if err != nil {
 			return err
 		}
@@ -224,7 +224,7 @@ type ChunkState struct {
 	flags            uints.U32
 }
 
-func NewChunkState(keyWords [8]uints.U32, chunkCounter uint64, flags uints.U32) ChunkState {
+func newChunkState(keyWords [8]uints.U32, chunkCounter uint64, flags uints.U32) ChunkState {
 	return ChunkState{chainingValue: keyWords, chunkCounter: chunkCounter, flags: flags}
 }
 func (c *ChunkState) Len() int {
@@ -237,7 +237,7 @@ func (c *ChunkState) startFlag() uints.U32 {
 	return uints.NewU32(0)
 }
 
-func (c *ChunkState) Update(api frontend.API, uapi uints.BinaryField[uints.U32], input []uints.U8) error {
+func (c *ChunkState) update(api frontend.API, uapi uints.BinaryField[uints.U32], input []uints.U8) error {
 	var err error
 	for len(input) > 0 {
 		if c.blockLen == BLOCK_LEN {
@@ -245,7 +245,7 @@ func (c *ChunkState) Update(api frontend.API, uapi uints.BinaryField[uints.U32],
 			for i := range blockWords {
 				blockWords[i] = uapi.PackLSB(c.block[4*i : 4*i+4]...)
 			}
-			c.chainingValue, err = Blake3Compress(api, uapi, c.chainingValue, blockWords, uints.NewU64(c.chunkCounter), uints.NewU32(BLOCK_LEN), uapi.Or(c.flags, c.startFlag()))
+			c.chainingValue, err = blake3Compress(api, uapi, c.chainingValue, blockWords, uints.NewU64(c.chunkCounter), uints.NewU32(BLOCK_LEN), uapi.Or(c.flags, c.startFlag()))
 			if err != nil {
 				return err
 			}
@@ -267,7 +267,7 @@ func (c *ChunkState) Update(api frontend.API, uapi uints.BinaryField[uints.U32],
 	return nil
 }
 
-func (c *ChunkState) Output(uapi uints.BinaryField[uints.U32]) *Output {
+func (c *ChunkState) output(uapi uints.BinaryField[uints.U32]) *Output {
 	var blockWords [16]uints.U32
 	for i := range blockWords {
 		blockWords[i] = uapi.PackLSB(c.block[4*i : 4*i+4]...)
@@ -302,7 +302,7 @@ type Hasher struct {
 func NewHasher() *Hasher {
 	IV := GetIV()
 	return &Hasher{
-		chunkState: NewChunkState(IV, 0, uints.NewU32(0)), keyWords: [8]uints.U32(IV), flags: uints.NewU32(0)}
+		chunkState: newChunkState(IV, 0, uints.NewU32(0)), keyWords: [8]uints.U32(IV), flags: uints.NewU32(0)}
 }
 func (h *Hasher) pushStack(cv [8]uints.U32) {
 	h.cvStack[h.cvStackLen] = cv
@@ -328,13 +328,13 @@ func (h *Hasher) addChunkChainingValue(api frontend.API, uapi uints.BinaryField[
 func (h *Hasher) Update(api frontend.API, uapi uints.BinaryField[uints.U32], uapi_64 uints.BinaryField[uints.U64], input []uints.U8) error {
 	for len(input) > 0 {
 		if h.chunkState.Len() == CHUNK_LEN {
-			chunkCV, err := h.chunkState.Output(uapi).ChainingValue(api, uapi)
+			chunkCV, err := h.chunkState.output(uapi).ChainingValue(api, uapi)
 			if err != nil {
 				return err
 			}
 			totalChunks := h.chunkState.chunkCounter + 1
 			h.addChunkChainingValue(api, uapi, [8]uints.U32(chunkCV), totalChunks)
-			h.chunkState = NewChunkState(h.keyWords, totalChunks, h.flags)
+			h.chunkState = newChunkState(h.keyWords, totalChunks, h.flags)
 		}
 		want := CHUNK_LEN - h.chunkState.Len()
 		take := want
@@ -342,14 +342,14 @@ func (h *Hasher) Update(api frontend.API, uapi uints.BinaryField[uints.U32], uap
 		if take > len(input) {
 			take = len(input)
 		}
-		h.chunkState.Update(api, uapi, input[:take])
+		h.chunkState.update(api, uapi, input[:take])
 		input = input[take:]
 	}
 	return nil
 }
 
 func (h *Hasher) Finalize(api frontend.API, uapi uints.BinaryField[uints.U32], out []uints.U8) error {
-	output := h.chunkState.Output(uapi)
+	output := h.chunkState.output(uapi)
 	for i := h.cvStackLen - 1; i >= 0; i-- {
 		chainingValue, err := output.ChainingValue(api, uapi)
 		if err != nil {
@@ -361,7 +361,7 @@ func (h *Hasher) Finalize(api frontend.API, uapi uints.BinaryField[uints.U32], o
 	return nil
 }
 
-func PadTo16Words(data []uints.U32) [16]uints.U32 {
+func padTo16Words(data []uints.U32) [16]uints.U32 {
 	var padded [16]uints.U32
 
 	// Fill from data
