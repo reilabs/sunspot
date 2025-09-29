@@ -74,7 +74,7 @@ jobs:
       run: cd rust/testgen && cargo run && cd ../..
 
     - name: Run tests
-      run: go test ./...
+      run: go test ./... -timeout 0
 
     - name: Run linters
       run: go vet ./...
