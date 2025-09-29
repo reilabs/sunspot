@@ -114,6 +114,13 @@ func TestACIRBlake2s(t *testing.T) {
 	)
 }
 
+func TestACIRBlake3(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/blake3/target/blake3.json",
+		"../noir-samples/black_box_functions/blake3/target/blake3.gz",
+	)
+}
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
