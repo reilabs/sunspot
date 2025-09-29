@@ -95,7 +95,6 @@ func (a *Blake3[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness
 		}
 		data[i] = bytesApi.ValueOf(input_var)
 	}
-	data = PadTo64Bytes(data)
 	hasher := NewHasher()
 
 	hasher.Update(api, *uapi, *uapi64, data)
@@ -122,9 +121,6 @@ func Blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]ui
 	var v [16]uints.U32
 	var ret [8]uints.U32
 	uapi64, err := uints.NewBinaryField[uints.U64](api)
-	for i := range m {
-		api.Println(uapi.ToValue(m[i]))
-	}
 	if err != nil {
 		return ret, fmt.Errorf("unable to create 64 bit operation api in blake3")
 	}
@@ -141,10 +137,6 @@ func Blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]ui
 	v[13] = upperBytes
 	v[14] = len
 	v[15] = flags
-	api.Println("completed v")
-	for i := range v {
-		api.Println(uapi.ToValue(v[i]))
-	}
 
 	for range 7 {
 		v = G(&uapi, v, 0, 4, 8, 12, m[0], m[1])
@@ -155,7 +147,7 @@ func Blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]ui
 		v = G(&uapi, v, 0, 5, 10, 15, m[8], m[9])
 		v = G(&uapi, v, 1, 6, 11, 12, m[10], m[11])
 		v = G(&uapi, v, 2, 7, 8, 13, m[12], m[13])
-		v = G(&uapi, v, 3, 4, 9, 14, m[15], m[15])
+		v = G(&uapi, v, 3, 4, 9, 14, m[14], m[15])
 		m = permuteMessage(m)
 	}
 
@@ -178,7 +170,7 @@ func permuteMessage(input [16]uints.U32) [16]uints.U32 {
 	}
 	var output [16]uints.U32
 	for i, p := range perm {
-		output[p] = input[i]
+		output[i] = input[p]
 	}
 	return output
 }
@@ -205,6 +197,8 @@ func (o *Output) RootOutputBytes(api frontend.API, uapi uints.BinaryField[uints.
 		if end > len(out) {
 			end = len(out)
 		}
+
+		o.blockWords = PadTo16Words(o.blockWords[:])
 		words, err := Blake3Compress(api, uapi, o.inputChainingValue, o.blockWords, uints.NewU64(outputBlockCounter), o.blockLen, uapi.Or(o.flags, uints.NewU32(ROOT)))
 		if err != nil {
 			return err
@@ -367,18 +361,16 @@ func (h *Hasher) Finalize(api frontend.API, uapi uints.BinaryField[uints.U32], o
 	return nil
 }
 
-func PadTo64Bytes(data []uints.U8) []uints.U8 {
+func PadTo16Words(data []uints.U32) [16]uints.U32 {
+	var padded [16]uints.U32
 
-	paddedLen := ((len(data) + BLOCK_LEN - 1) / BLOCK_LEN) * BLOCK_LEN
-
-	if len(data) == paddedLen {
-		return append([]uints.U8(nil), data...)
+	// Fill from data
+	for i := 0; i < 16; i++ {
+		if data[i][0].Val == nil {
+			padded[i] = uints.NewU32(0)
+		} else {
+			padded[i] = data[i]
+		}
 	}
-
-	padded := make([]uints.U8, paddedLen)
-	for i := range padded {
-		padded[i] = getByte(data, i)
-	}
-
 	return padded
 }
