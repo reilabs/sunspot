@@ -1,5 +1,5 @@
 use std::hash::blake3;
-fn main(x:[u8; 86], y: [u8; 32] ) {
+fn main(x:[u8; 4197], y: [u8; 32] ) {
     let hash= blake3(x);
     assert(hash == y)
 }
