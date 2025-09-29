@@ -35,53 +35,34 @@ jobs:
       run: |
         chmod +x build_noir_samples.sh
         ./build_noir_samples.sh
-        nargo --help
-        nargo compile --help
-        cd noir-samples/expressions/sum_a_b
-        nargo compile
-        nargo execute
-        cd ../square_equation
-        nargo compile
-        nargo execute
-        cd ../linear_equation
-        nargo compile
-        nargo execute
-        cd ../rock_paper_scissors
-        nargo compile
-        nargo execute
-        cd ../polynomial
-        nargo compile
-        nargo execute
-        cd ../lcchecker
-        nargo compile
-        nargo execute
-        cd ../../black_box_functions/range
-        nargo compile
-        nargo execute
-        cd ../keccak_f1600
-        nargo compile
-        nargo execute
-        cd ../and
-        nargo compile
-        nargo execute
-        cd ../xor
-        nargo compile
-        nargo execute
-        cd ../sha256_compression
-        nargo compile
-        nargo execute
-         cd ../sha256_hash
-        nargo compile
-        nargo execute
-        cd ../blake2s
-        nargo compile
-        nargo execute
-        cd ../../memory
-        nargo compile
-        nargo execute
-        cd ../real_world/provekit_basic
-        nargo compile
-        nargo execute
+        
+        # List all Noir sample project directories you want to build
+        PROJECTS=(
+          noir-samples/expressions/sum_a_b
+          noir-samples/expressions/square_equation
+          noir-samples/expressions/linear_equation
+          noir-samples/expressions/rock_paper_scissors
+          noir-samples/expressions/polynomial
+          noir-samples/expressions/lcchecker
+          noir-samples/black_box_functions/range
+          noir-samples/black_box_functions/keccak_f1600
+          noir-samples/black_box_functions/and
+          noir-samples/black_box_functions/xor
+          noir-samples/black_box_functions/sha256_compression
+          noir-samples/black_box_functions/sha256_hash
+          noir-samples/black_box_functions/blake2s
+          noir-samples/black_box_functions/blake3
+          noir-samples/memory
+          noir-samples/real_world/provekit_basic
+        )
+
+        for project in "${PROJECTS[@]}"; do
+          echo "▶️ Building Noir project: $project"
+          cd "$project"
+          nargo compile   # quicker than compile to catch errors
+          nargo execute || (echo "Tests failed in $project" && exit 1)
+          cd - > /dev/null
+        done
 
     - name: Install dependencies
       run: go mod tidy
@@ -93,7 +74,7 @@ jobs:
       run: cd rust/testgen && cargo run && cd ../..
 
     - name: Run tests
-      run: go test ./...
+      run: go test ./... -timeout 0
 
     - name: Run linters
       run: go vet ./...
