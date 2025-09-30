@@ -2,11 +2,16 @@ package blackboxfunc
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/algebra/emulated/sw_emulated"
+	"github.com/consensys/gnark/std/math/bits"
+	"github.com/consensys/gnark/std/math/emulated"
+	"github.com/consensys/gnark/std/math/emulated/emparams"
 	"github.com/google/btree"
 )
 
@@ -58,6 +63,51 @@ func (a *EmbeddedCurveAdd[T, E]) Equals(other BlackBoxFunction[E]) bool {
 }
 
 func (a *EmbeddedCurveAdd[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+
+	curve, err := sw_emulated.New[emparams.BN254Fr, emparams.BN254Fr](api, sw_emulated.GetBN254Params())
+	if err != nil {
+		return fmt.Errorf("new curve: %w", err)
+	}
+	scalarField, err := emulated.NewField[emparams.BN254Fr](api)
+	if err != nil {
+		return err
+	}
+
+	// point1 := scalarField.NewElement(a.Input1[0].ToVariable(witnesses))
+	point1X, err := a.Input1[0].ToVariable(witnesses)
+	if err != nil {
+		return err
+	}
+
+	point1Y, err := a.Input1[1].ToVariable(witnesses)
+	if err != nil {
+		return err
+	}
+	point2X, err := a.Input2[0].ToVariable(witnesses)
+	if err != nil {
+		return err
+	}
+	point2Y, err := a.Input2[1].ToVariable(witnesses)
+	if err != nil {
+		return err
+	}
+
+	x := sw_emulated.AffinePoint[emparams.BN254Fr]{
+		X: *scalarField.NewElement(DecomposeTo4x64(api, point1X)),
+		Y: *scalarField.NewElement(DecomposeTo4x64(api, point1Y)),
+	}
+	y := sw_emulated.AffinePoint[emparams.BN254Fr]{
+		X: *scalarField.NewElement(DecomposeTo4x64(api, point2X)),
+		Y: *scalarField.NewElement(DecomposeTo4x64(api, point2Y)),
+	}
+
+	z := sw_emulated.AffinePoint[emparams.BN254Fr]{
+		X: *scalarField.NewElement(DecomposeTo4x64(api, witnesses[a.Outputs[0]])),
+		Y: *scalarField.NewElement(DecomposeTo4x64(api, witnesses[a.Outputs[1]])),
+	}
+
+	curve.AssertIsEqual(&z, curve.Add(&x, &y))
+
 	return nil
 }
 
@@ -78,4 +128,24 @@ func (a *EmbeddedCurveAdd[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 		tree.ReplaceOrInsert(output)
 	}
 	return true
+}
+
+// DecomposeTo4x54 decomposes x into 4 little-endian 64-bit limbs:
+func DecomposeTo4x64(api frontend.API, x frontend.Variable) []frontend.Variable {
+	const bitsPerLimb = 64
+	const nbLimbs = 4
+	limbs := make([]frontend.Variable, nbLimbs)
+
+	// Get 216 bits (little-endian) representing x
+	allBits := bits.ToBinary(api, x, bits.WithNbDigits(bitsPerLimb*nbLimbs))
+
+	// pack each chunk of 64 bits back into a limb
+	for i := 0; i < nbLimbs; i++ {
+		start := i * bitsPerLimb
+		end := start + bitsPerLimb
+		chunk := allBits[start:end] // little-endian chunk: least-significant bit first
+		limbs[i] = bits.FromBinary(api, chunk)
+	}
+
+	return limbs
 }
