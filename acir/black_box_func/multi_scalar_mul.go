@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"io"
 	shr "nr-groth16/acir/shared"
+	grumpkin "nr-groth16/sw-grumpkin"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
@@ -79,10 +80,64 @@ func (a *MultiScalarMul[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	return true
 }
 
-func (*MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+	points := make([]*grumpkin.G1Affine, len(a.Points)/3)
+
+	scalars := make([]interface{}, len(a.Scalars)/2)
+
+	for i := 0; i < len(a.Points); i += 3 {
+		pointX, err := a.Points[i].ToVariable(witnesses)
+		if err != nil {
+			return err
+		}
+
+		pointY, err := a.Points[i+1].ToVariable(witnesses)
+		if err != nil {
+			return err
+		}
+
+		point := grumpkin.G1Affine{
+			X: pointX,
+			Y: pointY,
+		}
+		points[i/3] = &point
+	}
+
+	for i := 0; i < len(a.Scalars); i += 2 {
+		scalar, err := a.Scalars[i].ToVariable(witnesses)
+		if err != nil {
+			return err
+		}
+		scalars[i/2] = scalar
+	}
+
+	output := grumpkin.G1Affine{
+		X: witnesses[a.Outputs[0]],
+		Y: witnesses[a.Outputs[1]],
+	}
+
+	constrained_output := grumpkin.MultiScalarMul(api, points, scalars)
+	output.AssertIsEqual(api, *constrained_output)
 	return nil
 }
 
-func (*MultiScalarMul[T, E]) FillWitnessTree(tree *btree.BTree) bool {
-	return tree != nil
+func (a *MultiScalarMul[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+	if tree == nil {
+		return false
+	}
+	for _, point := range a.Points {
+		if point.FunctionInputKind == 1 {
+			tree.ReplaceOrInsert(*point.Witness)
+		}
+	}
+
+	for _, scalar := range a.Scalars {
+		if scalar.FunctionInputKind == 1 {
+			tree.ReplaceOrInsert(*scalar.Witness)
+		}
+	}
+	for _, output := range a.Outputs {
+		tree.ReplaceOrInsert(output)
+	}
+	return true
 }
