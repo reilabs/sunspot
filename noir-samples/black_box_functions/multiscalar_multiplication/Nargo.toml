@@ -1,0 +1,6 @@
+[package]
+name = "multiscalar_multiplication"
+type = "bin"
+authors = [""]
+
+[dependencies]
