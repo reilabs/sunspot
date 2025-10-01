@@ -129,6 +129,13 @@ func TestACIREmbeddedCurveAdd(t *testing.T) {
 		"../noir-samples/black_box_functions/embedded_curve_add/target/embedded_curve_add.gz",
 	)
 }
+func TestACIRMultiscalarMultiplication(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/multiscalar_multiplication/target/multiscalar_multiplication.json",
+		"../noir-samples/black_box_functions/multiscalar_multiplication/target/multiscalar_multiplication.gz",
+	)
+}
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
