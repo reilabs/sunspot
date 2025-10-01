@@ -52,6 +52,7 @@ jobs:
           noir-samples/black_box_functions/sha256_hash
           noir-samples/black_box_functions/blake2s
           noir-samples/black_box_functions/blake3
+          noir-samples/black_box_functions/embedded_curve_add
           noir-samples/memory
           noir-samples/real_world/provekit_basic
         )
