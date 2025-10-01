@@ -121,6 +121,14 @@ func TestACIRBlake3(t *testing.T) {
 		"../noir-samples/black_box_functions/blake3/target/blake3.gz",
 	)
 }
+
+func TestACIREmbeddedCurveAdd(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/embedded_curve_add/target/embedded_curve_add.json",
+		"../noir-samples/black_box_functions/embedded_curve_add/target/embedded_curve_add.gz",
+	)
+}
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
