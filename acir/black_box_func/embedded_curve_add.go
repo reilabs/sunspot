@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math/big"
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -63,17 +64,27 @@ func (a *EmbeddedCurveAdd[T, E]) Equals(other BlackBoxFunction[E]) bool {
 }
 
 func (a *EmbeddedCurveAdd[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
-
-	curve, err := sw_emulated.New[emparams.BN254Fr, emparams.BN254Fr](api, sw_emulated.GetBN254Params())
+	gy, ok := new(big.Int).SetString("17631683881184975370165255887551781615748388533673675138860", 10)
+	if !ok {
+		return fmt.Errorf("unable to initialise generator y value for grumpkin curve")
+	}
+	grumpkin_params := sw_emulated.CurveParams{
+		A:  big.NewInt(0),
+		B:  big.NewInt(-17),
+		Gx: big.NewInt(1),
+		Gy: gy,
+	}
+	// Grumpkin prime field  = BN254Fr
+	// Grumpkin scalar field = BN254Fp
+	curve, err := sw_emulated.New[emparams.BN254Fr, emparams.BN254Fp](api, grumpkin_params)
 	if err != nil {
 		return fmt.Errorf("new curve: %w", err)
 	}
-	scalarField, err := emulated.NewField[emparams.BN254Fr](api)
+	primeField, err := emulated.NewField[emparams.BN254Fr](api)
 	if err != nil {
 		return err
 	}
 
-	// point1 := scalarField.NewElement(a.Input1[0].ToVariable(witnesses))
 	point1X, err := a.Input1[0].ToVariable(witnesses)
 	if err != nil {
 		return err
@@ -93,20 +104,27 @@ func (a *EmbeddedCurveAdd[T, E]) Define(api frontend.Builder[E], witnesses map[s
 	}
 
 	x := sw_emulated.AffinePoint[emparams.BN254Fr]{
-		X: *scalarField.NewElement(DecomposeTo4x64(api, point1X)),
-		Y: *scalarField.NewElement(DecomposeTo4x64(api, point1Y)),
+		X: *primeField.NewElement(DecomposeTo4x64(api, point1X)),
+		Y: *primeField.NewElement(DecomposeTo4x64(api, point1Y)),
 	}
+	api.Println(x.X.Limbs...)
+	api.Println(x.Y.Limbs...)
 	y := sw_emulated.AffinePoint[emparams.BN254Fr]{
-		X: *scalarField.NewElement(DecomposeTo4x64(api, point2X)),
-		Y: *scalarField.NewElement(DecomposeTo4x64(api, point2Y)),
+		X: *primeField.NewElement(DecomposeTo4x64(api, point2X)),
+		Y: *primeField.NewElement(DecomposeTo4x64(api, point2Y)),
 	}
-
+	api.Println(y.X.Limbs...)
+	api.Println(y.Y.Limbs...)
 	z := sw_emulated.AffinePoint[emparams.BN254Fr]{
-		X: *scalarField.NewElement(DecomposeTo4x64(api, witnesses[a.Outputs[0]])),
-		Y: *scalarField.NewElement(DecomposeTo4x64(api, witnesses[a.Outputs[1]])),
+		X: *primeField.NewElement(DecomposeTo4x64(api, witnesses[a.Outputs[0]])),
+		Y: *primeField.NewElement(DecomposeTo4x64(api, witnesses[a.Outputs[1]])),
 	}
-
-	curve.AssertIsEqual(&z, curve.Add(&x, &y))
+	api.Println(z.X.Limbs...)
+	curve.AssertIsOnCurve(&x)
+	curve.AssertIsOnCurve(&y)
+	curve.AssertIsOnCurve(&z)
+	api.Println(z.X.Limbs...)
+	curve.AssertIsEqual(&z, curve.AddUnified(&x, &y))
 
 	return nil
 }
@@ -130,22 +148,18 @@ func (a *EmbeddedCurveAdd[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return true
 }
 
-// DecomposeTo4x54 decomposes x into 4 little-endian 64-bit limbs:
+// DecomposeTo4x64 decomposes x into 4 little-endian 64-bit limbs:
 func DecomposeTo4x64(api frontend.API, x frontend.Variable) []frontend.Variable {
 	const bitsPerLimb = 64
 	const nbLimbs = 4
 	limbs := make([]frontend.Variable, nbLimbs)
-
-	// Get 216 bits (little-endian) representing x
+	// Get 256 bits (little-endian) representing x
 	allBits := bits.ToBinary(api, x, bits.WithNbDigits(bitsPerLimb*nbLimbs))
-
-	// pack each chunk of 64 bits back into a limb
 	for i := 0; i < nbLimbs; i++ {
 		start := i * bitsPerLimb
 		end := start + bitsPerLimb
-		chunk := allBits[start:end] // little-endian chunk: least-significant bit first
+		chunk := allBits[start:end]
 		limbs[i] = bits.FromBinary(api, chunk)
 	}
-
 	return limbs
 }
