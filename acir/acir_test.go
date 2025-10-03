@@ -136,6 +136,22 @@ func TestACIRMultiscalarMultiplication(t *testing.T) {
 		"../noir-samples/black_box_functions/multiscalar_multiplication/target/multiscalar_multiplication.gz",
 	)
 }
+
+func TestACIRECDSASecp256k1(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/ecdsa_secp256k1/target/ecdsa_secp256k1.json",
+		"../noir-samples/black_box_functions/ecdsa_secp256k1/target/ecdsa_secp256k1.gz",
+	)
+}
+
+func TestACIRECDSASecp256r1(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/ecdsa_secp256r1/target/ecdsa_secp256r1.json",
+		"../noir-samples/black_box_functions/ecdsa_secp256r1/target/ecdsa_secp256r1.gz",
+	)
+}
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
