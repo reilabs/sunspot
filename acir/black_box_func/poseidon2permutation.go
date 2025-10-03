@@ -4,9 +4,11 @@ import (
 	"encoding/binary"
 	"io"
 	shr "nr-groth16/acir/shared"
+	"nr-groth16/poseidon2"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 )
 
 type Poseidon2Permutation[T shr.ACIRField, E constraint.Element] struct {
@@ -44,19 +46,20 @@ func (a *Poseidon2Permutation[T, E]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *Poseidon2Permutation[T, E]) Equals(other *Poseidon2Permutation[T, E]) bool {
-	if len(a.Inputs) != len(other.Inputs) || len(a.Outputs) != len(other.Outputs) || a.Len != other.Len {
+func (a *Poseidon2Permutation[T, E]) Equals(other BlackBoxFunction[E]) bool {
+	value, ok := other.(*Poseidon2Permutation[T, E])
+	if !ok || len(a.Inputs) != len(value.Inputs) || len(a.Outputs) != len(value.Outputs) || a.Len != value.Len {
 		return false
 	}
 
 	for i := range a.Inputs {
-		if !a.Inputs[i].Equals(&other.Inputs[i]) {
+		if !a.Inputs[i].Equals(&value.Inputs[i]) {
 			return false
 		}
 	}
 
 	for i := range a.Outputs {
-		if a.Outputs[i] != other.Outputs[i] {
+		if a.Outputs[i] != value.Outputs[i] {
 			return false
 		}
 	}
@@ -65,5 +68,38 @@ func (a *Poseidon2Permutation[T, E]) Equals(other *Poseidon2Permutation[T, E]) b
 }
 
 func (a *Poseidon2Permutation[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+	inputs := make([]frontend.Variable, 4)
+
+	for i := range a.Inputs {
+		input, err := a.Inputs[i].ToVariable(witnesses)
+		if err != nil {
+			return err
+		}
+		inputs[i] = input
+	}
+
+	poseidon2.Permute(api, inputs)
+
+	for i := range a.Inputs {
+		api.AssertIsEqual(inputs[i], witnesses[a.Outputs[i]])
+	}
 	return nil
+}
+
+func (a *Poseidon2Permutation[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+	if tree == nil {
+		return false
+	}
+
+	for _, input := range a.Inputs {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness)
+		}
+	}
+
+	for _, output := range a.Outputs {
+		tree.ReplaceOrInsert(output)
+	}
+
+	return true
 }

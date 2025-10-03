@@ -13,11 +13,11 @@ This project provides a Noir interface for the gnark library, allowing Noir prog
 |Range|Yes|
 |Blake2s|Yes|
 |Blake3|Yes|
-|ECDSA SECP256K1|No|
-|ECDSA SECP256R1|No|
+|ECDSA SECP256K1|Yes|
+|ECDSA SECP256R1|Yes|
 |MultiScalarMul|Yes|
 |KeccakF1600|Yes|
 |RecursiveAggregation|No|
 |EmbeddedCurveAdd|Yes|
-|Poseidon2Permutation|No (Broken in noir)|
+|Poseidon2Permutation|Yes|
 |SHA256Compression|Yes|

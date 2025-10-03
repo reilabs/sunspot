@@ -9,7 +9,6 @@ import (
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
-	"github.com/consensys/gnark/std/math/bits"
 	"github.com/google/btree"
 )
 
@@ -118,21 +117,4 @@ func (a *EmbeddedCurveAdd[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 		tree.ReplaceOrInsert(output)
 	}
 	return true
-}
-
-// We need to decompose field elements into 4 little endian 64bit elements
-// to comply with Gnark's elliptic curve API
-func DecomposeTo4x64(api frontend.API, x frontend.Variable) []frontend.Variable {
-	const bitsPerLimb = 64
-	const nbLimbs = 4
-	limbs := make([]frontend.Variable, nbLimbs)
-	// Get 256 bits (little-endian) representing x
-	allBits := bits.ToBinary(api, x, bits.WithNbDigits(bitsPerLimb*nbLimbs))
-	for i := 0; i < nbLimbs; i++ {
-		start := i * bitsPerLimb
-		end := start + bitsPerLimb
-		chunk := allBits[start:end]
-		limbs[i] = bits.FromBinary(api, chunk)
-	}
-	return limbs
 }

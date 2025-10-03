@@ -56,6 +56,10 @@ jobs:
           noir-samples/black_box_functions/blake3
           noir-samples/black_box_functions/embedded_curve_add
           noir-samples/black_box_functions/multiscalar_multiplication 
+          noir-samples/black_box_functions/poseidon2
+          noir-samples/black_box_functions/ecdsa_secp256r1
+          noir-samples/black_box_functions/ecdsa_secp256k1_failing
+          noir-samples/black_box_functions/ecdsa_secp256k1
           noir-samples/memory
           noir-samples/real_world/provekit_basic
         )

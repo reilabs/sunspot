@@ -79,12 +79,18 @@ func NewBlackBoxFunction[T shr.ACIRField, E constraint.Element](r io.Reader) (*B
 		return &BlackBoxFuncCall[T, E]{&Blake2s[T, E]{}}, nil
 	case 5:
 		return &BlackBoxFuncCall[T, E]{&Blake3[T, E]{}}, nil
+	case 6:
+		return &BlackBoxFuncCall[T, E]{&ECDSASECP256K1[T, E]{}}, nil
+	case 7:
+		return &BlackBoxFuncCall[T, E]{&ECDSASECP256R1[T, E]{}}, nil
 	case 8:
 		return &BlackBoxFuncCall[T, E]{&MultiScalarMul[T, E]{}}, nil
 	case 9:
 		return &BlackBoxFuncCall[T, E]{&EmbeddedCurveAdd[T, E]{}}, nil
 	case 10:
 		return &BlackBoxFuncCall[T, E]{&Keccakf1600[T, E]{}}, nil
+	case 18:
+		return &BlackBoxFuncCall[T, E]{&Poseidon2Permutation[T, E]{}}, nil
 	case 19:
 		return &BlackBoxFuncCall[T, E]{&SHA256Compression[T, E]{}}, nil
 	default:

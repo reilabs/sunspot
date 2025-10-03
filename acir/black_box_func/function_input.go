@@ -125,3 +125,7 @@ func (f *FunctionInput[T]) ToVariable(witnesses map[shr.Witness]frontend.Variabl
 		return nil, fmt.Errorf("unknown function input kind")
 	}
 }
+
+func (f *FunctionInput[T]) IsWitness() bool {
+	return f.FunctionInputKind == 1
+}

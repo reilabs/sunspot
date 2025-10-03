@@ -5,10 +5,13 @@ import (
 	"io"
 	shr "nr-groth16/acir/shared"
 
-	"github.com/rs/zerolog/log"
+	"github.com/google/btree"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/algebra/emulated/sw_emulated"
+	"github.com/consensys/gnark/std/math/emulated"
+	"github.com/consensys/gnark/std/signature/ecdsa"
 )
 
 type ECDSASECP256R1[T shr.ACIRField, E constraint.Element] struct {
@@ -20,7 +23,6 @@ type ECDSASECP256R1[T shr.ACIRField, E constraint.Element] struct {
 }
 
 func (a *ECDSASECP256R1[T, E]) UnmarshalReader(r io.Reader) error {
-	log.Trace().Msgf("Unmarshalling ECDSASECP256R1 function call")
 	for i := 0; i < 32; i++ {
 		if err := a.PublicKeyX[i].UnmarshalReader(r); err != nil {
 			return err
@@ -51,31 +53,110 @@ func (a *ECDSASECP256R1[T, E]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *ECDSASECP256R1[T, E]) Equals(other *ECDSASECP256R1[T, E]) bool {
-	if len(a.PublicKeyX) != len(other.PublicKeyX) ||
-		len(a.PublicKeyY) != len(other.PublicKeyY) ||
-		len(a.Signature) != len(other.Signature) ||
-		len(a.HashedMessage) != len(other.HashedMessage) {
+func (a *ECDSASECP256R1[T, E]) Equals(other BlackBoxFunction[E]) bool {
+	value, ok := other.(*ECDSASECP256R1[T, E])
+	if !ok || len(a.PublicKeyX) != len(value.PublicKeyX) ||
+		len(a.PublicKeyY) != len(value.PublicKeyY) ||
+		len(a.Signature) != len(value.Signature) ||
+		len(a.HashedMessage) != len(value.HashedMessage) {
 		return false
 	}
 
 	for i := 0; i < 32; i++ {
-		if !a.PublicKeyX[i].Equals(&other.PublicKeyX[i]) ||
-			!a.PublicKeyY[i].Equals(&other.PublicKeyY[i]) ||
-			!a.HashedMessage[i].Equals(&other.HashedMessage[i]) {
+		if !a.PublicKeyX[i].Equals(&value.PublicKeyX[i]) ||
+			!a.PublicKeyY[i].Equals(&value.PublicKeyY[i]) ||
+			!a.HashedMessage[i].Equals(&value.HashedMessage[i]) {
 			return false
 		}
 	}
 
 	for i := 0; i < 64; i++ {
-		if !a.Signature[i].Equals(&other.Signature[i]) {
+		if !a.Signature[i].Equals(&value.Signature[i]) {
 			return false
 		}
 	}
 
-	return a.Output == other.Output
+	return a.Output == value.Output
 }
 
 func (a *ECDSASECP256R1[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+	primeField, err := emulated.NewField[emulated.P256Fp](api)
+	if err != nil {
+		return err
+	}
+	scalarField, err := emulated.NewField[emulated.P256Fr](api)
+	if err != nil {
+		return err
+	}
+
+	qXValue, err := BytesTo64BitLimbs(api, a.PublicKeyX[:], witnesses)
+	if err != nil {
+		return err
+	}
+
+	qYValue, err := BytesTo64BitLimbs(api, a.PublicKeyY[:], witnesses)
+	if err != nil {
+		return err
+	}
+
+	rValue, err := BytesTo64BitLimbs(api, a.Signature[0:32], witnesses)
+	if err != nil {
+		return err
+	}
+
+	sValue, err := BytesTo64BitLimbs(api, a.Signature[32:64], witnesses)
+	if err != nil {
+		return err
+	}
+
+	hash_value, err := BytesTo64BitLimbs(api, a.HashedMessage[:], witnesses)
+	if err != nil {
+		return err
+	}
+
+	Q := ecdsa.PublicKey[emulated.P256Fp, emulated.P256Fr]{
+		X: *primeField.NewElement(qXValue),
+		Y: *primeField.NewElement(qYValue),
+	}
+
+	sig := ecdsa.Signature[emulated.P256Fr]{
+		R: *scalarField.NewElement(rValue),
+		S: *scalarField.NewElement(sValue),
+	}
+
+	msg := scalarField.NewElement(hash_value)
+
+	api.AssertIsEqual(witnesses[a.Output], Q.IsValid(api, sw_emulated.GetP256Params(), msg, &sig))
 	return nil
+}
+
+func (a *ECDSASECP256R1[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+	if tree == nil {
+		return false
+	}
+
+	for _, input := range a.PublicKeyX {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness)
+		}
+	}
+	for _, input := range a.PublicKeyY {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness)
+		}
+	}
+	for _, input := range a.HashedMessage {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness)
+		}
+	}
+	for _, input := range a.Signature {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness)
+		}
+	}
+
+	tree.ReplaceOrInsert(a.Output)
+
+	return true
 }
