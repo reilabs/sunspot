@@ -169,6 +169,14 @@ func TestACIRPoseidon2(t *testing.T) {
 	)
 }
 
+func TestACIRAES128(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/aes128encrypt/target/aes128encrypt.json",
+		"../noir-samples/black_box_functions/aes128encrypt/target/aes128encrypt.gz",
+	)
+}
+
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
