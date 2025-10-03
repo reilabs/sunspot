@@ -79,8 +79,6 @@ func (a *ECDSASECP256R1[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	return a.Output == value.Output
 }
 
-// Currently verifies that signature is correct
-// TODO: change this to also check if the signature is incorrect and the output is false
 func (a *ECDSASECP256R1[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	primeField, err := emulated.NewField[emulated.P256Fp](api)
 	if err != nil {

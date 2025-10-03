@@ -79,8 +79,6 @@ func (a *ECDSASECP256K1[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	return a.Output == value.Output
 }
 
-// Currently verifies that signature is correct
-// TODO: change this to also check if the signature is incorrect and the output is false
 func (a *ECDSASECP256K1[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	primeField, err := emulated.NewField[emulated.Secp256k1Fp](api)
 	if err != nil {
@@ -161,6 +159,10 @@ func (a *ECDSASECP256K1[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 
 	return true
 }
+
+// ACIR has signature variables as big endian bytes
+// but gnark wants them as 4 * 64 but limbs.
+// See https://pkg.go.dev/github.com/consensys/gnark/std/math/emulated@v0.14.0#hdr-Element_representation
 
 func BytesTo64BitLimbs[T shr.ACIRField](
 	api frontend.API,
