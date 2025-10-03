@@ -145,6 +145,14 @@ func TestACIRECDSASecp256k1(t *testing.T) {
 	)
 }
 
+func TestACIRECDSASecp256k1Failing(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/ecdsa_secp256k1_failing/target/ecdsa_secp256k1_failing.json",
+		"../noir-samples/black_box_functions/ecdsa_secp256k1_failing/target/ecdsa_secp256k1_failing.gz",
+	)
+}
+
 func TestACIRECDSASecp256r1(t *testing.T) {
 	testProveAndVerify(
 		t,

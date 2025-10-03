@@ -128,7 +128,7 @@ func (a *ECDSASECP256R1[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 
 	msg := scalarField.NewElement(hash_value)
 
-	Q.Verify(api, sw_emulated.GetP256Params(), msg, &sig)
+	api.AssertIsEqual(witnesses[a.Output], Q.IsValid(api, sw_emulated.GetSecp256k1Params(), msg, &sig))
 	return nil
 }
 
