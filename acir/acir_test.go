@@ -160,6 +160,15 @@ func TestACIRECDSASecp256r1(t *testing.T) {
 		"../noir-samples/black_box_functions/ecdsa_secp256r1/target/ecdsa_secp256r1.gz",
 	)
 }
+
+func TestACIRPoseidon2(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/poseidon2/target/poseidon2.json",
+		"../noir-samples/black_box_functions/poseidon2/target/poseidon2.gz",
+	)
+}
+
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
