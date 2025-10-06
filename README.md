@@ -7,7 +7,7 @@ This project provides a Noir interface for the gnark library, allowing Noir prog
 
 |Function|Implemented|
 |--------|-----------|
-|AES128Encrypt|No|
+|AES128Encrypt|Yes|
 |AND|Yes|
 |XOR|Yes|
 |Range|Yes|
