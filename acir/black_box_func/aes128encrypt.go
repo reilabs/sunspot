@@ -4,14 +4,16 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"math/big"
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/lookup/logderivlookup"
+	"github.com/consensys/gnark/std/math/uints"
 	"github.com/google/btree"
 )
 
+const AES_BLOCK_SIZE = 16 // in bytes
 type AES128Encrypt[T shr.ACIRField, E constraint.Element] struct {
 	Inputs  []FunctionInput[T]
 	Iv      [16]FunctionInput[T]
@@ -98,147 +100,299 @@ func (a *AES128Encrypt[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return tree != nil
 }
 
-func AESShiftRows(state [16]frontend.Variable) [16]frontend.Variable {
-	var shiftedState [16]frontend.Variable
-	shiftedState[0], shiftedState[1], shiftedState[2], shiftedState[3] = state[0], state[1], state[2], state[3]
-	shiftedState[4], shiftedState[5], shiftedState[6], shiftedState[7] = state[5], state[6], state[7], state[4]
-	shiftedState[8], shiftedState[9], shiftedState[10], shiftedState[11] = state[10], state[11], state[8], state[9]
-	shiftedState[12], shiftedState[13], shiftedState[14], shiftedState[15] = state[15], state[12], state[13], state[14]
-	return shiftedState
-}
-
-func AESSubWord(api frontend.API, word [4]frontend.Variable) [4]frontend.Variable {
-	var result [4]frontend.Variable
-	for i := 0; i < 4; i++ {
-		result[i] = word[i]
-	}
-	return result
-}
-
-func AESRotWord(api frontend.API, word [4]frontend.Variable) [4]frontend.Variable {
-	var result [4]frontend.Variable
-	result[0] = word[1]
-	result[1] = word[2]
-	result[2] = word[3]
-	result[3] = word[0]
-	return result
-}
-
-func AESRcon(api frontend.API, round int) frontend.Variable {
-	rcon := []frontend.Variable{
-		big.NewInt(0x01000000),
-		big.NewInt(0x02000000),
-		big.NewInt(0x04000000),
-		big.NewInt(0x08000000),
-		big.NewInt(0x10000000),
-		big.NewInt(0x20000000),
-		big.NewInt(0x40000000),
-		big.NewInt(0x80000000),
-		big.NewInt(0x1B000000),
-		big.NewInt(0x36000000),
-	}
-	return rcon[round]
-}
-
-func AESKeyExpansion(api frontend.API, key [16]frontend.Variable) [11][16]frontend.Variable {
-	var roundKeys [11][16]frontend.Variable
-	for i := 0; i < 4; i++ {
-		for j := 0; j < 4; j++ {
-			roundKeys[0][i*4+j] = key[i*4+j]
-		}
-	}
-
-	for round := 1; round <= 10; round++ {
-		var temp [4]frontend.Variable
-		for i := 0; i < 4; i++ {
-			temp[i] = roundKeys[round-1][i*4+3]
-		}
-
-		temp = AESSubWord(api, temp)
-		temp = AESRotWord(api, temp)
-
-		temp[0] = api.Xor(temp[0], AESRcon(api, round))
-
-		for i := 0; i < 4; i++ {
-			roundKeys[round][i*4] = api.Xor(roundKeys[round-1][i*4], temp[i])
-		}
-
-		// Generate the other 3 words of the round key
-		for col := 1; col < 4; col++ {
-			for row := 0; row < 4; row++ {
-				roundKeys[round][row*4+col] = api.Xor(roundKeys[round][row*4+col-1], roundKeys[round-1][row*4+col])
-			}
-		}
-	}
-
-	return roundKeys
-}
-
-func AESAddRoundKey(api frontend.API, state [16]frontend.Variable, roundKey [16]frontend.Variable) [16]frontend.Variable {
-	var result [16]frontend.Variable
-	for i := 0; i < 16; i++ {
-		result[i] = api.Xor(state[i], roundKey[i])
-	}
-	return result
-}
-
 func (a *AES128Encrypt[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
-	numBlocks := len(a.Inputs) / 16
-	var state [16]frontend.Variable
-	var results [16]frontend.Variable
-	var key [16]frontend.Variable
-	for i := 0; i < 16; i++ {
-		key_val, err := a.Key[i].ToVariable(witnesses)
+	uapi, err := uints.NewBinaryField[uints.U32](api)
+
+	if err != nil {
+		return err
+	}
+	t0 := logderivlookup.New(api)
+	t1 := logderivlookup.New(api)
+	t2 := logderivlookup.New(api)
+	t3 := logderivlookup.New(api)
+	for i := 0; i < 256; i++ {
+		t0.Insert(TE[0][i])
+		t1.Insert(TE[1][i])
+		t2.Insert(TE[2][i])
+		t3.Insert(TE[3][i])
+	}
+
+	var IV [16]uints.U8
+
+	for i := range IV {
+		iv_val, err := a.Iv[i].ToVariable(witnesses)
 		if err != nil {
 			return err
 		}
-		key[i] = key_val
+		IV[i] = uapi.ByteValueOf(iv_val)
 	}
-	roundKeys := AESKeyExpansion(api, key)
-	for i := 0; i < numBlocks; i++ {
-		block := a.Inputs[i*16 : (i+1)*16]
 
-		//
-		// Initialize the state with the input data
-		//
-		for j := 0; j < 16; j++ {
-			state[j] = block[j]
+	plaintext := make([]uints.U8, len(a.Inputs))
+	for i := range plaintext {
+		pt_val, err := a.Inputs[i].ToVariable(witnesses)
+		if err != nil {
+			return err
 		}
+		plaintext[i] = uapi.ByteValueOf(pt_val)
+	}
 
-		for j := 0; j < 16; j++ {
-			if i == 0 {
-				state[j] = api.Xor(state[j], a.Iv[j])
-			} else {
-				state[j] = api.Xor(state[j], results[j])
-			}
-		}
+	key, err := a.expandKey(api, witnesses, t0, t1, t2, t3)
+	if err != nil {
+		return err
+	}
+	ciphertext, err := CBCEncrypt(api, key, IV, plaintext, t0, t1, t2, t3)
+	if err != nil {
+		return err
+	}
 
-		state = AESAddRoundKey(api, state, roundKeys[0])
-
-		for i := 0; i < 10; i++ {
-			// Sub Bytes
-
-			state = AESShiftRows(state)
-
-			if i < 9 {
-				// Mix Columns
-			}
-
-			state = AESAddRoundKey(api, state, roundKeys[i+1])
-		}
-
-		for j := 0; j < 16; j++ {
-			results[j] = state[j]
-		}
-
-		for j := 0; j < 16; j++ {
-			expected := witnesses[a.Outputs[i*16+j]]
-			if expected == nil {
-				return fmt.Errorf("expected output for AES128Encrypt at index %d is nil", i*16+j)
-			}
-			api.AssertIsEqual(results[j], expected)
-		}
+	for i := range a.Outputs {
+		api.AssertIsEqual(uapi.Value(ciphertext[i]), witnesses[a.Outputs[i]])
 	}
 
 	return nil
+}
+
+// CBCEncrypt: encrypts data in CBC mode in-place and returns the padded ciphertext.
+func CBCEncrypt(
+	api frontend.API,
+	key [60]uints.U32,
+	iv [16]uints.U8,
+	plaintext []uints.U8,
+	te0, te1, te2, te3 logderivlookup.Table,
+) ([]uints.U8, error) {
+
+	bytes, err := uints.NewBytes(api)
+	if err != nil {
+		return nil, err
+	}
+	plaintext = pad(plaintext)
+	ciphertext := make([]uints.U8, len(plaintext))
+
+	prevBlock := iv
+
+	for blockStart := 0; blockStart < len(plaintext); blockStart += 16 {
+		blockEnd := blockStart + 16
+		var block [16]uints.U8
+
+		for i := 0; i < 16; i++ {
+			block[i] = bytes.Xor(plaintext[blockStart+i], prevBlock[i])
+		}
+		blockCipher, err := encrypt(api, key, block, te0, te1, te2, te3)
+		if err != nil {
+			return nil, fmt.Errorf("CBCEncrypt: block %d encrypt failed: %w", blockStart/16, err)
+		}
+
+		copy(ciphertext[blockStart:blockEnd], blockCipher[:])
+
+		prevBlock = blockCipher
+	}
+
+	return ciphertext, nil
+}
+
+func encrypt(
+	api frontend.API,
+	key [60]uints.U32,
+	inputs [16]uints.U8,
+	te0, te1, te2, te3 logderivlookup.Table,
+) ([16]uints.U8, error) {
+	var outputs [16]uints.U8
+	rk := key[:]
+	uapi, err := uints.NewBinaryField[uints.U32](api)
+	if err != nil {
+		return outputs, err
+	}
+
+	const keyRounds = 10
+
+	s0 := uapi.Xor(uapi.PackMSB(inputs[0:4]...), rk[0])
+	s1 := uapi.Xor(uapi.PackMSB(inputs[4:8]...), rk[1])
+	s2 := uapi.Xor(uapi.PackMSB(inputs[8:12]...), rk[2])
+	s3 := uapi.Xor(uapi.PackMSB(inputs[12:16]...), rk[3])
+
+	output := inputs
+
+	r := keyRounds >> 1
+
+	var t0 uints.U32
+	var t1 uints.U32
+	var t2 uints.U32
+	var t3 uints.U32
+
+	for {
+		t0 = uapi.Xor(
+			uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.Rshift(s0, 24)))[0]),
+			uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(s1, 16), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(s2, 8), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(s3, uints.NewU32(0xff))))[0]),
+			rk[4],
+		)
+
+		t1 = uapi.Xor(
+			uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.Rshift(s1, 24)))[0]),
+			uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(s2, 16), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(s3, 8), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(s0, uints.NewU32(0xff))))[0]),
+			rk[5],
+		)
+
+		t2 = uapi.Xor(
+			uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.Rshift(s2, 24)))[0]),
+			uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(s3, 16), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(s0, 8), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(s1, uints.NewU32(0xff))))[0]),
+			rk[6],
+		)
+
+		t3 = uapi.Xor(
+			uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.Rshift(s3, 24)))[0]),
+			uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(s0, 16), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(s1, 8), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(s2, uints.NewU32(0xff))))[0]),
+			rk[7],
+		)
+
+		rk = rk[8:]
+
+		r--
+		if r == 0 {
+			break
+		}
+
+		s0 = uapi.Xor(
+			uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.Rshift(t0, 24)))[0]),
+			uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t1, 16), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t2, 8), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(t3, uints.NewU32(0xff))))[0]),
+			rk[0],
+		)
+
+		s1 = uapi.Xor(
+			uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.Rshift(t1, 24)))[0]),
+			uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t2, 16), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t3, 8), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(t0, uints.NewU32(0xff))))[0]),
+			rk[1],
+		)
+
+		s2 = uapi.Xor(
+			uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.Rshift(t2, 24)))[0]),
+			uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t3, 16), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t0, 8), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(t1, uints.NewU32(0xff))))[0]),
+			rk[2],
+		)
+
+		s3 = uapi.Xor(
+			uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.Rshift(t3, 24)))[0]),
+			uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t0, 16), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t1, 8), uints.NewU32(0xff))))[0]),
+			uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(t2, uints.NewU32(0xff))))[0]),
+			rk[3],
+		)
+	}
+
+	s0 = uapi.Xor(
+		uapi.And(uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.Rshift(t0, 24)))[0]), uints.NewU32(0xff000000)),
+		uapi.And(uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t1, 16), uints.NewU32(0xff))))[0]), uints.NewU32(0x00ff0000)),
+		uapi.And(uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t2, 8), uints.NewU32(0xff))))[0]), uints.NewU32(0x0000ff00)),
+		uapi.And(uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(t3, uints.NewU32(0xff))))[0]), uints.NewU32(0x000000ff)),
+		rk[0],
+	)
+	copy(output[0:4], uapi.UnpackMSB(s0))
+
+	s1 = uapi.Xor(
+		uapi.And(uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.Rshift(t1, 24)))[0]), uints.NewU32(0xff000000)),
+		uapi.And(uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t2, 16), uints.NewU32(0xff))))[0]), uints.NewU32(0x00ff0000)),
+		uapi.And(uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t3, 8), uints.NewU32(0xff))))[0]), uints.NewU32(0x0000ff00)),
+		uapi.And(uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(t0, uints.NewU32(0xff))))[0]), uints.NewU32(0x000000ff)),
+		rk[1],
+	)
+	copy(output[4:8], uapi.UnpackMSB(s1))
+
+	s2 = uapi.Xor(
+		uapi.And(uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.Rshift(t2, 24)))[0]), uints.NewU32(0xff000000)),
+		uapi.And(uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t3, 16), uints.NewU32(0xff))))[0]), uints.NewU32(0x00ff0000)),
+		uapi.And(uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t0, 8), uints.NewU32(0xff))))[0]), uints.NewU32(0x0000ff00)),
+		uapi.And(uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(t1, uints.NewU32(0xff))))[0]), uints.NewU32(0x000000ff)),
+		rk[2],
+	)
+	copy(output[8:12], uapi.UnpackMSB(s2))
+
+	s3 = uapi.Xor(
+		uapi.And(uapi.ValueOf(te2.Lookup(uapi.ToValue(uapi.Rshift(t3, 24)))[0]), uints.NewU32(0xff000000)),
+		uapi.And(uapi.ValueOf(te3.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t0, 16), uints.NewU32(0xff))))[0]), uints.NewU32(0x00ff0000)),
+		uapi.And(uapi.ValueOf(te0.Lookup(uapi.ToValue(uapi.And(uapi.Rshift(t1, 8), uints.NewU32(0xff))))[0]), uints.NewU32(0x0000ff00)),
+		uapi.And(uapi.ValueOf(te1.Lookup(uapi.ToValue(uapi.And(t2, uints.NewU32(0xff))))[0]), uints.NewU32(0x000000ff)),
+		rk[3],
+	)
+	copy(output[12:16], uapi.UnpackMSB(s3))
+
+	return output, nil
+}
+
+func (a *AES128Encrypt[T, E]) expandKey(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable, TE0, TE1, TE2, TE3 logderivlookup.Table) ([60]uints.U32, error) {
+	var rk [60]uints.U32
+
+	var keyBytes [16]uints.U8
+	uapi, err := uints.NewBinaryField[uints.U32](api)
+
+	if err != nil {
+		return rk, err
+	}
+
+	for i := range a.Key {
+		val, err := a.Key[i].ToVariable(witnesses)
+		if err != nil {
+			return rk, err
+		}
+		keyBytes[i] = uapi.ByteValueOf(val)
+	}
+
+	rk[0] = uapi.PackMSB(keyBytes[0:4]...)
+	rk[1] = uapi.PackMSB(keyBytes[4:8]...)
+	rk[2] = uapi.PackMSB(keyBytes[8:12]...)
+	rk[3] = uapi.PackMSB(keyBytes[12:16]...)
+
+	start := 0
+	for i := range 10 {
+		temp := rk[3+start]
+
+		te2index := uapi.ToValue(uapi.And(uapi.Rshift(temp, 16), uints.NewU32(0xff)))
+		te2Val := uapi.ValueOf(TE2.Lookup(te2index)[0])
+
+		te3index := uapi.ToValue(uapi.And(uapi.Rshift(temp, 8), uints.NewU32(0xff)))
+		te3Val := uapi.ValueOf(TE3.Lookup(te3index)[0])
+
+		te0index := uapi.ToValue(uapi.And(temp, uints.NewU32(0xff)))
+		te0Val := uapi.ValueOf(TE0.Lookup(te0index)[0])
+
+		te1index := uapi.ToValue(uapi.Rshift(temp, 24))
+		te1Val := uapi.ValueOf(TE1.Lookup(te1index)[0])
+
+		rk[4+start] = uapi.Xor(rk[0+start], uapi.And(te2Val, uints.NewU32(0xff000000)),
+			uapi.And(te3Val, uints.NewU32(0x00ff0000)),
+			uapi.And(te0Val, uints.NewU32(0x0000ff00)),
+			uapi.And(te1Val, uints.NewU32(0x000000ff)),
+			uints.NewU32(RCON[i]),
+		)
+
+		rk[5+start] = uapi.Xor(rk[1+start], rk[4+start])
+		rk[6+start] = uapi.Xor(rk[2+start], rk[5+start])
+		rk[7+start] = uapi.Xor(rk[3+start], rk[6+start])
+
+		start += 4
+	}
+	return rk, nil
+}
+
+func pad(input []uints.U8) []uints.U8 {
+	sz := len(input)
+	add := 16 - (sz % 16)
+	v := make([]uints.U8, 0, sz+add)
+	v = append(v, input...)
+	for i := 0; i < add; i++ {
+		v = append(v, uints.NewU8(uint8(add)))
+	}
+	return v
 }
