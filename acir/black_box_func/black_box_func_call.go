@@ -91,6 +91,8 @@ func NewBlackBoxFunction[T shr.ACIRField, E constraint.Element](r io.Reader) (*B
 		return &BlackBoxFuncCall[T, E]{&EmbeddedCurveAdd[T, E]{}}, nil
 	case 10:
 		return &BlackBoxFuncCall[T, E]{&Keccakf1600[T, E]{}}, nil
+	case 11:
+		return &BlackBoxFuncCall[T, E]{&RecursiveAggregation[T, E]{}}, nil
 	case 18:
 		return &BlackBoxFuncCall[T, E]{&Poseidon2Permutation[T, E]{}}, nil
 	case 19:

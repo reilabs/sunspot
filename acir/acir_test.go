@@ -177,6 +177,14 @@ func TestACIRAES128(t *testing.T) {
 	)
 }
 
+func TestACIRRecursiveAggregation(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/black_box_functions/recursive_aggregation/target/recursive_aggregation.json",
+		"../noir-samples/black_box_functions/recursive_aggregation/target/recursive_aggregation.gz",
+	)
+}
+
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,

@@ -4,9 +4,13 @@ import (
 	"encoding/binary"
 	"io"
 	shr "nr-groth16/acir/shared"
+
+	"github.com/consensys/gnark/constraint"
+	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 )
 
-type RecursiveAggregation[T shr.ACIRField] struct {
+type RecursiveAggregation[T shr.ACIRField, E constraint.Element] struct {
 	VerificationKey []FunctionInput[T]
 	Proof           []FunctionInput[T]
 	PublicInputs    []FunctionInput[T]
@@ -14,7 +18,7 @@ type RecursiveAggregation[T shr.ACIRField] struct {
 	ProofType       uint32
 }
 
-func (a *RecursiveAggregation[T]) UnmarshalReader(r io.Reader) error {
+func (a *RecursiveAggregation[T, E]) UnmarshalReader(r io.Reader) error {
 	var VerificationKeyCount uint64
 	if err := binary.Read(r, binary.LittleEndian, &VerificationKeyCount); err != nil {
 		return err
@@ -59,31 +63,60 @@ func (a *RecursiveAggregation[T]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (a *RecursiveAggregation[T]) Equals(other *RecursiveAggregation[T]) bool {
-	if len(a.VerificationKey) != len(other.VerificationKey) ||
-		len(a.Proof) != len(other.Proof) ||
-		len(a.PublicInputs) != len(other.PublicInputs) ||
-		a.ProofType != other.ProofType {
+func (a *RecursiveAggregation[T, E]) Equals(other BlackBoxFunction[E]) bool {
+	value, ok := other.(*RecursiveAggregation[T, E])
+	if !ok || len(a.VerificationKey) != len(value.VerificationKey) ||
+		len(a.Proof) != len(value.Proof) ||
+		len(a.PublicInputs) != len(value.PublicInputs) ||
+		a.ProofType != value.ProofType {
 		return false
 	}
 
 	for i := range a.VerificationKey {
-		if !a.VerificationKey[i].Equals(&other.VerificationKey[i]) {
+		if !a.VerificationKey[i].Equals(&value.VerificationKey[i]) {
 			return false
 		}
 	}
 
 	for i := range a.Proof {
-		if !a.Proof[i].Equals(&other.Proof[i]) {
+		if !a.Proof[i].Equals(&value.Proof[i]) {
 			return false
 		}
 	}
 
 	for i := range a.PublicInputs {
-		if !a.PublicInputs[i].Equals(&other.PublicInputs[i]) {
+		if !a.PublicInputs[i].Equals(&value.PublicInputs[i]) {
 			return false
 		}
 	}
 
-	return a.KeyHash.Equals(&other.KeyHash)
+	return a.KeyHash.Equals(&value.KeyHash)
+}
+
+func (a *RecursiveAggregation[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+	return nil
+}
+
+func (a *RecursiveAggregation[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+	for i := range a.VerificationKey {
+		if a.VerificationKey[i].IsWitness() {
+			tree.ReplaceOrInsert(*a.VerificationKey[i].Witness)
+		}
+	}
+
+	for i := range a.Proof {
+		if a.Proof[i].IsWitness() {
+			tree.ReplaceOrInsert(*a.Proof[i].Witness)
+		}
+	}
+	for i := range a.PublicInputs {
+		if a.PublicInputs[i].IsWitness() {
+			tree.ReplaceOrInsert(*a.PublicInputs[i].Witness)
+		}
+	}
+
+	if a.KeyHash.IsWitness() {
+		tree.ReplaceOrInsert(*a.KeyHash.Witness)
+	}
+	return tree != nil
 }

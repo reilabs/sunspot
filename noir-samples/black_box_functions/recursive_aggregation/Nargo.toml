@@ -1,0 +1,6 @@
+[package]
+name = "recursive_aggregation"
+type = "bin"
+authors = [""]
+
+[dependencies]
