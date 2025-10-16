@@ -1,7 +1,7 @@
 use std::verify_proof_with_type;
 
-global N: u32 = 18;
-global M: u32 = 10;
+global N: u32 = 28;
+global M: u32 = 12;
 global K: u32 = 1;
 
 fn main(verification_key: [Field;N], proof: [Field;M], public_inputs: [Field;K], key_hash: Field) {

@@ -99,7 +99,6 @@ func (a *RecursiveAggregation[T, E]) Equals(other BlackBoxFunction[E]) bool {
 }
 
 func (a *RecursiveAggregation[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
-
 	proof, err := newProof(api, a.Proof, witnesses)
 	if err != nil {
 		return err
@@ -211,6 +210,10 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 		commitments[i].GSigmaNeg = gSigmaNeg
 		idx += 8
 	}
+	indices := [][]int{
+		{1},
+	}
+	vk.PublicAndCommitmentCommitted = indices
 
 	return vk, nil
 }
