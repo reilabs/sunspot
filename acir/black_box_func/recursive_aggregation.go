@@ -2,6 +2,7 @@ package blackboxfunc
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	shr "nr-groth16/acir/shared"
 
@@ -99,6 +100,15 @@ func (a *RecursiveAggregation[T, E]) Equals(other BlackBoxFunction[E]) bool {
 }
 
 func (a *RecursiveAggregation[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+	switch a.ProofType {
+	case 0:
+		return a.AggregateGroth16(api, witnesses)
+	default:
+		return fmt.Errorf("proof type %d not supported in recursive aggregation", a.ProofType)
+	}
+}
+
+func (a *RecursiveAggregation[T, E]) AggregateGroth16(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	proof, err := newProof(api, a.Proof, witnesses)
 	if err != nil {
 		return err
