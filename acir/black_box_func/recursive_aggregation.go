@@ -182,7 +182,7 @@ func VariableTo64BitLimbs[T shr.ACIRField](
 	}
 	out := make([]frontend.Variable, nbLimbs)
 
-	bit_array := api.ToBinary(variable, 254)
+	bit_array := api.ToBinary(variable, 256)
 
 	for i := 0; i < nbLimbs; i++ {
 		start := i * bitsPerLimb
@@ -234,7 +234,7 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 
 	k := make([]sw_bn254.G1Affine, (len(vars)-14)/2)
 	for i := range k {
-		k[i], err = newG1(api, vars[i*2:i*2+1], witnesses)
+		k[i], err = newG1(api, vars[i*2:i*2+2], witnesses)
 		if err != nil {
 			return vk, err
 		}
@@ -267,7 +267,7 @@ func newG1[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 }
 
 func newG2[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable) (sw_bn254.G2Affine, error) {
-	ret := sw_bn254.NewG2AffineFixedPlaceholder()
+	ret := sw_bn254.G2Affine{}
 	primeField, err := emulated.NewField[emulated.BN254Fp](api)
 	if err != nil {
 		return ret, err
@@ -283,7 +283,7 @@ func newG2[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 		return ret, err
 	}
 
-	ret.P.X.A0 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(g2BetaXA1))
+	ret.P.X.A1 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(g2BetaXA1))
 
 	g2BetaYA0, err := VariableTo64BitLimbs(api, vars[2], witnesses)
 	if err != nil {
@@ -295,7 +295,7 @@ func newG2[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 	if err != nil {
 		return ret, err
 	}
-	ret.P.Y.A0 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(g2BetaYA1))
+	ret.P.Y.A1 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(g2BetaYA1))
 
 	return ret, nil
 
@@ -328,11 +328,11 @@ func newProof[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnes
 	if err != nil {
 		return proof, err
 	}
-	proof.Bs, err = newG2(api, vars[2:6], witnesses)
+	proof.Krs, err = newG1(api, vars[2:4], witnesses)
 	if err != nil {
 		return proof, err
 	}
-	proof.Krs, err = newG1(api, vars[6:8], witnesses)
+	proof.Bs, err = newG2(api, vars[4:8], witnesses)
 	if err != nil {
 		return proof, err
 	}
