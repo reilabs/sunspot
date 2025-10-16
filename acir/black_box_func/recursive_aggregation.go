@@ -149,31 +149,6 @@ func (a *RecursiveAggregation[T, E]) FillWitnessTree(tree *btree.BTree) bool {
 	return tree != nil
 }
 
-func VariableTo64BitLimbs[T shr.ACIRField](
-	api frontend.API,
-	fi FunctionInput[T],
-	witnesses map[shr.Witness]frontend.Variable,
-) ([]frontend.Variable, error) {
-	const bitsPerLimb = 64
-	const nbLimbs = 4
-
-	variable, err := fi.ToVariable(witnesses)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]frontend.Variable, nbLimbs)
-
-	bit_array := api.ToBinary(variable, 256)
-
-	for i := 0; i < nbLimbs; i++ {
-		start := i * bitsPerLimb
-		end := start + bitsPerLimb
-		chunk := bit_array[start:end]
-		out[i] = bits.FromBinary(api, chunk)
-	}
-	return out, nil
-}
-
 func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable, kLen int) (groth16.VerifyingKey[sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl], error) {
 	vk := groth16.VerifyingKey[sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{}
 	g2, err := sw_bn254.NewG2(api)
@@ -241,6 +216,62 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 	return vk, nil
 }
 
+func newWitness[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable) (groth16.Witness[emulated.BN254Fr], error) {
+	var witness groth16.Witness[sw_bn254.ScalarField]
+	scalarField, err := emulated.NewField[sw_bn254.ScalarField](api)
+	if err != nil {
+		return witness, err
+	}
+	witnessVector := make([]emulated.Element[sw_bn254.ScalarField], len(vars))
+
+	for i := range vars {
+		value, err := VariableTo64BitLimbs(api, vars[i], witnesses)
+		if err != nil {
+			return witness, err
+		}
+		witnessVector[i] = emulated.Element[sw_bn254.ScalarField](*scalarField.NewElement(value))
+
+	}
+	witness.Public = witnessVector
+	return witness, err
+}
+
+func newProof[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable) (groth16.Proof[sw_bn254.G1Affine, sw_bn254.G2Affine], error) {
+	var proof groth16.Proof[sw_bn254.G1Affine, sw_bn254.G2Affine]
+	var err error
+	proof.Ar, err = newG1(api, vars[0:2], witnesses)
+	if err != nil {
+		return proof, err
+	}
+	proof.Krs, err = newG1(api, vars[2:4], witnesses)
+	if err != nil {
+		return proof, err
+	}
+	proof.Bs, err = newG2(api, vars[4:8], witnesses)
+	if err != nil {
+		return proof, err
+	}
+
+	pok, err := newG1(api, vars[8:10], witnesses)
+	if err != nil {
+		return proof, err
+	}
+	proof.CommitmentPok.G1El = pok
+
+	idx := 10
+
+	commitments := make([]pedersen.Commitment[sw_bn254.G1Affine], (len(vars)-10)/2)
+
+	for i := range commitments {
+		commitment, err := newG1(api, vars[idx:idx+2], witnesses)
+		if err != nil {
+			return proof, err
+		}
+		commitments[i].G1El = commitment
+	}
+	return proof, nil
+}
+
 func newG1[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable) (sw_bn254.G1Affine, error) {
 	var ret sw_bn254.G1Affine
 	primeField, err := emulated.NewField[sw_bn254.BaseField](api)
@@ -299,58 +330,27 @@ func newG2[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 
 }
 
-func newWitness[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable) (groth16.Witness[emulated.BN254Fr], error) {
-	var witness groth16.Witness[sw_bn254.ScalarField]
-	scalarField, err := emulated.NewField[sw_bn254.ScalarField](api)
+func VariableTo64BitLimbs[T shr.ACIRField](
+	api frontend.API,
+	fi FunctionInput[T],
+	witnesses map[shr.Witness]frontend.Variable,
+) ([]frontend.Variable, error) {
+	const bitsPerLimb = 64
+	const nbLimbs = 4
+
+	variable, err := fi.ToVariable(witnesses)
 	if err != nil {
-		return witness, err
+		return nil, err
 	}
-	witnessVector := make([]emulated.Element[sw_bn254.ScalarField], len(vars))
+	out := make([]frontend.Variable, nbLimbs)
 
-	for i := range vars {
-		value, err := VariableTo64BitLimbs(api, vars[i], witnesses)
-		if err != nil {
-			return witness, err
-		}
-		witnessVector[i] = emulated.Element[sw_bn254.ScalarField](*scalarField.NewElement(value))
+	bit_array := api.ToBinary(variable, 256)
 
+	for i := 0; i < nbLimbs; i++ {
+		start := i * bitsPerLimb
+		end := start + bitsPerLimb
+		chunk := bit_array[start:end]
+		out[i] = bits.FromBinary(api, chunk)
 	}
-	witness.Public = witnessVector
-	return witness, err
-}
-
-func newProof[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable) (groth16.Proof[sw_bn254.G1Affine, sw_bn254.G2Affine], error) {
-	var proof groth16.Proof[sw_bn254.G1Affine, sw_bn254.G2Affine]
-	var err error
-	proof.Ar, err = newG1(api, vars[0:2], witnesses)
-	if err != nil {
-		return proof, err
-	}
-	proof.Krs, err = newG1(api, vars[2:4], witnesses)
-	if err != nil {
-		return proof, err
-	}
-	proof.Bs, err = newG2(api, vars[4:8], witnesses)
-	if err != nil {
-		return proof, err
-	}
-
-	pok, err := newG1(api, vars[8:10], witnesses)
-	if err != nil {
-		return proof, err
-	}
-	proof.CommitmentPok.G1El = pok
-
-	idx := 10
-
-	commitments := make([]pedersen.Commitment[sw_bn254.G1Affine], (len(vars)-10)/2)
-
-	for i := range commitments {
-		commitment, err := newG1(api, vars[idx:idx+2], witnesses)
-		if err != nil {
-			return proof, err
-		}
-		commitments[i].G1El = commitment
-	}
-	return proof, nil
+	return out, nil
 }
