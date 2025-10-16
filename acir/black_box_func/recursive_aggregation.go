@@ -8,7 +8,7 @@ import (
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	sw_bn254 "github.com/consensys/gnark/std/algebra/emulated/sw_bn254"
-	"github.com/consensys/gnark/std/algebra/emulated/sw_emulated"
+	"github.com/consensys/gnark/std/commitments/pedersen"
 	"github.com/consensys/gnark/std/math/bits"
 	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/recursion/groth16"
@@ -100,21 +100,12 @@ func (a *RecursiveAggregation[T, E]) Equals(other BlackBoxFunction[E]) bool {
 
 func (a *RecursiveAggregation[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 
-	e, err := sw_bn254.NewPairing(api)
-	if err != nil {
-		return err
-	}
-	curve, err := sw_emulated.New[emulated.BN254Fp, emulated.BN254Fr](api, sw_emulated.GetCurveParams[emulated.BN254Fp]())
-	if err != nil {
-		panic("initialize new curve")
-	}
-
 	proof, err := newProof(api, a.Proof, witnesses)
 	if err != nil {
 		return err
 	}
 
-	vk, err := newVK(api, a.VerificationKey, witnesses)
+	vk, err := newVK(api, a.VerificationKey, witnesses, len(a.PublicInputs)+1)
 	if err != nil {
 		return err
 	}
@@ -124,22 +115,12 @@ func (a *RecursiveAggregation[T, E]) Define(api frontend.Builder[E], witnesses m
 		return err
 	}
 
-	gIC := vk.G1.K[0]
-
-	for i, input := range witness.Public {
-		curve.AddUnified(&gIC, curve.ScalarMul(&vk.G1.K[i+1], &input))
-	}
-
-	g1_vec := []*sw_bn254.G1Affine{&proof.Ar, &gIC, &proof.Krs}
-	g2_vec := []*sw_bn254.G2Affine{&proof.Bs, &vk.G2.GammaNeg, &vk.G2.DeltaNeg}
-	qap, err := e.MillerLoop(g1_vec, g2_vec)
-
+	verifier, err := groth16.NewVerifier[emulated.BN254Fr, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](api)
 	if err != nil {
 		return err
 	}
 
-	exponent := e.FinalExponentiation(qap)
-	e.AssertIsEqual(exponent, &vk.E)
+	verifier.AssertProof(vk, proof, witness)
 
 	return nil
 }
@@ -193,7 +174,7 @@ func VariableTo64BitLimbs[T shr.ACIRField](
 	return out, nil
 }
 
-func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable) (groth16.VerifyingKey[sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl], error) {
+func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable, kLen int) (groth16.VerifyingKey[sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl], error) {
 	vk := groth16.VerifyingKey[sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{}
 	g2, err := sw_bn254.NewG2(api)
 	if err != nil {
@@ -208,6 +189,7 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 	if err != nil {
 		return vk, err
 	}
+
 	g2Beta, err := newG2(api, vars[2:6], witnesses)
 	if err != nil {
 		return vk, err
@@ -217,35 +199,51 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 		return vk, err
 	}
 	vk.E = *pair
-
+	api.Println(pair.A0.Limbs...)
 	g2Gamma, err := newG2(api, vars[6:10], witnesses)
 	if err != nil {
 		return vk, err
 	}
 	g2Gamma.P.Y = *g2.Neg(&g2Gamma.P.Y)
 	vk.G2.GammaNeg = g2Gamma
-
 	g2Delta, err := newG2(api, vars[10:14], witnesses)
 	if err != nil {
 		return vk, err
 	}
 	g2Delta.P.Y = *g2.Neg(&g2Delta.P.Y)
 	vk.G2.DeltaNeg = g2Delta
-
-	k := make([]sw_bn254.G1Affine, (len(vars)-14)/2)
+	k := make([]sw_bn254.G1Affine, kLen)
 	for i := range k {
-		k[i], err = newG1(api, vars[i*2:i*2+2], witnesses)
+		k[i], err = newG1(api, vars[14+i*2:14+i*2+2], witnesses)
 		if err != nil {
 			return vk, err
 		}
 	}
 	vk.G1.K = k
+
+	idx := 14 + kLen*2
+	commitments := make([]pedersen.VerifyingKey[sw_bn254.G2Affine], (len(vars)-idx)/8)
+
+	for i := range commitments {
+		g, err := newG2(api, vars[idx:idx+4], witnesses)
+		if err != nil {
+			return vk, err
+		}
+		gSigmaNeg, err := newG2(api, vars[idx+4:idx+8], witnesses)
+		if err != nil {
+			return vk, err
+		}
+		commitments[i].G = g
+		commitments[i].GSigmaNeg = gSigmaNeg
+		idx += 8
+	}
+
 	return vk, nil
 }
 
 func newG1[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable) (sw_bn254.G1Affine, error) {
 	var ret sw_bn254.G1Affine
-	primeField, err := emulated.NewField[emulated.BN254Fp](api)
+	primeField, err := emulated.NewField[sw_bn254.BaseField](api)
 
 	if err != nil {
 		return ret, err
@@ -268,42 +266,42 @@ func newG1[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 
 func newG2[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable) (sw_bn254.G2Affine, error) {
 	ret := sw_bn254.G2Affine{}
-	primeField, err := emulated.NewField[emulated.BN254Fp](api)
+	primeField, err := emulated.NewField[sw_bn254.BaseField](api)
 	if err != nil {
 		return ret, err
 	}
-	g2BetaXA0, err := VariableTo64BitLimbs(api, vars[0], witnesses)
-	if err != nil {
-		return ret, err
-	}
-
-	ret.P.X.A0 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(g2BetaXA0))
-	g2BetaXA1, err := VariableTo64BitLimbs(api, vars[1], witnesses)
+	XA0, err := VariableTo64BitLimbs(api, vars[0], witnesses)
 	if err != nil {
 		return ret, err
 	}
 
-	ret.P.X.A1 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(g2BetaXA1))
-
-	g2BetaYA0, err := VariableTo64BitLimbs(api, vars[2], witnesses)
+	ret.P.X.A0 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(XA0))
+	XA1, err := VariableTo64BitLimbs(api, vars[1], witnesses)
 	if err != nil {
 		return ret, err
 	}
-	ret.P.Y.A0 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(g2BetaYA0))
 
-	g2BetaYA1, err := VariableTo64BitLimbs(api, vars[3], witnesses)
+	ret.P.X.A1 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(XA1))
+
+	YA0, err := VariableTo64BitLimbs(api, vars[2], witnesses)
 	if err != nil {
 		return ret, err
 	}
-	ret.P.Y.A1 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(g2BetaYA1))
+
+	YA1, err := VariableTo64BitLimbs(api, vars[3], witnesses)
+	if err != nil {
+		return ret, err
+	}
+	ret.P.Y.A1 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(YA1))
+	ret.P.Y.A0 = emulated.Element[sw_bn254.BaseField](*primeField.NewElement(YA0))
 
 	return ret, nil
 
 }
 
 func newWitness[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable) (groth16.Witness[emulated.BN254Fr], error) {
-	var witness groth16.Witness[emulated.BN254Fr]
-	scalarField, err := emulated.NewField[emulated.BN254Fr](api)
+	var witness groth16.Witness[sw_bn254.ScalarField]
+	scalarField, err := emulated.NewField[sw_bn254.ScalarField](api)
 	if err != nil {
 		return witness, err
 	}
@@ -335,6 +333,24 @@ func newProof[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnes
 	proof.Bs, err = newG2(api, vars[4:8], witnesses)
 	if err != nil {
 		return proof, err
+	}
+
+	pok, err := newG1(api, vars[8:10], witnesses)
+	if err != nil {
+		return proof, err
+	}
+	proof.CommitmentPok.G1El = pok
+
+	idx := 10
+
+	commitments := make([]pedersen.Commitment[sw_bn254.G1Affine], (len(vars)-10)/2)
+
+	for i := range commitments {
+		commitment, err := newG1(api, vars[idx:idx+2], witnesses)
+		if err != nil {
+			return proof, err
+		}
+		commitments[i].G1El = commitment
 	}
 	return proof, nil
 }
