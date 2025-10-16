@@ -174,7 +174,6 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 		return vk, err
 	}
 	vk.E = *pair
-	api.Println(pair.A0.Limbs...)
 	g2Gamma, err := newG2(api, vars[6:10], witnesses)
 	if err != nil {
 		return vk, err

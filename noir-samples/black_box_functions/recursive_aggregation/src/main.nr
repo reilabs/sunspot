@@ -1,6 +1,6 @@
 use std::verify_proof_with_type;
 
-global N: u32 = 22;
+global N: u32 = 18;
 global M: u32 = 10;
 global K: u32 = 1;
 
