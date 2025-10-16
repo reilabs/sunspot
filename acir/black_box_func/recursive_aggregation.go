@@ -163,7 +163,9 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 	if err != nil {
 		return vk, err
 	}
-
+	indices := [][]int{
+		{1},
+	}
 	g2Beta, err := newG2(api, vars[2:6], witnesses)
 	if err != nil {
 		return vk, err
@@ -185,7 +187,7 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 	}
 	g2Delta.P.Y = *g2.Neg(&g2Delta.P.Y)
 	vk.G2.DeltaNeg = g2Delta
-	k := make([]sw_bn254.G1Affine, kLen)
+	k := make([]sw_bn254.G1Affine, kLen+len(indices))
 	for i := range k {
 		k[i], err = newG1(api, vars[14+i*2:14+i*2+2], witnesses)
 		if err != nil {
@@ -194,7 +196,7 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 	}
 	vk.G1.K = k
 
-	idx := 14 + kLen*2
+	idx := 14 + (kLen+len(indices))*2
 	commitments := make([]pedersen.VerifyingKey[sw_bn254.G2Affine], (len(vars)-idx)/8)
 
 	for i := range commitments {
@@ -210,9 +212,7 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 		commitments[i].GSigmaNeg = gSigmaNeg
 		idx += 8
 	}
-	indices := [][]int{
-		{1},
-	}
+	vk.CommitmentKeys = commitments
 	vk.PublicAndCommitmentCommitted = indices
 
 	return vk, nil
@@ -271,6 +271,7 @@ func newProof[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnes
 		}
 		commitments[i].G1El = commitment
 	}
+	proof.Commitments = commitments
 	return proof, nil
 }
 
