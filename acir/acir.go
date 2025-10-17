@@ -291,17 +291,6 @@ func (a *ACIR[T, E]) String() string {
 	return string(jsonData)
 }
 
-func MyNewBuilder[E constraint.Element](field *big.Int, config frontend.CompileConfig) *frontend.Builder[E] {
-	builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
-		CompressThreshold: 300,
-	})
-	if err != nil {
-		return nil
-	}
-	return &builder
-
-}
-
 // We need the dummy circuit to feed in our custom builder
 // This makes sure that call deferred is actually called on our custom builder
 type DummyCircuit struct{}

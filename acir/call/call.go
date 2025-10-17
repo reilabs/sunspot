@@ -2,11 +2,16 @@ package call
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"io"
+	"math/big"
 	exp "nr-groth16/acir/expression"
+	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
+	"github.com/consensys/gnark/frontend"
+	"github.com/google/btree"
 )
 
 type Call[T shr.ACIRField, E constraint.Element] struct {
@@ -53,34 +58,57 @@ func (c *Call[T, E]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (c *Call[T, E]) Equals(other *Call[T, E]) bool {
-	if c.ID != other.ID {
+func (c *Call[T, E]) Equals(other ops.Opcode[E]) bool {
+	value, ok := other.(*Call[T, E])
+	if !ok || c.ID != value.ID {
 		return false
 	}
 
-	if len(c.Inputs) != len(other.Inputs) || len(c.Outputs) != len(other.Outputs) {
+	if len(c.Inputs) != len(value.Inputs) || len(c.Outputs) != len(value.Outputs) {
 		return false
 	}
 
 	for i := range c.Inputs {
-		if c.Inputs[i] != other.Inputs[i] {
+		if c.Inputs[i] != value.Inputs[i] {
 			return false
 		}
 	}
 
 	for i := range c.Outputs {
-		if c.Outputs[i] != other.Outputs[i] {
+		if c.Outputs[i] != value.Outputs[i] {
 			return false
 		}
 	}
 
-	if (c.Predicate == nil) != (other.Predicate == nil) {
+	if (c.Predicate == nil) != (value.Predicate == nil) {
 		return false
 	}
 
-	if c.Predicate != nil && !c.Predicate.Equals(other.Predicate) {
+	if c.Predicate != nil && !c.Predicate.Equals(value.Predicate) {
 		return false
 	}
 
 	return true
+}
+
+func (*Call[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
+	return tree != nil
+}
+
+func (o *Call[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+	return nil
+}
+
+func (c *Call[T, E]) FeedConstantsAsWitnesses() []*big.Int {
+	return make([]*big.Int, 0)
+}
+
+func (c *Call[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+	return tree != nil
+}
+
+func (c *Call[T, E]) MarshalJSON() ([]byte, error) {
+	stringMap := make(map[string]interface{})
+	stringMap["circuit_call"] = c
+	return json.Marshal(stringMap)
 }

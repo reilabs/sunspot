@@ -7,6 +7,7 @@ import (
 	"math/big"
 	bbf "nr-groth16/acir/black_box_func"
 	"nr-groth16/acir/brillig"
+	"nr-groth16/acir/call"
 	exp "nr-groth16/acir/expression"
 	"nr-groth16/acir/memory_init"
 	mem_op "nr-groth16/acir/memory_op"
@@ -202,6 +203,8 @@ func NewOpcode[T shr.ACIRField, E constraint.Element](r io.Reader) (ops.Opcode[E
 		return &memory_init.MemoryInit[T, E]{}, nil
 	case 4:
 		return &brillig.BrilligCall[T, E]{}, nil
+	case 5:
+		return &call.Call[T, E]{}, nil
 	default:
 		return nil, fmt.Errorf("unknown opcode kind: %d", kind)
 	}
