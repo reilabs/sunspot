@@ -84,12 +84,12 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 		c.PublicParameters.ReplaceOrInsert(witness)
 	}
 
-	var numReturnValues uint32
+	var numReturnValues uint64
 	if err := binary.Read(r, binary.LittleEndian, &numReturnValues); err != nil {
 		return err
 	}
 	c.ReturnValues = *btree.New(2)
-	for i := uint32(0); i < numReturnValues; i++ {
+	for i := uint64(0); i < numReturnValues; i++ {
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
 			return err
@@ -118,16 +118,6 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 		}
 		c.AssertMessages[opcodeLocation] = payload
 	}*/
-
-	var recursiveFlag uint8
-	if err := binary.Read(r, binary.LittleEndian, &recursiveFlag); err != nil {
-		if err == io.EOF {
-			c.Recursive = false
-			return nil
-		}
-		return err
-	}
-	c.Recursive = recursiveFlag != 0
 
 	return nil
 }
