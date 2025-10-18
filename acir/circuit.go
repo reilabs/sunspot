@@ -28,7 +28,6 @@ type Circuit[T shr.ACIRField, E constraint.Element] struct {
 	PublicParameters    btree.BTree                                   `json:"public_parameters"`  // Witnesses
 	ReturnValues        btree.BTree                                   `json:"return_values"`      // Witnesses
 	AssertMessages      map[ops.OpcodeLocation]AssertionPayload[T, E] `json:"assert_messages"`    // Assert messages for the circuit
-	Recursive           bool                                          `json:"recursive"`          // Whether the circuit is recursive
 	MemoryBlocks        map[uint32]*logderivlookup.Table
 }
 
@@ -122,7 +121,7 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable, resolve CircuitResolver[T, E]) error {
 	c.MemoryBlocks = make(map[uint32]*logderivlookup.Table)
 	for _, opcode := range c.Opcodes {
 
@@ -135,6 +134,53 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 		mem_op, ok := opcode.(*mem_op.MemoryOp[T, E])
 		if ok {
 			mem_op.Memory = c.MemoryBlocks
+		}
+
+		// --- Nested circuit calls ---
+		if callOp, ok := opcode.(*call.Call[T, E]); ok {
+			subCircuit, err := resolve(callOp.ID)
+			if err != nil {
+				return fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
+			}
+
+			// Prepare subcircuit input witnesses
+			subWitnesses := make(map[shr.Witness]frontend.Variable, len(callOp.Inputs))
+			for i := range callOp.Inputs {
+				inputWitness := callOp.Inputs[i]
+				v, ok := witnesses[inputWitness]
+				if !ok {
+					return fmt.Errorf("call: missing input witness %d", inputWitness)
+				}
+				subWitnesses[shr.Witness(i)] = v
+			}
+
+			// Run subcircuit definition
+			if err := subCircuit.Define(api, subWitnesses, resolve); err != nil {
+				return fmt.Errorf("failed to define subcircuit %d: %w", callOp.ID, err)
+			}
+
+			// Collect subcircuit outputs (these are stored in subCircuit.ReturnValues)
+			idx := 0
+			subCircuit.ReturnValues.Ascend(func(i btree.Item) bool {
+				if idx >= len(callOp.Outputs) {
+					return false
+				}
+				w := i.(shr.Witness)
+				v := subWitnesses[w]
+
+				// TODO: Replace commented code with something that legit works
+				// Apply predicate if applicable
+				// if callOp.Predicate != nil {
+				// 	v = api.Select(predicate, v, 0)
+				// }
+
+				witnesses[callOp.Outputs[idx]] = v
+				idx++
+				return true
+			})
+
+			// Continue with next opcode
+			continue
 		}
 
 		if err := opcode.Define(api, witnesses); err != nil {

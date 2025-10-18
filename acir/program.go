@@ -2,6 +2,7 @@ package acir
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"math/big"
 	brl "nr-groth16/acir/brillig"
@@ -12,6 +13,8 @@ import (
 	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
 )
+
+type CircuitResolver[T shr.ACIRField, E constraint.Element] func(id uint32) (*Circuit[T, E], error)
 
 type Program[T shr.ACIRField, E constraint.Element] struct {
 	Functions              []Circuit[T, E]          `json:"functions"`
@@ -45,8 +48,18 @@ func (p *Program[T, E]) Define(
 	api frontend.Builder[E],
 	witnesses map[shr.Witness]frontend.Variable,
 ) error {
+
+	resolver := func(id uint32) (*Circuit[T, E], error) {
+		if id >= uint32(len(p.Functions)) {
+			return nil, fmt.Errorf("unable to get circuit, index %d out of range", id)
+		}
+		c := p.Functions[id]
+		return &c, nil
+
+	}
+
 	for _, circuit := range p.Functions {
-		if err := circuit.Define(api, witnesses); err != nil {
+		if err := circuit.Define(api, witnesses, resolver); err != nil {
 			return err
 		}
 	}
