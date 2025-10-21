@@ -118,10 +118,6 @@ func (o *MemoryOp[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witne
 	return nil
 }
 
-func (o *MemoryOp[T, E]) FeedConstantsAsWitnesses() []*big.Int {
-	return make([]*big.Int, 0)
-}
-
 func (o *MemoryOp[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	return (o.Predicate == nil || o.Predicate.FillWitnessTree(tree, index)) &&
 		o.Index.FillWitnessTree(tree, index) &&

@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"io"
-	"math/big"
 	exp "nr-groth16/acir/expression"
 	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
@@ -91,16 +90,8 @@ func (c *Call[T, E]) Equals(other ops.Opcode[E]) bool {
 	return true
 }
 
-func (*Call[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
-	return tree != nil
-}
-
 func (o *Call[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	return nil
-}
-
-func (c *Call[T, E]) FeedConstantsAsWitnesses() []*big.Int {
-	return make([]*big.Int, 0)
 }
 
 func (c *Call[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {

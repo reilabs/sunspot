@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/big"
 	"nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
@@ -28,10 +27,6 @@ type BlackBoxFuncCall[T shr.ACIRField, E constraint.Element] struct {
 	function BlackBoxFunction[E]
 }
 
-func (b BlackBoxFuncCall[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
-	return true
-}
-
 func (b BlackBoxFuncCall[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	return b.function.Define(api, witnesses)
 }
@@ -42,11 +37,6 @@ func (b BlackBoxFuncCall[T, E]) Equals(other opcodes.Opcode[E]) bool {
 		return false
 	}
 	return b.function.Equals(bbf.function)
-}
-
-func (b BlackBoxFuncCall[T, E]) FeedConstantsAsWitnesses() []*big.Int {
-	values := make([]*big.Int, 0)
-	return values
 }
 
 func (b BlackBoxFuncCall[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {

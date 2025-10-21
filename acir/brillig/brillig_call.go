@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"io"
-	"math/big"
 	exp "nr-groth16/acir/expression"
 	ops "nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
@@ -80,13 +79,4 @@ func (o *BrilligCall[T, E]) MarshalJSON() ([]byte, error) {
 
 func (o *BrilligCall[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	return tree != nil
-}
-
-func (o *BrilligCall[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
-	return tree != nil
-}
-
-func (o *BrilligCall[T, E]) FeedConstantsAsWitnesses() []*big.Int {
-	values := make([]*big.Int, 0)
-	return values
 }

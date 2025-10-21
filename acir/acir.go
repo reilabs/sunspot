@@ -158,27 +158,12 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode bytecode: %w", err)
 	}
-
 	// Decompress the bytecode using gzip
-	gzReader, err := gzip.NewReader(bytes.NewReader(data))
+	reader, err = gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-	defer gzReader.Close()
-
-	// Read all decompressed data
-	unzippedData, err := io.ReadAll(gzReader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read unzipped data: %w", err)
-	}
-
-	// Print unzipped content to terminal
-	fmt.Println("=== Unzipped Data ===")
-	fmt.Println(string(unzippedData))
-	fmt.Println("=====================")
-
-	// Return a new reader over the same unzipped data
-	return bytes.NewReader(unzippedData), nil
+	return reader, err
 }
 
 func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
@@ -205,7 +190,7 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 			}
 		}
 
-		a.WitnessTree, a.ConstantWitnessTree = a.Program.GetWitnessTree()
+		a.WitnessTree = a.Program.GetWitnessTree()
 		if a.WitnessTree == nil {
 			return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
 		}
@@ -220,23 +205,6 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 				witnessMap[witness] = builder.SecretVariable(
 					schema.LeafInfo{
 						FullName:   func() string { return fmt.Sprintf("__witness_%d", witness) },
-						Visibility: schema.Secret,
-					},
-				)
-			}
-			return true
-		})
-
-		a.ConstantWitnessTree.Ascend(func(it btree.Item) bool {
-			witness, ok := it.(shr.Witness)
-			if !ok {
-				log.Warn().Msgf("Item in constant witness tree is not of type shr.Witness: %T", it)
-				return true // Continue processing other items
-			}
-			if _, ok := witnessMap[witness]; !ok {
-				witnessMap[witness] = builder.SecretVariable(
-					schema.LeafInfo{
-						FullName:   func() string { return fmt.Sprintf("__constant_%d", witness) },
 						Visibility: schema.Secret,
 					},
 				)

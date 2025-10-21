@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"io"
-	"math/big"
 	"nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
@@ -126,23 +125,6 @@ func (e *Expression[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool
 	}
 
 	return true
-}
-
-func (e Expression[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
-	if tree == nil {
-		return false
-	}
-
-	e.constantWitnessID = shr.Witness(start + uint32(tree.Len()))
-	tree.ReplaceOrInsert(e.constantWitnessID)
-
-	return true
-}
-
-func (e *Expression[T, E]) FeedConstantsAsWitnesses() []*big.Int {
-	values := make([]*big.Int, 0)
-	values = append(values, e.Constant.ToBigInt())
-	return values
 }
 
 func (e *Expression[T, E]) MarshalJSON() ([]byte, error) {

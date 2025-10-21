@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"math/big"
 	bbf "nr-groth16/acir/black_box_func"
 	"nr-groth16/acir/brillig"
 	"nr-groth16/acir/call"
@@ -50,9 +49,6 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 		if err := op.UnmarshalReader(r); err != nil {
 			return fmt.Errorf("failed to unmarshal opcode at index %d: %w", i, err)
 		}
-		// if i > 200 {
-		fmt.Println(i, op)
-		// }
 		c.Opcodes[i] = op
 	}
 
@@ -139,15 +135,15 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 			}
 		}
 	}
+
 	currentWitnesses := make(map[shr.Witness]frontend.Variable, c.CurrentWitnessIndex+1)
-	fmt.Println("circuit witnesses")
-	fmt.Println(c.CurrentWitnessIndex)
 	for i := range c.CurrentWitnessIndex + 1 {
 		v, ok := witnesses[shr.Witness(i+uint32(*index))]
 		if !ok {
 			// Sometimes circuits skip an index
+			// insert dummy witness variable for the skipped index
+			currentWitnesses[shr.Witness(i)] = frontend.Variable(0)
 			continue
-			// return fmt.Errorf("call: missing input witness %d", i)
 		}
 		currentWitnesses[shr.Witness(i)] = v
 		api.Println(v)
@@ -202,25 +198,6 @@ func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve Circui
 		opcode.FillWitnessTree(witnessTree, index)
 	}
 	return nil
-}
-
-func (c *Circuit[T, E]) CollectConstantsAsWitnesses(start uint32, witnessTree *btree.BTree) {
-	if witnessTree == nil {
-		return
-	}
-
-	for _, opcode := range c.Opcodes {
-		opcode.CollectConstantsAsWitnesses(start, witnessTree)
-	}
-}
-
-func (c *Circuit[T, E]) FeedConstantsAsWitnesses() []*big.Int {
-	values := make([]*big.Int, 0)
-
-	for _, opcode := range c.Opcodes {
-		values = append(values, opcode.FeedConstantsAsWitnesses()...)
-	}
-	return values
 }
 
 func NewOpcode[T shr.ACIRField, E constraint.Element](r io.Reader) (ops.Opcode[E], error) {
