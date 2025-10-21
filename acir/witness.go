@@ -110,7 +110,7 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 	countPrivate -= countPublic
 
 	go func() {
-		for i := range witnessStack.ItemStack {
+		for i := len(witnessStack.ItemStack) - 1; i >= 0; i-- {
 			if i == 0 {
 				for index, param := range acir.ABI.Parameters {
 					if param.Visibility == hdr.ACIRParameterVisibilityPublic {
@@ -125,7 +125,7 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 					}
 				}
 			}
-			itemStack := witnessStack.ItemStack[i]
+			itemStack := witnessStack.ItemStack[uint32(i)]
 			for it := itemStack.Iter(); it.Next(); {
 				witnessKey := it.Key()
 				skipKey := false
