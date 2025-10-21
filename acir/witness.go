@@ -19,7 +19,7 @@ type WitnessStack[T shr.ACIRField] struct {
 	ItemStack ItemStack[T]
 }
 
-type ItemStack[T shr.ACIRField] map[uint32]btree.Map[shr.Witness, T]
+type ItemStack[T shr.ACIRField] map[uint64]btree.Map[shr.Witness, T]
 
 type WitnessMap[T shr.ACIRField] btree.Map[shr.Witness, T]
 
@@ -70,7 +70,7 @@ func LoadWitnessStackFromFile[T shr.ACIRField](filePath string, modulus *big.Int
 
 			witnessMap.Set(witness, value)
 		}
-		witnessStack.ItemStack[stackIndex] = witnessMap
+		witnessStack.ItemStack[i] = witnessMap
 	}
 	return witnessStack, nil
 }
@@ -110,22 +110,21 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 	countPrivate -= countPublic
 
 	go func() {
-		for i := len(witnessStack.ItemStack) - 1; i >= 0; i-- {
-			if i == 0 {
-				for index, param := range acir.ABI.Parameters {
-					if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-						for stackIndex, itemStack := range witnessStack.ItemStack {
-							if value, ok := itemStack.Get(shr.Witness(index)); ok {
-								values <- value.ToFrontendVariable()
-								break // Only send the first occurrence of the public parameter
-							} else {
-								log.Warn().Msgf("Public parameter %s not found in stack %d", param.Name, stackIndex)
-							}
-						}
+		for index, param := range acir.ABI.Parameters {
+			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+				itemStack := witnessStack.ItemStack[uint64(0)]
+				for i := 0; i < len(witnessStack.ItemStack); i++ {
+					if value, ok := itemStack.Get(shr.Witness(index)); ok {
+						values <- value.ToFrontendVariable()
+						break // Only send the first occurrence of the public parameter
+					} else {
+						log.Warn().Msgf("Public parameter %s not found in stack %d", param.Name, i)
 					}
 				}
 			}
-			itemStack := witnessStack.ItemStack[uint32(i)]
+		}
+		for i := 0; i < len(witnessStack.ItemStack); i++ {
+			itemStack := witnessStack.ItemStack[uint64(i)]
 			for it := itemStack.Iter(); it.Next(); {
 				witnessKey := it.Key()
 				skipKey := false
