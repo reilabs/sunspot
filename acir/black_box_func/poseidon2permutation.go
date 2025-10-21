@@ -86,19 +86,19 @@ func (a *Poseidon2Permutation[T, E]) Define(api frontend.Builder[E], witnesses m
 	return nil
 }
 
-func (a *Poseidon2Permutation[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *Poseidon2Permutation[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
 
 	for _, input := range a.Inputs {
 		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness)
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
 		}
 	}
 
 	for _, output := range a.Outputs {
-		tree.ReplaceOrInsert(output)
+		tree.ReplaceOrInsert(output + shr.Witness(index))
 	}
 
 	return true

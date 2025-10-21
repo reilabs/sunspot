@@ -160,11 +160,25 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	}
 
 	// Decompress the bytecode using gzip
-	reader, err = gzip.NewReader(bytes.NewReader(data))
+	gzReader, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-	return reader, err
+	defer gzReader.Close()
+
+	// Read all decompressed data
+	unzippedData, err := io.ReadAll(gzReader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read unzipped data: %w", err)
+	}
+
+	// Print unzipped content to terminal
+	fmt.Println("=== Unzipped Data ===")
+	fmt.Println(string(unzippedData))
+	fmt.Println("=====================")
+
+	// Return a new reader over the same unzipped data
+	return bytes.NewReader(unzippedData), nil
 }
 
 func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {

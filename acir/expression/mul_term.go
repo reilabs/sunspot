@@ -63,13 +63,13 @@ func (Mt *MulTerm[T]) Calculate(api frontend.API, witnesses map[shr.Witness]fron
 	return api.Mul(left, right, Mt.Term.ToFrontendVariable())
 }
 
-func (mt *MulTerm[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (mt *MulTerm[T]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
 
-	tree.ReplaceOrInsert(mt.WitnessLeft)
-	tree.ReplaceOrInsert(mt.WitnessRight)
+	tree.ReplaceOrInsert(mt.WitnessLeft + shr.Witness(index))
+	tree.ReplaceOrInsert(mt.WitnessRight + shr.Witness(index))
 
 	return true
 }

@@ -18,7 +18,7 @@ type BlackBoxFunction[E constraint.Element] interface {
 	UnmarshalReader(r io.Reader) error
 	Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error
 	Equals(other BlackBoxFunction[E]) bool
-	FillWitnessTree(tree *btree.BTree) bool
+	FillWitnessTree(tree *btree.BTree, index uint32) bool
 }
 
 // Struct that implements the Opcode interface
@@ -49,8 +49,8 @@ func (b BlackBoxFuncCall[T, E]) FeedConstantsAsWitnesses() []*big.Int {
 	return values
 }
 
-func (b BlackBoxFuncCall[T, E]) FillWitnessTree(tree *btree.BTree) bool {
-	return b.function.FillWitnessTree(tree)
+func (b BlackBoxFuncCall[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
+	return b.function.FillWitnessTree(tree, index)
 }
 
 func (b BlackBoxFuncCall[T, E]) MarshalJSON() ([]byte, error) {

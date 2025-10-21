@@ -50,6 +50,9 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 		if err := op.UnmarshalReader(r); err != nil {
 			return fmt.Errorf("failed to unmarshal opcode at index %d: %w", i, err)
 		}
+		// if i > 200 {
+		fmt.Println(i, op)
+		// }
 		c.Opcodes[i] = op
 	}
 
@@ -121,10 +124,37 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
-func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable, resolve CircuitResolver[T, E]) error {
+func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable, resolve CircuitResolver[T, E], index *uint32) error {
 	c.MemoryBlocks = make(map[uint32]*logderivlookup.Table)
 	for _, opcode := range c.Opcodes {
+		if callOp, ok := opcode.(*call.Call[T, E]); ok {
+			subCircuit, err := resolve(callOp.ID)
+			if err != nil {
+				return fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
+			}
 
+			// Run subcircuit definition
+			if err := subCircuit.Define(api, witnesses, resolve, index); err != nil {
+				return fmt.Errorf("failed to define subcircuit %d: %w", callOp.ID, err)
+			}
+		}
+	}
+	currentWitnesses := make(map[shr.Witness]frontend.Variable, c.CurrentWitnessIndex+1)
+	fmt.Println("circuit witnesses")
+	fmt.Println(c.CurrentWitnessIndex)
+	for i := range c.CurrentWitnessIndex + 1 {
+		v, ok := witnesses[shr.Witness(i+uint32(*index))]
+		if !ok {
+			// Sometimes circuits skip an index
+			continue
+			// return fmt.Errorf("call: missing input witness %d", i)
+		}
+		currentWitnesses[shr.Witness(i)] = v
+		api.Println(v)
+	}
+
+	*index += c.CurrentWitnessIndex + 1
+	for _, opcode := range c.Opcodes {
 		mem_init, ok := opcode.(*memory_init.MemoryInit[T, E])
 		if ok {
 			table := logderivlookup.New(api)
@@ -136,68 +166,42 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 			mem_op.Memory = c.MemoryBlocks
 		}
 
-		// --- Nested circuit calls ---
-		if callOp, ok := opcode.(*call.Call[T, E]); ok {
-			subCircuit, err := resolve(callOp.ID)
-			if err != nil {
-				return fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
-			}
-
-			// Prepare subcircuit input witnesses
-			subWitnesses := make(map[shr.Witness]frontend.Variable, len(callOp.Inputs))
-			for i := range callOp.Inputs {
-				inputWitness := callOp.Inputs[i]
-				v, ok := witnesses[inputWitness]
-				if !ok {
-					return fmt.Errorf("call: missing input witness %d", inputWitness)
-				}
-				subWitnesses[shr.Witness(i)] = v
-			}
-
-			// Run subcircuit definition
-			if err := subCircuit.Define(api, subWitnesses, resolve); err != nil {
-				return fmt.Errorf("failed to define subcircuit %d: %w", callOp.ID, err)
-			}
-
-			// Collect subcircuit outputs (these are stored in subCircuit.ReturnValues)
-			idx := 0
-			subCircuit.ReturnValues.Ascend(func(i btree.Item) bool {
-				if idx >= len(callOp.Outputs) {
-					return false
-				}
-				w := i.(shr.Witness)
-				v := subWitnesses[w]
-
-				// TODO: Replace commented code with something that legit works
-				// Apply predicate if applicable
-				// if callOp.Predicate != nil {
-				// 	v = api.Select(predicate, v, 0)
-				// }
-
-				witnesses[callOp.Outputs[idx]] = v
-				idx++
-				return true
-			})
-
-			// Continue with next opcode
-			continue
-		}
-
-		if err := opcode.Define(api, witnesses); err != nil {
+		if err := opcode.Define(api, currentWitnesses); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree) {
+func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve CircuitResolver[T, E], index uint32) error {
 	if witnessTree == nil {
-		return
+		return fmt.Errorf("no witness tree to fill")
 	}
 
 	for _, opcode := range c.Opcodes {
-		opcode.FillWitnessTree(witnessTree)
+		if callOp, ok := opcode.(*call.Call[T, E]); ok {
+			subCircuit, err := resolve(callOp.ID)
+			if err != nil {
+				return fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
+			}
+			subCircuitWitnessTree := btree.New(2)
+			subCircuit.FillWitnessTree(subCircuitWitnessTree, resolve, index)
+
+			subCircuitWitnessTree.Ascend(func(it btree.Item) bool {
+				witness, ok := it.(shr.Witness)
+				if !ok {
+					panic("Item in subwitness tree not of type witness")
+				}
+				witnessTree.ReplaceOrInsert(witness)
+				index++
+				return true
+			})
+		}
 	}
+	for _, opcode := range c.Opcodes {
+		opcode.FillWitnessTree(witnessTree, index)
+	}
+	return nil
 }
 
 func (c *Circuit[T, E]) CollectConstantsAsWitnesses(start uint32, witnessTree *btree.BTree) {

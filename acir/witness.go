@@ -51,7 +51,7 @@ func LoadWitnessStackFromFile[T shr.ACIRField](filePath string, modulus *big.Int
 		if err := binary.Read(reader, binary.LittleEndian, &stackIndex); err != nil {
 			return WitnessStack[T]{}, err
 		}
-
+		fmt.Println(stackIndex)
 		var witnessMap btree.Map[shr.Witness, T]
 		var mapSize uint64
 		if err := binary.Read(reader, binary.LittleEndian, &mapSize); err != nil {
@@ -107,42 +107,63 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 		}
 		countPrivate += itemStackCount
 	}
-
+	fmt.Println(countPrivate)
+	fmt.Println(countPublic)
 	countPrivate += acir.ConstantWitnessTree.Len()
 
 	countPrivate -= countPublic
 
 	go func() {
-		for index, param := range acir.ABI.Parameters {
-			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-				for stackIndex, itemStack := range witnessStack.ItemStack {
-					if value, ok := itemStack.Get(shr.Witness(index)); ok {
-						values <- value.ToFrontendVariable()
-						break // Only send the first occurrence of the public parameter
-					} else {
-						log.Warn().Msgf("Public parameter %s not found in stack %d", param.Name, stackIndex)
+		// for index, param := range acir.ABI.Parameters {
+		// 	if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+		// 		for stackIndex, itemStack := range witnessStack.ItemStack {
+		// 			if value, ok := itemStack.Get(shr.Witness(index)); ok {
+		// 				fmt.Println("public value: ", value)
+		// 				values <- value.ToFrontendVariable()
+		// 				break // Only send the first occurrence of the public parameter
+		// 			} else {
+		// 				log.Warn().Msgf("Public parameter %s not found in stack %d", param.Name, stackIndex)
+		// 			}
+		// 		}
+		// 	}
+		// }
+
+		for i := range witnessStack.ItemStack {
+			if i == 0 {
+				for index, param := range acir.ABI.Parameters {
+					if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+						for stackIndex, itemStack := range witnessStack.ItemStack {
+							if value, ok := itemStack.Get(shr.Witness(index)); ok {
+								fmt.Println("public value: ", value)
+								values <- value.ToFrontendVariable()
+								break // Only send the first occurrence of the public parameter
+							} else {
+								log.Warn().Msgf("Public parameter %s not found in stack %d", param.Name, stackIndex)
+							}
+						}
 					}
 				}
 			}
-		}
-
-		for _, itemStack := range witnessStack.ItemStack {
+			itemStack := witnessStack.ItemStack[i]
 			for it := itemStack.Iter(); it.Next(); {
 				witnessKey := it.Key()
 				skipKey := false
-				for index, param := range acir.ABI.Parameters {
-					if witnessKey == shr.Witness(index) && param.Visibility == hdr.ACIRParameterVisibilityPublic {
-						skipKey = true
-						break
+				if i == 0 {
+					for index, param := range acir.ABI.Parameters {
+						if witnessKey == shr.Witness(index) && param.Visibility == hdr.ACIRParameterVisibilityPublic {
+							skipKey = true
+							break
+						}
 					}
-				}
-				if acir.WitnessTree != nil && !acir.WitnessTree.Has(witnessKey) {
-					skipKey = true
+					if acir.WitnessTree != nil && !acir.WitnessTree.Has(witnessKey) {
+						skipKey = true
+					}
 				}
 				if skipKey {
 					continue
 				}
 				witnessValue := it.Value()
+				fmt.Println("witness value: ", witnessValue)
 				values <- witnessValue.ToFrontendVariable()
 			}
 		}
@@ -158,6 +179,6 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 	if err != nil {
 		return nil, fmt.Errorf("failed to fill witness: %w", err)
 	}
-
+	fmt.Println(witness.Vector())
 	return witness, nil
 }

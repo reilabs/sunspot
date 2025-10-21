@@ -122,11 +122,11 @@ func (o *MemoryOp[T, E]) FeedConstantsAsWitnesses() []*big.Int {
 	return make([]*big.Int, 0)
 }
 
-func (o *MemoryOp[T, E]) FillWitnessTree(tree *btree.BTree) bool {
-	return (o.Predicate == nil || o.Predicate.FillWitnessTree(tree)) &&
-		o.Index.FillWitnessTree(tree) &&
-		o.Operation.FillWitnessTree(tree) &&
-		o.Value.FillWitnessTree(tree)
+func (o *MemoryOp[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
+	return (o.Predicate == nil || o.Predicate.FillWitnessTree(tree, index)) &&
+		o.Index.FillWitnessTree(tree, index) &&
+		o.Operation.FillWitnessTree(tree, index) &&
+		o.Value.FillWitnessTree(tree, index)
 }
 
 func (o MemoryOp[T, E]) MarshalJSON() ([]byte, error) {

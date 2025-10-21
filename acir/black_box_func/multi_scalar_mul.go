@@ -121,23 +121,23 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	return nil
 }
 
-func (a *MultiScalarMul[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *MultiScalarMul[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
 	for _, point := range a.Points {
-		if point.FunctionInputKind == 1 {
-			tree.ReplaceOrInsert(*point.Witness)
+		if point.IsWitness() {
+			tree.ReplaceOrInsert(*point.Witness + shr.Witness(index))
 		}
 	}
 
 	for _, scalar := range a.Scalars {
-		if scalar.FunctionInputKind == 1 {
-			tree.ReplaceOrInsert(*scalar.Witness)
+		if scalar.IsWitness() {
+			tree.ReplaceOrInsert(*scalar.Witness + shr.Witness(index))
 		}
 	}
 	for _, output := range a.Outputs {
-		tree.ReplaceOrInsert(output)
+		tree.ReplaceOrInsert(output + shr.Witness(index))
 	}
 	return true
 }

@@ -96,7 +96,7 @@ func (a *AES128Encrypt[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	return true
 }
 
-func (a *AES128Encrypt[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *AES128Encrypt[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	return tree != nil
 }
 

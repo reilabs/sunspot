@@ -100,21 +100,21 @@ func (a *EmbeddedCurveAdd[T, E]) Define(api frontend.Builder[E], witnesses map[s
 	return nil
 }
 
-func (a *EmbeddedCurveAdd[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *EmbeddedCurveAdd[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
 	for _, input := range a.Input1 {
 
-		tree.ReplaceOrInsert(*input.Witness)
+		tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
 	}
 
 	for _, input := range a.Input2 {
-		tree.ReplaceOrInsert(*input.Witness)
+		tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
 	}
 
 	for _, output := range a.Outputs {
-		tree.ReplaceOrInsert(output)
+		tree.ReplaceOrInsert(output + shr.Witness(index))
 	}
 	return true
 }

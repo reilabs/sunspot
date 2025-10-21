@@ -47,10 +47,10 @@ func (a Range[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]f
 	return nil
 }
 
-func (a *Range[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *Range[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
-	tree.ReplaceOrInsert(*a.Input.Witness)
+	tree.ReplaceOrInsert(*a.Input.Witness + shr.Witness(index))
 	return true
 }

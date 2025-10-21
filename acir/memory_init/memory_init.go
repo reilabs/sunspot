@@ -99,12 +99,12 @@ func (m *MemoryInit[T, E]) FeedConstantsAsWitnesses() []*big.Int {
 	return make([]*big.Int, 0)
 }
 
-func (m *MemoryInit[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (m *MemoryInit[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
 	for _, entry := range m.Init {
-		tree.ReplaceOrInsert(entry)
+		tree.ReplaceOrInsert(entry + shr.Witness(index))
 	}
 	return true
 }

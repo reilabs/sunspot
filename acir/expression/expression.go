@@ -27,6 +27,7 @@ func (e *Expression[T, E]) Define(
 	api.AssertIsEqual(e.Calculate(api, witnesses), 0)
 	return nil
 }
+
 func (e *Expression[T, E]) UnmarshalReader(r io.Reader) error {
 	e.Constant = shr.MakeNonNil(e.Constant) // Ensure Constant is non-nil
 
@@ -107,19 +108,19 @@ func (e *Expression[T, E]) Calculate(api frontend.API, witnesses map[shr.Witness
 	return sum
 }
 
-func (e *Expression[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (e *Expression[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
 
 	for _, term := range e.MulTerms {
-		if !term.FillWitnessTree(tree) {
+		if !term.FillWitnessTree(tree, index) {
 			return false
 		}
 	}
 
 	for _, lc := range e.LinearCombinations {
-		if !lc.FillWitnessTree(tree) {
+		if !lc.FillWitnessTree(tree, index) {
 			return false
 		}
 	}

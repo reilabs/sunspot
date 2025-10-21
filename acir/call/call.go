@@ -103,7 +103,13 @@ func (c *Call[T, E]) FeedConstantsAsWitnesses() []*big.Int {
 	return make([]*big.Int, 0)
 }
 
-func (c *Call[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (c *Call[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
+	for i := range c.Inputs {
+		tree.ReplaceOrInsert(c.Inputs[i] + shr.Witness(index))
+	}
+	for i := range c.Outputs {
+		tree.ReplaceOrInsert(c.Outputs[i] + shr.Witness(index))
+	}
 	return tree != nil
 }
 

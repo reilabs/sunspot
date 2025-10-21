@@ -15,7 +15,7 @@ type Opcode[E constraint.Element] interface {
 	Equals(other Opcode[E]) bool
 	Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error
 	MarshalJSON() ([]byte, error)
-	FillWitnessTree(tree *btree.BTree) bool
+	FillWitnessTree(tree *btree.BTree, index uint32) bool
 	CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool
 	FeedConstantsAsWitnesses() []*big.Int
 }

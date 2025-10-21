@@ -130,33 +130,33 @@ func (a *ECDSASECP256R1[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	return nil
 }
 
-func (a *ECDSASECP256R1[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *ECDSASECP256R1[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
 
 	for _, input := range a.PublicKeyX {
 		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness)
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
 		}
 	}
 	for _, input := range a.PublicKeyY {
 		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness)
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
 		}
 	}
 	for _, input := range a.HashedMessage {
 		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness)
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
 		}
 	}
 	for _, input := range a.Signature {
 		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness)
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
 		}
 	}
 
-	tree.ReplaceOrInsert(a.Output)
+	tree.ReplaceOrInsert(a.Output + shr.Witness(index))
 
 	return true
 }
