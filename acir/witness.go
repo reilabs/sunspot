@@ -112,11 +112,9 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 	go func() {
 
 		for index, param := range acir.ABI.Parameters {
-			// fmt.Println(index)
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
 				outerCircuitStack := witnessStack.ItemStack[uint64(len(witnessStack.ItemStack)-1)]
 				if value, ok := outerCircuitStack.Get(shr.Witness(index)); ok {
-					// fmt.Println(value.ToBigInt())
 					values <- value.ToFrontendVariable()
 				} else {
 					log.Warn().Msgf("Public parameter %s not found in outermost circuit stack", param.Name)
@@ -129,6 +127,8 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 			for it := itemStack.Iter(); it.Next(); {
 				witnessKey := it.Key()
 				skipKey := false
+				// For the outermost circuit, we skip the witness values
+				// that have already been added as part of the public variables
 				if i == len(witnessStack.ItemStack)-1 {
 					for index, param := range acir.ABI.Parameters {
 						if witnessKey == shr.Witness(index) && param.Visibility == hdr.ACIRParameterVisibilityPublic {
@@ -144,7 +144,6 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 					continue
 				}
 				witnessValue := it.Value()
-				// fmt.Println(witnessValue.ToBigInt())
 				values <- witnessValue.ToFrontendVariable()
 			}
 		}

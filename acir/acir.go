@@ -179,19 +179,19 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 		}
 
 		witnessMap := make(map[shr.Witness]frontend.Variable)
+		var outerCircuitIndex uint32
+		a.WitnessTree, outerCircuitIndex, err = a.Program.GetWitnessTree()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get witness tree: %w", err)
+		}
 
-		a.WitnessTree = a.Program.GetWitnessTree()
 		if a.WitnessTree == nil {
 			return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
 		}
 
-		// Doesn't catch the case when witnesses are missing from the ACIR programme
-		outerCircuitIndex := a.WitnessTree.Len() - int(a.Program.Functions[0].CurrentWitnessIndex+1)
-		fmt.Println(outerCircuitIndex)
 		for index, param := range a.ABI.Parameters {
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-				// fmt.Println(outerCircuitIndex + index)
-				witnessMap[shr.Witness(index+outerCircuitIndex)] = builder.PublicVariable(
+				witnessMap[shr.Witness(index+int(outerCircuitIndex))] = builder.PublicVariable(
 					schema.LeafInfo{
 						FullName:   func() string { return param.Name },
 						Visibility: schema.Public,
@@ -206,7 +206,6 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 				return true // Continue processing other items
 			}
 			if _, ok := witnessMap[witness]; !ok {
-				// fmt.Println("Adding a witness variable at index", witness)
 				witnessMap[witness] = builder.SecretVariable(
 					schema.LeafInfo{
 						FullName:   func() string { return fmt.Sprintf("__witness_%d", witness) },

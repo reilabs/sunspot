@@ -56,11 +56,13 @@ func (p *Program[T, E]) Define(
 	return nil
 }
 
-func (p *Program[T, E]) GetWitnessTree() *btree.BTree {
+func (p *Program[T, E]) GetWitnessTree() (*btree.BTree, uint32, error) {
 	witnessTree := btree.New(2)
-	p.Functions[0].FillWitnessTree(witnessTree, makeResolver(*p), uint32(0))
-
-	return witnessTree
+	outerCircuitWitnessIndex, err := p.Functions[0].FillWitnessTree(witnessTree, makeResolver(*p), uint32(0))
+	if err != nil {
+		return nil, outerCircuitWitnessIndex, err
+	}
+	return witnessTree, outerCircuitWitnessIndex, nil
 }
 
 // Resolver takes a progamme and an index and returns the circuit

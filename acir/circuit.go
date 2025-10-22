@@ -146,11 +146,7 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 			continue
 		}
 		currentWitnesses[shr.Witness(i)] = v
-		// fmt.Println("witness_", i, v)
-
-		// api.Println("witness", i, v)
 	}
-	// fmt.Print("\n\n\n\n")
 
 	*index += c.CurrentWitnessIndex + 1
 	for _, opcode := range c.Opcodes {
@@ -172,16 +168,16 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 	return nil
 }
 
-func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve CircuitResolver[T, E], index uint32) error {
+func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve CircuitResolver[T, E], index uint32) (uint32, error) {
 	if witnessTree == nil {
-		return fmt.Errorf("no witness tree to fill")
+		return index, fmt.Errorf("no witness tree to fill")
 	}
 
 	for _, opcode := range c.Opcodes {
 		if callOp, ok := opcode.(*call.Call[T, E]); ok {
 			subCircuit, err := resolve(callOp.ID)
 			if err != nil {
-				return fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
+				return index, fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
 			}
 			subCircuitWitnessTree := btree.New(2)
 			subCircuit.FillWitnessTree(subCircuitWitnessTree, resolve, index)
@@ -200,7 +196,7 @@ func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve Circui
 	for _, opcode := range c.Opcodes {
 		opcode.FillWitnessTree(witnessTree, index)
 	}
-	return nil
+	return index, nil
 }
 
 func NewOpcode[T shr.ACIRField, E constraint.Element](r io.Reader) (ops.Opcode[E], error) {
