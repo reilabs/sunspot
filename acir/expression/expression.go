@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"io"
-	"math/big"
 	"nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
@@ -27,6 +26,7 @@ func (e *Expression[T, E]) Define(
 	api.AssertIsEqual(e.Calculate(api, witnesses), 0)
 	return nil
 }
+
 func (e *Expression[T, E]) UnmarshalReader(r io.Reader) error {
 	e.Constant = shr.MakeNonNil(e.Constant) // Ensure Constant is non-nil
 
@@ -107,41 +107,24 @@ func (e *Expression[T, E]) Calculate(api frontend.API, witnesses map[shr.Witness
 	return sum
 }
 
-func (e *Expression[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (e *Expression[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
 
 	for _, term := range e.MulTerms {
-		if !term.FillWitnessTree(tree) {
+		if !term.FillWitnessTree(tree, index) {
 			return false
 		}
 	}
 
 	for _, lc := range e.LinearCombinations {
-		if !lc.FillWitnessTree(tree) {
+		if !lc.FillWitnessTree(tree, index) {
 			return false
 		}
 	}
 
 	return true
-}
-
-func (e Expression[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
-	if tree == nil {
-		return false
-	}
-
-	e.constantWitnessID = shr.Witness(start + uint32(tree.Len()))
-	tree.ReplaceOrInsert(e.constantWitnessID)
-
-	return true
-}
-
-func (e *Expression[T, E]) FeedConstantsAsWitnesses() []*big.Int {
-	values := make([]*big.Int, 0)
-	values = append(values, e.Constant.ToBigInt())
-	return values
 }
 
 func (e *Expression[T, E]) MarshalJSON() ([]byte, error) {

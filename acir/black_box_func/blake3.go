@@ -113,7 +113,7 @@ func (a *Blake3[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness
 	return nil
 }
 
-func (a *Blake3[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *Blake3[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	return tree != nil
 }
 

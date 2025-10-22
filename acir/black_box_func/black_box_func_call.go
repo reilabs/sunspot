@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/big"
 	"nr-groth16/acir/opcodes"
 	shr "nr-groth16/acir/shared"
 
@@ -18,18 +17,13 @@ type BlackBoxFunction[E constraint.Element] interface {
 	UnmarshalReader(r io.Reader) error
 	Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error
 	Equals(other BlackBoxFunction[E]) bool
-	FillWitnessTree(tree *btree.BTree) bool
+	FillWitnessTree(tree *btree.BTree, index uint32) bool
 }
 
 // Struct that implements the Opcode interface
 // Allows us to create generic behaviour for all black box functions
-// TODO: revisit and think about this design
 type BlackBoxFuncCall[T shr.ACIRField, E constraint.Element] struct {
 	function BlackBoxFunction[E]
-}
-
-func (b BlackBoxFuncCall[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
-	return true
 }
 
 func (b BlackBoxFuncCall[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
@@ -44,13 +38,8 @@ func (b BlackBoxFuncCall[T, E]) Equals(other opcodes.Opcode[E]) bool {
 	return b.function.Equals(bbf.function)
 }
 
-func (b BlackBoxFuncCall[T, E]) FeedConstantsAsWitnesses() []*big.Int {
-	values := make([]*big.Int, 0)
-	return values
-}
-
-func (b BlackBoxFuncCall[T, E]) FillWitnessTree(tree *btree.BTree) bool {
-	return b.function.FillWitnessTree(tree)
+func (b BlackBoxFuncCall[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
+	return b.function.FillWitnessTree(tree, index)
 }
 
 func (b BlackBoxFuncCall[T, E]) MarshalJSON() ([]byte, error) {

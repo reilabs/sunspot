@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"math/big"
 	bbf "nr-groth16/acir/black_box_func"
 	"nr-groth16/acir/brillig"
+	"nr-groth16/acir/call"
 	exp "nr-groth16/acir/expression"
 	"nr-groth16/acir/memory_init"
 	mem_op "nr-groth16/acir/memory_op"
@@ -27,7 +27,6 @@ type Circuit[T shr.ACIRField, E constraint.Element] struct {
 	PublicParameters    btree.BTree                                   `json:"public_parameters"`  // Witnesses
 	ReturnValues        btree.BTree                                   `json:"return_values"`      // Witnesses
 	AssertMessages      map[ops.OpcodeLocation]AssertionPayload[T, E] `json:"assert_messages"`    // Assert messages for the circuit
-	Recursive           bool                                          `json:"recursive"`          // Whether the circuit is recursive
 	MemoryBlocks        map[uint32]*logderivlookup.Table
 }
 
@@ -83,12 +82,12 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 		c.PublicParameters.ReplaceOrInsert(witness)
 	}
 
-	var numReturnValues uint32
+	var numReturnValues uint64
 	if err := binary.Read(r, binary.LittleEndian, &numReturnValues); err != nil {
 		return err
 	}
 	c.ReturnValues = *btree.New(2)
-	for i := uint32(0); i < numReturnValues; i++ {
+	for i := uint64(0); i < numReturnValues; i++ {
 		var witness shr.Witness
 		if err := witness.UnmarshalReader(r); err != nil {
 			return err
@@ -118,68 +117,191 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 		c.AssertMessages[opcodeLocation] = payload
 	}*/
 
-	var recursiveFlag uint8
-	if err := binary.Read(r, binary.LittleEndian, &recursiveFlag); err != nil {
-		if err == io.EOF {
-			c.Recursive = false
-			return nil
-		}
-		return err
-	}
-	c.Recursive = recursiveFlag != 0
-
 	return nil
 }
 
-func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+// Define the constraints for a circuit
+// This returns the input and output variables of the circuit,
+// so that circuits that call the circuit can check that the values they called the
+// circuit with are consistent with the true value.
+func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable, resolve CircuitResolver[T, E], index *uint32) ([]frontend.Variable, []frontend.Variable, error) {
 	c.MemoryBlocks = make(map[uint32]*logderivlookup.Table)
-	for _, opcode := range c.Opcodes {
 
-		mem_init, ok := opcode.(*memory_init.MemoryInit[T, E])
+	// 1. Resolve and define all subcircuits
+	callConnections, err := c.defineSubcircuits(api, witnesses, resolve, index)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// 2. Collect witnesses for current circuit
+	currentWitnesses := c.collectCurrentWitnesses(witnesses, index)
+
+	// 3. Add the constraints for the circuit
+	if err := c.constrainCircuit(api, currentWitnesses); err != nil {
+		return nil, nil, err
+	}
+
+	// 4. Connect call inputs/outputs
+	c.constrainCircuitCalls(api, currentWitnesses, callConnections)
+
+	// 5. Collect circuit inputs and outputs
+	inputs := c.collectWitnesses(&c.PrivateParameters, currentWitnesses)
+	outputs := c.collectWitnesses(&c.ReturnValues, currentWitnesses)
+
+	return inputs, outputs, nil
+}
+
+// Run the definition function for the circuits called by the circuit
+func (c *Circuit[T, E]) defineSubcircuits(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable, resolve CircuitResolver[T, E], index *uint32) (map[int]struct {
+	Inputs  []frontend.Variable
+	Outputs []frontend.Variable
+}, error) {
+	callConnections := make(map[int]struct {
+		Inputs  []frontend.Variable
+		Outputs []frontend.Variable
+	})
+
+	for i, opcode := range c.Opcodes {
+		callOp, ok := opcode.(*call.Call[T, E])
+		if !ok {
+			continue
+		}
+
+		subCircuit, err := resolve(callOp.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
+		}
+
+		// Run subcircuit definition
+		in, out, err := subCircuit.Define(api, witnesses, resolve, index)
+		if err != nil {
+			return nil, fmt.Errorf("failed to define subcircuit %d: %w", callOp.ID, err)
+		}
+
+		if len(in) > len(callOp.Inputs) {
+			return nil, fmt.Errorf("input count mismatch: subcircuit %d requires more inputs than are given by the outer circuit", callOp.ID)
+		}
+		if len(out) > len(callOp.Outputs) {
+			return nil, fmt.Errorf("output count mismatch: subcircuit %d provides more outputs than the outer circuit is expecting", callOp.ID)
+		}
+
+		callConnections[i] = struct {
+			Inputs  []frontend.Variable
+			Outputs []frontend.Variable
+		}{Inputs: in, Outputs: out}
+	}
+
+	return callConnections, nil
+}
+
+// Get the partial witness for a particular circuit call
+// The partial witness for a whole programme consists of a concatenation of a postorder traversal of the programme tree.
+// We perform a postorder traversal and 'pop' the witness that we need by incrementing the global index
+func (c *Circuit[T, E]) collectCurrentWitnesses(witnesses map[shr.Witness]frontend.Variable, index *uint32) map[shr.Witness]frontend.Variable {
+	currentWitnesses := make(map[shr.Witness]frontend.Variable, c.CurrentWitnessIndex+1)
+
+	for i := range c.CurrentWitnessIndex + 1 {
+		v, ok := witnesses[shr.Witness(i+uint32(*index))]
+		if !ok {
+			// Sometimes circuits skip an index.
+			// Insert dummy witness variable to make the number of witnesses
+			// consistent with the `CurrentWitnessIndex` in the ACIR of the circuit
+			currentWitnesses[shr.Witness(i)] = frontend.Variable(0)
+			continue
+		}
+		currentWitnesses[shr.Witness(i)] = v
+	}
+
+	*index += c.CurrentWitnessIndex + 1
+	return currentWitnesses
+}
+
+// Add constraints for a specific circuit call within a programme
+func (c *Circuit[T, E]) constrainCircuit(api frontend.Builder[E], currentWitnesses map[shr.Witness]frontend.Variable) error {
+	for _, opcode := range c.Opcodes {
+		memInit, ok := opcode.(*memory_init.MemoryInit[T, E])
 		if ok {
 			table := logderivlookup.New(api)
-			mem_init.Table = &table
-			c.MemoryBlocks[mem_init.BlockID] = &table
-		}
-		mem_op, ok := opcode.(*mem_op.MemoryOp[T, E])
-		if ok {
-			mem_op.Memory = c.MemoryBlocks
+			memInit.Table = &table
+			c.MemoryBlocks[memInit.BlockID] = &table
 		}
 
-		if err := opcode.Define(api, witnesses); err != nil {
+		memOp, ok := opcode.(*mem_op.MemoryOp[T, E])
+		if ok {
+			memOp.Memory = c.MemoryBlocks
+		}
+
+		if err := opcode.Define(api, currentWitnesses); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree) {
-	if witnessTree == nil {
-		return
-	}
-
-	for _, opcode := range c.Opcodes {
-		opcode.FillWitnessTree(witnessTree)
+// Ensure that the input and return values of a circuit call are consistent with the values
+// that are in the partial witness for the outer circuit
+func (c *Circuit[T, E]) constrainCircuitCalls(api frontend.Builder[E], currentWitnesses map[shr.Witness]frontend.Variable, callConnections map[int]struct {
+	Inputs  []frontend.Variable
+	Outputs []frontend.Variable
+}) {
+	for i, opcode := range c.Opcodes {
+		callOp, ok := opcode.(*call.Call[T, E])
+		if !ok {
+			continue
+		}
+		connection := callConnections[i]
+		for j, inputWitness := range callOp.Inputs {
+			api.AssertIsEqual(currentWitnesses[inputWitness], connection.Inputs[j])
+		}
+		for j, outputWitness := range callOp.Outputs {
+			api.AssertIsEqual(currentWitnesses[outputWitness], connection.Outputs[j])
+		}
 	}
 }
 
-func (c *Circuit[T, E]) CollectConstantsAsWitnesses(start uint32, witnessTree *btree.BTree) {
-	if witnessTree == nil {
-		return
-	}
-
-	for _, opcode := range c.Opcodes {
-		opcode.CollectConstantsAsWitnesses(start, witnessTree)
-	}
+// Construct a list of input/ output variables of a circuit given a tree of witness indices and a index->variable mapping
+func (c *Circuit[T, E]) collectWitnesses(tree *btree.BTree, currentWitnesses map[shr.Witness]frontend.Variable) []frontend.Variable {
+	var vars []frontend.Variable
+	tree.Ascend(func(it btree.Item) bool {
+		witness, ok := it.(shr.Witness)
+		if !ok {
+			return false
+		}
+		vars = append(vars, currentWitnesses[witness])
+		return true
+	})
+	return vars
 }
 
-func (c *Circuit[T, E]) FeedConstantsAsWitnesses() []*big.Int {
-	values := make([]*big.Int, 0)
+func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve CircuitResolver[T, E], index uint32) (uint32, error) {
+	if witnessTree == nil {
+		return index, fmt.Errorf("no witness tree to fill")
+	}
 
 	for _, opcode := range c.Opcodes {
-		values = append(values, opcode.FeedConstantsAsWitnesses()...)
+		if callOp, ok := opcode.(*call.Call[T, E]); ok {
+			subCircuit, err := resolve(callOp.ID)
+			if err != nil {
+				return index, fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
+			}
+			subCircuitWitnessTree := btree.New(2)
+			subCircuit.FillWitnessTree(subCircuitWitnessTree, resolve, index)
+
+			subCircuitWitnessTree.Ascend(func(it btree.Item) bool {
+				witness, ok := it.(shr.Witness)
+				if !ok {
+					panic("Item in subwitness tree not of type witness")
+				}
+				witnessTree.ReplaceOrInsert(witness)
+				index++
+				return true
+			})
+		}
 	}
-	return values
+	for _, opcode := range c.Opcodes {
+		opcode.FillWitnessTree(witnessTree, index)
+	}
+	return index, nil
 }
 
 func NewOpcode[T shr.ACIRField, E constraint.Element](r io.Reader) (ops.Opcode[E], error) {
@@ -202,6 +324,8 @@ func NewOpcode[T shr.ACIRField, E constraint.Element](r io.Reader) (ops.Opcode[E
 		return &memory_init.MemoryInit[T, E]{}, nil
 	case 4:
 		return &brillig.BrilligCall[T, E]{}, nil
+	case 5:
+		return &call.Call[T, E]{}, nil
 	default:
 		return nil, fmt.Errorf("unknown opcode kind: %d", kind)
 	}

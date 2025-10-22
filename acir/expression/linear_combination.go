@@ -49,10 +49,10 @@ func (lc *LinearCombination[T]) Calculate(api frontend.API, witnesses map[shr.Wi
 	return api.Mul(left, lc.Term.ToFrontendVariable())
 }
 
-func (lc *LinearCombination[T]) FillWitnessTree(tree *btree.BTree) bool {
+func (lc *LinearCombination[T]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
-	tree.ReplaceOrInsert(lc.Witness)
+	tree.ReplaceOrInsert(lc.Witness + shr.Witness(index))
 	return true
 }

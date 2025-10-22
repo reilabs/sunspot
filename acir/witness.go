@@ -19,7 +19,7 @@ type WitnessStack[T shr.ACIRField] struct {
 	ItemStack ItemStack[T]
 }
 
-type ItemStack[T shr.ACIRField] map[uint32]btree.Map[shr.Witness, T]
+type ItemStack[T shr.ACIRField] map[uint64]btree.Map[shr.Witness, T]
 
 type WitnessMap[T shr.ACIRField] btree.Map[shr.Witness, T]
 
@@ -71,7 +71,7 @@ func LoadWitnessStackFromFile[T shr.ACIRField](filePath string, modulus *big.Int
 
 			witnessMap.Set(witness, value)
 		}
-		witnessStack.ItemStack[stackIndex] = witnessMap
+		witnessStack.ItemStack[i] = witnessMap
 	}
 	return witnessStack, nil
 }
@@ -88,6 +88,8 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 	}
 
 	values := make(chan any)
+
+	// Calculate the number of private and public variables
 	countPublic := 0
 	countPrivate := 0
 	for _, param := range acir.ABI.Parameters {
@@ -98,46 +100,43 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 
 	for _, itemStack := range witnessStack.ItemStack {
 		itemStackCount := itemStack.Len()
-		for it := itemStack.Iter(); it.Next(); {
-			witnessKey := it.Key()
-			if acir.WitnessTree != nil && !acir.WitnessTree.Has(witnessKey) {
-				itemStackCount--
-				continue
-			}
-		}
 		countPrivate += itemStackCount
 	}
-
-	countPrivate += acir.ConstantWitnessTree.Len()
 
 	countPrivate -= countPublic
 
 	go func() {
+		// Add the public variables to the beginning of the witness vector.
+		// The public variables are accessed by the index in the partial witness
+		// of the outermost circuit
 		for index, param := range acir.ABI.Parameters {
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-				for stackIndex, itemStack := range witnessStack.ItemStack {
-					if value, ok := itemStack.Get(shr.Witness(index)); ok {
-						values <- value.ToFrontendVariable()
-						break // Only send the first occurrence of the public parameter
-					} else {
-						log.Warn().Msgf("Public parameter %s not found in stack %d", param.Name, stackIndex)
-					}
+				outerCircuitStack := witnessStack.ItemStack[uint64(len(witnessStack.ItemStack)-1)]
+				if value, ok := outerCircuitStack.Get(shr.Witness(index)); ok {
+					values <- value.ToFrontendVariable()
+				} else {
+					log.Warn().Msgf("Public parameter %s not found in outermost circuit stack", param.Name)
 				}
+
 			}
 		}
-
-		for _, itemStack := range witnessStack.ItemStack {
+		for i := 0; i < len(witnessStack.ItemStack); i++ {
+			itemStack := witnessStack.ItemStack[uint64(i)]
 			for it := itemStack.Iter(); it.Next(); {
 				witnessKey := it.Key()
 				skipKey := false
-				for index, param := range acir.ABI.Parameters {
-					if witnessKey == shr.Witness(index) && param.Visibility == hdr.ACIRParameterVisibilityPublic {
-						skipKey = true
-						break
+				// For the outermost circuit, we skip the witness values
+				// that have already been added as part of the public variables
+				if i == len(witnessStack.ItemStack)-1 {
+					for index, param := range acir.ABI.Parameters {
+						if witnessKey == shr.Witness(index) && param.Visibility == hdr.ACIRParameterVisibilityPublic {
+							skipKey = true
+							break
+						}
 					}
-				}
-				if acir.WitnessTree != nil && !acir.WitnessTree.Has(witnessKey) {
-					skipKey = true
+					if acir.WitnessTree != nil && !acir.WitnessTree.Has(witnessKey) {
+						skipKey = true
+					}
 				}
 				if skipKey {
 					continue
@@ -145,10 +144,6 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 				witnessValue := it.Value()
 				values <- witnessValue.ToFrontendVariable()
 			}
-		}
-		data := acir.Program.FeedConstantsAsWitnesses()
-		for _, value := range data {
-			values <- value
 		}
 
 		close(values)
@@ -158,6 +153,5 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 	if err != nil {
 		return nil, fmt.Errorf("failed to fill witness: %w", err)
 	}
-
 	return witness, nil
 }

@@ -2,7 +2,6 @@ package opcodes
 
 import (
 	"io"
-	"math/big"
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -15,7 +14,5 @@ type Opcode[E constraint.Element] interface {
 	Equals(other Opcode[E]) bool
 	Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error
 	MarshalJSON() ([]byte, error)
-	FillWitnessTree(tree *btree.BTree) bool
-	CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool
-	FeedConstantsAsWitnesses() []*big.Int
+	FillWitnessTree(tree *btree.BTree, index uint32) bool
 }

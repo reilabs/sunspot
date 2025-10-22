@@ -15,7 +15,6 @@ import (
 	"strconv"
 
 	"github.com/consensys/gnark-crypto/ecc"
-	"github.com/consensys/gnark/backend/witness"
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
@@ -159,7 +158,6 @@ func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode bytecode: %w", err)
 	}
-
 	// Decompress the bytecode using gzip
 	reader, err = gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
@@ -181,9 +179,19 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 		}
 
 		witnessMap := make(map[shr.Witness]frontend.Variable)
+		var outerCircuitIndex uint32
+		a.WitnessTree, outerCircuitIndex, err = a.Program.GetWitnessTree()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get witness tree: %w", err)
+		}
+
+		if a.WitnessTree == nil {
+			return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
+		}
+
 		for index, param := range a.ABI.Parameters {
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-				witnessMap[shr.Witness(index)] = builder.PublicVariable(
+				witnessMap[shr.Witness(index+int(outerCircuitIndex))] = builder.PublicVariable(
 					schema.LeafInfo{
 						FullName:   func() string { return param.Name },
 						Visibility: schema.Public,
@@ -191,12 +199,6 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 				)
 			}
 		}
-
-		a.WitnessTree, a.ConstantWitnessTree = a.Program.GetWitnessTree()
-		if a.WitnessTree == nil {
-			return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
-		}
-
 		a.WitnessTree.Ascend(func(it btree.Item) bool {
 			witness, ok := it.(shr.Witness)
 			if !ok {
@@ -207,23 +209,6 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 				witnessMap[witness] = builder.SecretVariable(
 					schema.LeafInfo{
 						FullName:   func() string { return fmt.Sprintf("__witness_%d", witness) },
-						Visibility: schema.Secret,
-					},
-				)
-			}
-			return true
-		})
-
-		a.ConstantWitnessTree.Ascend(func(it btree.Item) bool {
-			witness, ok := it.(shr.Witness)
-			if !ok {
-				log.Warn().Msgf("Item in constant witness tree is not of type shr.Witness: %T", it)
-				return true // Continue processing other items
-			}
-			if _, ok := witnessMap[witness]; !ok {
-				witnessMap[witness] = builder.SecretVariable(
-					schema.LeafInfo{
-						FullName:   func() string { return fmt.Sprintf("__constant_%d", witness) },
 						Visibility: schema.Secret,
 					},
 				)
@@ -242,64 +227,12 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 
 }
 
-func (a *ACIR[T, E]) GenerateWitness(inputs map[string]*big.Int, field *big.Int) (witness.Witness, error) {
-	witness, err := witness.New(field)
-	if err != nil {
-		return nil, err
-	}
-
-	values := make(chan any)
-	countPublic := 0
-	countPrivate := 0
-
-	for _, param := range a.ABI.Parameters {
-		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-			countPublic++
-		} else if param.Visibility == hdr.ACIRParameterVisibilityPrivate {
-			countPrivate++
-		}
-	}
-
-	go func() {
-		for _, param := range a.ABI.Parameters {
-			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-				values <- inputs[param.Name]
-			}
-		}
-
-		for _, param := range a.ABI.Parameters {
-			if param.Visibility == hdr.ACIRParameterVisibilityPrivate {
-				values <- inputs[param.Name]
-			}
-		}
-		close(values)
-	}()
-
-	err = witness.Fill(countPublic, countPrivate, values)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fill witness: %w", err)
-	}
-
-	return witness, nil
-}
-
 func (a *ACIR[T, E]) String() string {
 	jsonData, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
 		return fmt.Sprintf("Error marshalling ACIR: %v", err)
 	}
 	return string(jsonData)
-}
-
-func MyNewBuilder[E constraint.Element](field *big.Int, config frontend.CompileConfig) *frontend.Builder[E] {
-	builder, err := r1cs.NewBuilder[E](ecc.BN254.ScalarField(), frontend.CompileConfig{
-		CompressThreshold: 300,
-	})
-	if err != nil {
-		return nil
-	}
-	return &builder
-
 }
 
 // We need the dummy circuit to feed in our custom builder

@@ -96,6 +96,6 @@ func (a *SHA256Compression[T, E]) Define(api frontend.Builder[E], witnesses map[
 	return nil
 }
 
-func (a *SHA256Compression[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *SHA256Compression[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	return tree != nil
 }
