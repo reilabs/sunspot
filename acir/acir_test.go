@@ -185,6 +185,13 @@ func TestACIRRecursiveAggregation(t *testing.T) {
 	)
 }
 
+func TestACIRCircuitCall(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/circuit_call/target/circuit_call.json",
+		"../noir-samples/circuit_call/target/circuit_call.gz",
+	)
+}
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,

@@ -62,6 +62,7 @@ jobs:
           noir-samples/black_box_functions/ecdsa_secp256k1
           noir-samples/black_box_functions/aes128encrypt
           noir-samples/memory
+          noir-samples/circuit_call
           noir-samples/real_world/provekit_basic
         )
 

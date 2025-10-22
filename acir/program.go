@@ -2,16 +2,17 @@ package acir
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
-	"math/big"
 	brl "nr-groth16/acir/brillig"
 	shr "nr-groth16/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"
-	"github.com/rs/zerolog/log"
 )
+
+type CircuitResolver[T shr.ACIRField, E constraint.Element] func(id uint32) (*Circuit[T, E], error)
 
 type Program[T shr.ACIRField, E constraint.Element] struct {
 	Functions              []Circuit[T, E]          `json:"functions"`
@@ -45,40 +46,37 @@ func (p *Program[T, E]) Define(
 	api frontend.Builder[E],
 	witnesses map[shr.Witness]frontend.Variable,
 ) error {
-	for _, circuit := range p.Functions {
-		if err := circuit.Define(api, witnesses); err != nil {
-			return err
-		}
+	index := uint32(0)
+	if _, _, err := p.Functions[0].Define(api, witnesses, makeResolver(*p), &index); err != nil {
+		return err
 	}
 	return nil
 }
 
-func (p *Program[T, E]) GetWitnessTree() (*btree.BTree, *btree.BTree) {
+func (p *Program[T, E]) GetWitnessTree() (*btree.BTree, uint32, error) {
 	witnessTree := btree.New(2)
-	for _, circuit := range p.Functions {
-		circuit.FillWitnessTree(witnessTree)
+	outerCircuitWitnessIndex, err := p.Functions[0].FillWitnessTree(witnessTree, makeResolver(*p), uint32(0))
+	if err != nil {
+		return nil, outerCircuitWitnessIndex, err
 	}
-
-	constantsTree := btree.New(2)
-	start, ok := witnessTree.Max().(shr.Witness)
-	if !ok {
-		log.Error().Msg("Failed to get max witness ID from witness tree")
-		return nil, nil
-	}
-
-	for _, circuit := range p.Functions {
-		circuit.CollectConstantsAsWitnesses(uint32(start)+1, constantsTree)
-	}
-
-	return witnessTree, constantsTree
+	return witnessTree, outerCircuitWitnessIndex, nil
 }
 
-func (p *Program[T, E]) FeedConstantsAsWitnesses() []*big.Int {
-	values := make([]*big.Int, 0)
-
-	for _, circuit := range p.Functions {
-		values = append(values, circuit.FeedConstantsAsWitnesses()...)
+// Resolver takes a progamme and an index and returns the circuit
+// the programme has stored at that index
+func resolver[T shr.ACIRField, E constraint.Element](p Program[T, E], id uint32) (*Circuit[T, E], error) {
+	if id >= uint32(len(p.Functions)) {
+		return nil, fmt.Errorf("unable to get circuit, index %d out of range", id)
 	}
+	c := p.Functions[id]
+	return &c, nil
 
-	return values
+}
+
+// We call this inside the main programme function to get a function
+// by which we can get the circuit from its index
+func makeResolver[T shr.ACIRField, E constraint.Element](p Program[T, E]) func(uint32) (*Circuit[T, E], error) {
+	return func(id uint32) (*Circuit[T, E], error) {
+		return resolver(p, id)
+	}
 }

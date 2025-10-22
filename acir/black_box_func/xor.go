@@ -66,18 +66,18 @@ func (a *Xor[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]fr
 	return nil
 }
 
-func (a *Xor[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *Xor[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
 
-	if a.Lhs.FunctionInputKind == 1 {
-		tree.ReplaceOrInsert(*a.Lhs.Witness)
+	if a.Lhs.IsWitness() {
+		tree.ReplaceOrInsert(*a.Lhs.Witness + shr.Witness(index))
 	}
-	if a.Rhs.FunctionInputKind == 1 {
-		tree.ReplaceOrInsert(*a.Rhs.Witness)
+	if a.Rhs.IsWitness() {
+		tree.ReplaceOrInsert(*a.Rhs.Witness + shr.Witness(index))
 	}
-	tree.ReplaceOrInsert(a.Output)
+	tree.ReplaceOrInsert(a.Output + shr.Witness(index))
 
 	return true
 }

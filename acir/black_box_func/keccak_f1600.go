@@ -81,13 +81,12 @@ func (a *Keccakf1600[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Wi
 	return nil
 }
 
-func (a *Keccakf1600[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *Keccakf1600[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
 	for _, input := range a.Inputs {
-
-		tree.ReplaceOrInsert(*input.Witness)
+		tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
 	}
 	return true
 }

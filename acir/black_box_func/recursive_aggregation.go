@@ -134,26 +134,26 @@ func (a *RecursiveAggregation[T, E]) AggregateGroth16(api frontend.Builder[E], w
 	return nil
 }
 
-func (a *RecursiveAggregation[T, E]) FillWitnessTree(tree *btree.BTree) bool {
+func (a *RecursiveAggregation[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	for i := range a.VerificationKey {
 		if a.VerificationKey[i].IsWitness() {
-			tree.ReplaceOrInsert(*a.VerificationKey[i].Witness)
+			tree.ReplaceOrInsert(*a.VerificationKey[i].Witness + shr.Witness(index))
 		}
 	}
 
 	for i := range a.Proof {
 		if a.Proof[i].IsWitness() {
-			tree.ReplaceOrInsert(*a.Proof[i].Witness)
+			tree.ReplaceOrInsert(*a.Proof[i].Witness + shr.Witness(index))
 		}
 	}
 	for i := range a.PublicInputs {
 		if a.PublicInputs[i].IsWitness() {
-			tree.ReplaceOrInsert(*a.PublicInputs[i].Witness)
+			tree.ReplaceOrInsert(*a.PublicInputs[i].Witness + shr.Witness(index))
 		}
 	}
 
 	if a.KeyHash.IsWitness() {
-		tree.ReplaceOrInsert(*a.KeyHash.Witness)
+		tree.ReplaceOrInsert(*a.KeyHash.Witness + shr.Witness(index))
 	}
 	return tree != nil
 }
@@ -172,9 +172,6 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 	alpha, err := newG1(api, vars[0:2], witnesses)
 	if err != nil {
 		return vk, err
-	}
-	indices := [][]int{
-		{1},
 	}
 	g2Beta, err := newG2(api, vars[2:6], witnesses)
 	if err != nil {
@@ -197,7 +194,7 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 	}
 	g2Delta.P.Y = *g2.Neg(&g2Delta.P.Y)
 	vk.G2.DeltaNeg = g2Delta
-	k := make([]sw_bn254.G1Affine, kLen+len(indices))
+	k := make([]sw_bn254.G1Affine, kLen)
 	for i := range k {
 		k[i], err = newG1(api, vars[14+i*2:14+i*2+2], witnesses)
 		if err != nil {
@@ -206,7 +203,7 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 	}
 	vk.G1.K = k
 
-	idx := 14 + (kLen+len(indices))*2
+	idx := 14 + (kLen)*2
 	commitments := make([]pedersen.VerifyingKey[sw_bn254.G2Affine], (len(vars)-idx)/8)
 
 	for i := range commitments {
@@ -223,7 +220,6 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 		idx += 8
 	}
 	vk.CommitmentKeys = commitments
-	vk.PublicAndCommitmentCommitted = indices
 
 	return vk, nil
 }
