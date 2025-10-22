@@ -119,54 +119,78 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
-
 func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable, resolve CircuitResolver[T, E], index *uint32) ([]frontend.Variable, []frontend.Variable, error) {
 	c.MemoryBlocks = make(map[uint32]*logderivlookup.Table)
-	// Map of call opcode index -> resolved input/output frontend variables
+
+	// 1. Resolve and define all subcircuits
+	callConnections, err := c.defineSubcircuits(api, witnesses, resolve, index)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// 2. Collect witnesses for current circuit
+	currentWitnesses := c.collectCurrentWitnesses(witnesses, index)
+
+	// 3. Define all opcodes (memory + others)
+	if err := c.constrainCircuit(api, currentWitnesses); err != nil {
+		return nil, nil, err
+	}
+
+	// 4. Connect call inputs/outputs
+	c.constrainCircuitCalls(api, currentWitnesses, callConnections)
+
+	// 5. Collect circuit inputs and outputs
+	inputs := c.collectWitnesses(&c.PrivateParameters, currentWitnesses)
+	outputs := c.collectWitnesses(&c.ReturnValues, currentWitnesses)
+
+	return inputs, outputs, nil
+}
+
+func (c *Circuit[T, E]) defineSubcircuits(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable, resolve CircuitResolver[T, E], index *uint32) (map[int]struct {
+	Inputs  []frontend.Variable
+	Outputs []frontend.Variable
+}, error) {
 	callConnections := make(map[int]struct {
 		Inputs  []frontend.Variable
 		Outputs []frontend.Variable
 	})
 
-	inputs := make([]frontend.Variable, 0)
-	outputs := make([]frontend.Variable, 0)
-
 	for i, opcode := range c.Opcodes {
-		if callOp, ok := opcode.(*call.Call[T, E]); ok {
-			var conn struct {
-				Inputs  []frontend.Variable
-				Outputs []frontend.Variable
-			}
-			subCircuit, err := resolve(callOp.ID)
-			if err != nil {
-				return nil, nil, fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
-			}
-
-			// Run subcircuit definition
-			in, out, err := subCircuit.Define(api, witnesses, resolve, index)
-			if err != nil {
-				return nil, nil, fmt.Errorf("failed to define subcircuit %d: %w", callOp.ID, err)
-			}
-			conn.Inputs = make([]frontend.Variable, subCircuit.PrivateParameters.Len())
-			for i, inVar := range in {
-				if i >= len(callOp.Inputs) {
-					return nil, nil, fmt.Errorf("input count mismatch: subcircuit %d has more private parameters than inputs", callOp.ID)
-				}
-				conn.Inputs[i] = inVar
-			}
-			conn.Outputs = make([]frontend.Variable, subCircuit.ReturnValues.Len())
-			for i, outVar := range out {
-				if i >= len(callOp.Outputs) {
-					return nil, nil, fmt.Errorf("input count mismatch: subcircuit %d has to may outputs ", callOp.ID)
-
-				}
-				conn.Outputs[i] = outVar
-			}
-			callConnections[i] = conn
+		callOp, ok := opcode.(*call.Call[T, E])
+		if !ok {
+			continue
 		}
+
+		subCircuit, err := resolve(callOp.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
+		}
+
+		// Run subcircuit definition
+		in, out, err := subCircuit.Define(api, witnesses, resolve, index)
+		if err != nil {
+			return nil, fmt.Errorf("failed to define subcircuit %d: %w", callOp.ID, err)
+		}
+
+		if len(in) > len(callOp.Inputs) {
+			return nil, fmt.Errorf("input count mismatch: subcircuit %d has more private parameters than inputs", callOp.ID)
+		}
+		if len(out) > len(callOp.Outputs) {
+			return nil, fmt.Errorf("output count mismatch: subcircuit %d has too many outputs", callOp.ID)
+		}
+
+		callConnections[i] = struct {
+			Inputs  []frontend.Variable
+			Outputs []frontend.Variable
+		}{Inputs: in, Outputs: out}
 	}
 
+	return callConnections, nil
+}
+
+func (c *Circuit[T, E]) collectCurrentWitnesses(witnesses map[shr.Witness]frontend.Variable, index *uint32) map[shr.Witness]frontend.Variable {
 	currentWitnesses := make(map[shr.Witness]frontend.Variable, c.CurrentWitnessIndex+1)
+
 	for i := range c.CurrentWitnessIndex + 1 {
 		v, ok := witnesses[shr.Witness(i+uint32(*index))]
 		if !ok {
@@ -179,54 +203,60 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 	}
 
 	*index += c.CurrentWitnessIndex + 1
+	return currentWitnesses
+}
+
+func (c *Circuit[T, E]) constrainCircuit(api frontend.Builder[E], currentWitnesses map[shr.Witness]frontend.Variable) error {
 	for _, opcode := range c.Opcodes {
-		mem_init, ok := opcode.(*memory_init.MemoryInit[T, E])
+		memInit, ok := opcode.(*memory_init.MemoryInit[T, E])
 		if ok {
 			table := logderivlookup.New(api)
-			mem_init.Table = &table
-			c.MemoryBlocks[mem_init.BlockID] = &table
+			memInit.Table = &table
+			c.MemoryBlocks[memInit.BlockID] = &table
 		}
-		mem_op, ok := opcode.(*mem_op.MemoryOp[T, E])
+
+		memOp, ok := opcode.(*mem_op.MemoryOp[T, E])
 		if ok {
-			mem_op.Memory = c.MemoryBlocks
+			memOp.Memory = c.MemoryBlocks
 		}
 
 		if err := opcode.Define(api, currentWitnesses); err != nil {
-			return inputs, outputs, err
+			return err
 		}
 	}
+	return nil
+}
 
+func (c *Circuit[T, E]) constrainCircuitCalls(api frontend.Builder[E], currentWitnesses map[shr.Witness]frontend.Variable, callConnections map[int]struct {
+	Inputs  []frontend.Variable
+	Outputs []frontend.Variable
+}) {
 	for i, opcode := range c.Opcodes {
-		if callOp, ok := opcode.(*call.Call[T, E]); ok {
-			connection := callConnections[i]
-			for i, inputWitness := range callOp.Inputs {
-				fmt.Println(connection.Inputs)
-				api.AssertIsEqual(currentWitnesses[inputWitness], connection.Inputs[i])
-			}
-			for i, outputWitness := range callOp.Outputs {
-				api.AssertIsEqual(currentWitnesses[outputWitness], connection.Outputs[i])
-			}
+		callOp, ok := opcode.(*call.Call[T, E])
+		if !ok {
+			continue
+		}
+		connection := callConnections[i]
+		for j, inputWitness := range callOp.Inputs {
+			api.AssertIsEqual(currentWitnesses[inputWitness], connection.Inputs[j])
+		}
+		for j, outputWitness := range callOp.Outputs {
+			api.AssertIsEqual(currentWitnesses[outputWitness], connection.Outputs[j])
 		}
 	}
+}
 
-	c.PrivateParameters.Ascend(func(it btree.Item) bool {
+func (c *Circuit[T, E]) collectWitnesses(tree *btree.BTree, currentWitnesses map[shr.Witness]frontend.Variable) []frontend.Variable {
+	var vars []frontend.Variable
+	tree.Ascend(func(it btree.Item) bool {
 		witness, ok := it.(shr.Witness)
 		if !ok {
 			return false
 		}
-		inputs = append(inputs, currentWitnesses[witness])
+		vars = append(vars, currentWitnesses[witness])
 		return true
 	})
-
-	c.ReturnValues.Ascend(func(it btree.Item) bool {
-		witness, ok := it.(shr.Witness)
-		if !ok {
-			return false
-		}
-		outputs = append(outputs, currentWitnesses[witness])
-		return true
-	})
-	return inputs, outputs, nil
+	return vars
 }
 
 func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve CircuitResolver[T, E], index uint32) (uint32, error) {
