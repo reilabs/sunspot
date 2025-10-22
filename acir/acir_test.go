@@ -1,6 +1,7 @@
 package acir
 
 import (
+	"fmt"
 	"nr-groth16/bn254"
 	"testing"
 
@@ -191,6 +192,12 @@ func TestACIRLCChecker(t *testing.T) {
 		"../noir-samples/expressions/lcchecker/target/lcchecker.gz",
 	)
 }
+func TestAgeCheck(t *testing.T) {
+	testProveAndVerify(t,
+		"../noir-samples/target/complete_age_check.json",
+		"../noir-samples/target/complete_age_check.json",
+	)
+}
 
 func TestACIRProveKitBasic(t *testing.T) {
 	testProveAndVerify(
@@ -214,7 +221,7 @@ func testProveAndVerify(t *testing.T, acirPath string, witnessPath string) {
 	if err != nil {
 		t.Fatalf("Failed to compile ACIR: %v", err)
 	}
-
+	fmt.Println(ccs.GetNbConstraints())
 	pk, vk, err := groth16.Setup(ccs)
 	if err != nil {
 		t.Fatalf("Failed to setup Groth16: %v", err)

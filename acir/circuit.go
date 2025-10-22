@@ -146,8 +146,11 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 			continue
 		}
 		currentWitnesses[shr.Witness(i)] = v
-		api.Println(v)
+		// fmt.Println("witness_", i, v)
+
+		// api.Println("witness", i, v)
 	}
+	// fmt.Print("\n\n\n\n")
 
 	*index += c.CurrentWitnessIndex + 1
 	for _, opcode := range c.Opcodes {
