@@ -48,11 +48,9 @@ func (p *Program[T, E]) Define(
 	witnesses map[shr.Witness]frontend.Variable,
 ) error {
 	index := uint32(0)
-	// for _, circuit := range p.Functions {
-	if err := p.Functions[0].Define(api, witnesses, makeResolver(*p), &index); err != nil {
+	if _, _, err := p.Functions[0].Define(api, witnesses, makeResolver(*p), &index); err != nil {
 		return err
 	}
-	// }
 	return nil
 }
 
