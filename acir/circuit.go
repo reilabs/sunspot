@@ -119,6 +119,11 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 
 	return nil
 }
+
+// Define the constraints for a circuit
+// This returns the input and output variables of the circuit,
+// so that circuits that call the circuit can check that the values they called the
+// circuit with are consistent with the true value.
 func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable, resolve CircuitResolver[T, E], index *uint32) ([]frontend.Variable, []frontend.Variable, error) {
 	c.MemoryBlocks = make(map[uint32]*logderivlookup.Table)
 
@@ -131,7 +136,7 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 	// 2. Collect witnesses for current circuit
 	currentWitnesses := c.collectCurrentWitnesses(witnesses, index)
 
-	// 3. Define all opcodes (memory + others)
+	// 3. Add the constraints for the circuit
 	if err := c.constrainCircuit(api, currentWitnesses); err != nil {
 		return nil, nil, err
 	}
@@ -146,6 +151,7 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 	return inputs, outputs, nil
 }
 
+// Run the definition function for the circuits called by the circuit
 func (c *Circuit[T, E]) defineSubcircuits(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable, resolve CircuitResolver[T, E], index *uint32) (map[int]struct {
 	Inputs  []frontend.Variable
 	Outputs []frontend.Variable
@@ -173,10 +179,10 @@ func (c *Circuit[T, E]) defineSubcircuits(api frontend.Builder[E], witnesses map
 		}
 
 		if len(in) > len(callOp.Inputs) {
-			return nil, fmt.Errorf("input count mismatch: subcircuit %d has more private parameters than inputs", callOp.ID)
+			return nil, fmt.Errorf("input count mismatch: subcircuit %d requires more inputs than are given by the outer circuit", callOp.ID)
 		}
 		if len(out) > len(callOp.Outputs) {
-			return nil, fmt.Errorf("output count mismatch: subcircuit %d has too many outputs", callOp.ID)
+			return nil, fmt.Errorf("output count mismatch: subcircuit %d provides more outputs than the outer circuit is expecting", callOp.ID)
 		}
 
 		callConnections[i] = struct {
@@ -188,14 +194,18 @@ func (c *Circuit[T, E]) defineSubcircuits(api frontend.Builder[E], witnesses map
 	return callConnections, nil
 }
 
+// Get the partial witness for a particular circuit call
+// The partial witness for a whole programme consists of a concatenation of a postorder traversal of the programme tree.
+// We perform a postorder traversal and 'pop' the witness that we need by incrementing the global index
 func (c *Circuit[T, E]) collectCurrentWitnesses(witnesses map[shr.Witness]frontend.Variable, index *uint32) map[shr.Witness]frontend.Variable {
 	currentWitnesses := make(map[shr.Witness]frontend.Variable, c.CurrentWitnessIndex+1)
 
 	for i := range c.CurrentWitnessIndex + 1 {
 		v, ok := witnesses[shr.Witness(i+uint32(*index))]
 		if !ok {
-			// Sometimes circuits skip an index
-			// insert dummy witness variable for the skipped index
+			// Sometimes circuits skip an index.
+			// Insert dummy witness variable to make the number of witnesses
+			// consistent with the `CurrentWitnessIndex` in the ACIR of the circuit
 			currentWitnesses[shr.Witness(i)] = frontend.Variable(0)
 			continue
 		}
@@ -206,6 +216,7 @@ func (c *Circuit[T, E]) collectCurrentWitnesses(witnesses map[shr.Witness]fronte
 	return currentWitnesses
 }
 
+// Add constraints for a specific circuit call within a programme
 func (c *Circuit[T, E]) constrainCircuit(api frontend.Builder[E], currentWitnesses map[shr.Witness]frontend.Variable) error {
 	for _, opcode := range c.Opcodes {
 		memInit, ok := opcode.(*memory_init.MemoryInit[T, E])
@@ -227,6 +238,8 @@ func (c *Circuit[T, E]) constrainCircuit(api frontend.Builder[E], currentWitness
 	return nil
 }
 
+// Ensure that the input and return values of a circuit call are consistent with the values
+// that are in the partial witness for the outer circuit
 func (c *Circuit[T, E]) constrainCircuitCalls(api frontend.Builder[E], currentWitnesses map[shr.Witness]frontend.Variable, callConnections map[int]struct {
 	Inputs  []frontend.Variable
 	Outputs []frontend.Variable
@@ -246,6 +259,7 @@ func (c *Circuit[T, E]) constrainCircuitCalls(api frontend.Builder[E], currentWi
 	}
 }
 
+// Construct a list of input/ output variables of a circuit given a tree of witness indices and a index->variable mapping
 func (c *Circuit[T, E]) collectWitnesses(tree *btree.BTree, currentWitnesses map[shr.Witness]frontend.Variable) []frontend.Variable {
 	var vars []frontend.Variable
 	tree.Ascend(func(it btree.Item) bool {

@@ -22,7 +22,6 @@ type BlackBoxFunction[E constraint.Element] interface {
 
 // Struct that implements the Opcode interface
 // Allows us to create generic behaviour for all black box functions
-// TODO: revisit and think about this design
 type BlackBoxFuncCall[T shr.ACIRField, E constraint.Element] struct {
 	function BlackBoxFunction[E]
 }

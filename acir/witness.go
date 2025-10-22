@@ -51,6 +51,7 @@ func LoadWitnessStackFromFile[T shr.ACIRField](filePath string, modulus *big.Int
 		if err := binary.Read(reader, binary.LittleEndian, &stackIndex); err != nil {
 			return WitnessStack[T]{}, err
 		}
+
 		var witnessMap btree.Map[shr.Witness, T]
 		var mapSize uint64
 		if err := binary.Read(reader, binary.LittleEndian, &mapSize); err != nil {
@@ -87,6 +88,8 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 	}
 
 	values := make(chan any)
+
+	// Calculate the number of private and public variables
 	countPublic := 0
 	countPrivate := 0
 	for _, param := range acir.ABI.Parameters {
@@ -97,20 +100,15 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 
 	for _, itemStack := range witnessStack.ItemStack {
 		itemStackCount := itemStack.Len()
-		for it := itemStack.Iter(); it.Next(); {
-			witnessKey := it.Key()
-			if acir.WitnessTree != nil && !acir.WitnessTree.Has(witnessKey) {
-				itemStackCount--
-				continue
-			}
-		}
 		countPrivate += itemStackCount
 	}
 
 	countPrivate -= countPublic
 
 	go func() {
-
+		// Add the public variables to the beginning of the witness vector.
+		// The public variables are accessed by the index in the partial witness
+		// of the outermost circuit
 		for index, param := range acir.ABI.Parameters {
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
 				outerCircuitStack := witnessStack.ItemStack[uint64(len(witnessStack.ItemStack)-1)]
