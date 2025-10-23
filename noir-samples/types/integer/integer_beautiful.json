@@ -30,7 +30,7 @@
   "file_map": {
     "61": {
       "source": "fn main(x: u64, y: u64) {\n    assert(x == y);\n}\n\n#[test]\nfn test_main() {\n    main(1, 1);\n\n    // Uncomment to make test fail\n    // main(1, 1);\n}\n",
-      "path": "/home/mihail/nr-groth16/noir-samples/types/integer/src/main.nr"
+      "path": "/home/mihail/sunpot/noir-samples/types/integer/src/main.nr"
     }
   },
   "names": [

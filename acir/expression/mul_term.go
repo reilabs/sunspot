@@ -2,7 +2,7 @@ package expression
 
 import (
 	"io"
-	shr "nr-groth16/acir/shared"
+	shr "sunpot/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"

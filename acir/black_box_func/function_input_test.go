@@ -1,9 +1,9 @@
 package blackboxfunc
 
 import (
-	shr "nr-groth16/acir/shared"
-	"nr-groth16/bn254"
 	"os"
+	shr "sunpot/acir/shared"
+	"sunpot/bn254"
 	"testing"
 )
 

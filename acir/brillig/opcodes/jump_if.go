@@ -3,7 +3,7 @@ package opcodes
 import (
 	"encoding/binary"
 	"io"
-	mem "nr-groth16/acir/brillig/memory"
+	mem "sunpot/acir/brillig/memory"
 )
 
 type JumpIf struct {

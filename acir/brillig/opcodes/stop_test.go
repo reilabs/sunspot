@@ -1,9 +1,9 @@
 package opcodes
 
 import (
-	mem "nr-groth16/acir/brillig/memory"
-	"nr-groth16/bn254"
 	"os"
+	mem "sunpot/acir/brillig/memory"
+	"sunpot/bn254"
 	"testing"
 )
 

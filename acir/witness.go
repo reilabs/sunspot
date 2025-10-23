@@ -4,9 +4,9 @@ import (
 	"compress/gzip"
 	"encoding/binary"
 	"math/big"
-	hdr "nr-groth16/acir/header"
-	shr "nr-groth16/acir/shared"
 	"os"
+	hdr "sunpot/acir/header"
+	shr "sunpot/acir/shared"
 
 	"fmt"
 

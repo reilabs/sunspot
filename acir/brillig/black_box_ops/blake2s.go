@@ -2,7 +2,7 @@ package black_box_ops
 
 import (
 	"io"
-	mem "nr-groth16/acir/brillig/memory"
+	mem "sunpot/acir/brillig/memory"
 )
 
 type Blake2s struct {

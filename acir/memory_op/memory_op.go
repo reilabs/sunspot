@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-	exp "nr-groth16/acir/expression"
-	ops "nr-groth16/acir/opcodes"
-	shr "nr-groth16/acir/shared"
+	exp "sunpot/acir/expression"
+	ops "sunpot/acir/opcodes"
+	shr "sunpot/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"

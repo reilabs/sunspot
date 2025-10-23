@@ -2,10 +2,10 @@ package call
 
 import (
 	"encoding/binary"
-	exp "nr-groth16/acir/expression"
-	shr "nr-groth16/acir/shared"
-	"nr-groth16/bn254"
 	"os"
+	exp "sunpot/acir/expression"
+	shr "sunpot/acir/shared"
+	"sunpot/bn254"
 	"testing"
 
 	"github.com/consensys/gnark/constraint"
