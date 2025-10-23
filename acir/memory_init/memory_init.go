@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"io"
-	ops "nr-groth16/acir/opcodes"
-	shr "nr-groth16/acir/shared"
+	ops "sunpot/acir/opcodes"
+	shr "sunpot/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"

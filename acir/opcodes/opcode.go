@@ -2,7 +2,7 @@ package opcodes
 
 import (
 	"io"
-	shr "nr-groth16/acir/shared"
+	shr "sunpot/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"

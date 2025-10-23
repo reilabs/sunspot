@@ -2,8 +2,8 @@ package opcodes
 
 import (
 	"io"
-	mem "nr-groth16/acir/brillig/memory"
-	shr "nr-groth16/acir/shared"
+	mem "sunpot/acir/brillig/memory"
+	shr "sunpot/acir/shared"
 )
 
 type IndirectConst[T shr.ACIRField] struct {

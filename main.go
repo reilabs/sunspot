@@ -1,7 +1,7 @@
 package main
 
 import (
-	"nr-groth16/cmd"
+	"sunpot/cmd"
 )
 
 func main() {

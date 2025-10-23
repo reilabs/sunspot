@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	mem "nr-groth16/acir/brillig/memory"
+	mem "sunpot/acir/brillig/memory"
 )
 
 type BinaryIntOp struct {

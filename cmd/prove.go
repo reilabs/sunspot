@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"nr-groth16/acir"
-	"nr-groth16/bn254"
+	"sunpot/acir"
+	"sunpot/bn254"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	ecc_bn254 "github.com/consensys/gnark-crypto/ecc/bn254"

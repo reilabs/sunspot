@@ -2,9 +2,9 @@ package memory_init
 
 import (
 	"encoding/binary"
-	shr "nr-groth16/acir/shared"
-	"nr-groth16/bn254"
 	"os"
+	shr "sunpot/acir/shared"
+	"sunpot/bn254"
 	"testing"
 
 	"github.com/consensys/gnark/constraint"

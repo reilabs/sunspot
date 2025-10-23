@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-	shr "nr-groth16/acir/shared"
 	"strings"
+	shr "sunpot/acir/shared"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"

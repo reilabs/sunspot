@@ -3,8 +3,8 @@ package brillig
 import (
 	"encoding/binary"
 	"io"
-	ops "nr-groth16/acir/brillig/opcodes"
-	shr "nr-groth16/acir/shared"
+	ops "sunpot/acir/brillig/opcodes"
+	shr "sunpot/acir/shared"
 )
 
 type BrilligBytecode[T shr.ACIRField] struct {

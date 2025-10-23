@@ -1,4 +1,4 @@
-module nr-groth16
+module sunpot
 
 go 1.24.2
 

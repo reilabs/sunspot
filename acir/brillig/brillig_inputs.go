@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	exp "nr-groth16/acir/expression"
-	shr "nr-groth16/acir/shared"
+	exp "sunpot/acir/expression"
+	shr "sunpot/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 )

@@ -1,8 +1,8 @@
 package opcodes
 
 import (
-	"nr-groth16/bn254"
 	"os"
+	"sunpot/bn254"
 	"testing"
 )
 

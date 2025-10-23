@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"nr-groth16/bn254"
 	"os"
+	"sunpot/bn254"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/spf13/cobra"
