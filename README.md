@@ -17,7 +17,7 @@ This project provides a Noir interface for the gnark library, allowing Noir prog
 |ECDSA SECP256R1|Yes|
 |MultiScalarMul|Yes|
 |KeccakF1600|Yes|
-|RecursiveAggregation|No|
+|RecursiveAggregation|Yes|
 |EmbeddedCurveAdd|Yes|
 |Poseidon2Permutation|Yes|
 |SHA256Compression|Yes|
