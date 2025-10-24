@@ -180,7 +180,7 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 
 		witnessMap := make(map[shr.Witness]frontend.Variable)
 		var outerCircuitIndex uint32
-		a.WitnessTree, outerCircuitIndex, err = a.Program.GetWitnessTree()
+		a.WitnessTree, outerCircuitIndex, err = a.Program.GetWitnesses()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get witness tree: %w", err)
 		}

@@ -12,8 +12,11 @@ import (
 	"github.com/google/btree"
 )
 
+// The Circuit resolver is a function type that takes a circuit id and returns a reference to the circuit
+// at that index and an error if no suh circuit exists
 type CircuitResolver[T shr.ACIRField, E constraint.Element] func(id uint32) (*Circuit[T, E], error)
 
+// Program struct represents the circuits in an ACIR programme
 type Program[T shr.ACIRField, E constraint.Element] struct {
 	Functions              []Circuit[T, E]          `json:"functions"`
 	UnconstrainedFunctions []brl.BrilligBytecode[T] `json:"unconstrained_functions"`
@@ -42,10 +45,13 @@ func (p *Program[T, E]) UnmarshalReader(r io.Reader) error {
 	return nil
 }
 
+// Define adds constraints to the ACIR programme
 func (p *Program[T, E]) Define(
 	api frontend.Builder[E],
 	witnesses map[shr.Witness]frontend.Variable,
 ) error {
+	// We only call define on the first (main) circuit because it will recursively define
+	// any circuits that it calls
 	index := uint32(0)
 	if _, _, err := p.Functions[0].Define(api, witnesses, makeResolver(*p), &index); err != nil {
 		return err
@@ -53,7 +59,9 @@ func (p *Program[T, E]) Define(
 	return nil
 }
 
-func (p *Program[T, E]) GetWitnessTree() (*btree.BTree, uint32, error) {
+// GetWitnesses returns all the used witness indices in the programme
+// and the starting index for the witness referenced by the outermost (main) circuit
+func (p *Program[T, E]) GetWitnesses() (*btree.BTree, uint32, error) {
 	witnessTree := btree.New(2)
 	outerCircuitWitnessIndex, err := p.Functions[0].FillWitnessTree(witnessTree, makeResolver(*p), uint32(0))
 	if err != nil {
