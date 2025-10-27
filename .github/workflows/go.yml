@@ -35,9 +35,6 @@ jobs:
 
     - name: Build Noir contracts
       run: |
-        chmod +x build_noir_samples.sh
-        ./build_noir_samples.sh
-        
         # List all Noir sample project directories you want to build
         PROJECTS=(
           noir-samples/expressions/sum_a_b
