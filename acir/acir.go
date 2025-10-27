@@ -12,7 +12,6 @@ import (
 	"strconv"
 	hdr "sunpot/acir/header"
 	shr "sunpot/acir/shared"
-	"sunpot/bn254"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/constraint"
@@ -229,7 +228,7 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 		return builder, nil
 	}
 
-	return frontend.CompileGeneric(bn254.Bn254Modulus, builder_generator, &DummyCircuit{})
+	return frontend.CompileGeneric(ecc.BN254.ScalarField(), builder_generator, &DummyCircuit{})
 
 }
 

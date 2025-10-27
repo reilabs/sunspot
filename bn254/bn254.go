@@ -14,10 +14,6 @@ import (
 	"github.com/consensys/gnark/frontend"
 )
 
-const BN254_MODULUS_STRING = "21888242871839275222246405745257275088548364400416034343698204186575808495617"
-
-var Bn254Modulus, _ = new(big.Int).SetString(BN254_MODULUS_STRING, 10)
-
 type BN254Field struct {
 	value big.Int
 }
