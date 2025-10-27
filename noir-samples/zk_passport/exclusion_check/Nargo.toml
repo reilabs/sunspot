@@ -1,0 +1,8 @@
+[package]
+name = "exclusion_check"
+type = "bin"
+authors = [""]
+
+[dependencies]
+exclusion_check = {  tag = "main", git = "https://github.com/zkpassport/circuits", directory = "src/noir/lib/exclusion-check/country" }
+utils = {  tag = "main", git = "https://github.com/zkpassport/circuits", directory = "src/noir/lib/utils" }

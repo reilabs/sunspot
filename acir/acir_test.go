@@ -208,6 +208,22 @@ func TestACIRProveKitBasic(t *testing.T) {
 	)
 }
 
+func TestZKPassportInclusion(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/zk_passport/inclusion_check/target/inclusion_check.json",
+		"../noir-samples/zk_passport/inclusion_check/target/inclusion_check.gz",
+	)
+}
+
+func TestZKPassportExclusion(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/zk_passport/exclusion_check/target/exclusion_check.json",
+		"../noir-samples/zk_passport/exclusion_check/target/exclusion_check.gz",
+	)
+}
+
 // Helper function for testing files,
 // Provide circuit and witness path and compile to r1cs, proves and verifies in groth16
 func testProveAndVerify(t *testing.T, acirPath string, witnessPath string) {

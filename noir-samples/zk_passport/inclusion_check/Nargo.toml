@@ -1,0 +1,8 @@
+[package]
+name = "inclusion_check"
+type = "bin"
+authors = [""]
+
+[dependencies]
+inclusion_check = {  tag = "main", git = "https://github.com/zkpassport/circuits", directory = "src/noir/lib/inclusion-check/country" }
+utils = {  tag = "main", git = "https://github.com/zkpassport/circuits", directory = "src/noir/lib/utils" }
