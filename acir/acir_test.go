@@ -232,6 +232,14 @@ func TestZKPassportAge(t *testing.T) {
 	)
 }
 
+func TestZKPassportExpiry(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/zk_passport/expiry/target/expiry.json",
+		"../noir-samples/zk_passport/expiry/target/expiry.gz",
+	)
+}
+
 // Helper function for testing files,
 // Provide circuit and witness path and compile to r1cs, proves and verifies in groth16
 func testProveAndVerify(t *testing.T, acirPath string, witnessPath string) {
