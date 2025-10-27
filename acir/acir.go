@@ -180,7 +180,7 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 
 		witnessMap := make(map[shr.Witness]frontend.Variable)
 		var outerCircuitIndex uint32
-		a.WitnessTree, outerCircuitIndex, err = a.Program.GetWitnessTree()
+		a.WitnessTree, outerCircuitIndex, err = a.Program.GetWitnesses()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get witness tree: %w", err)
 		}
@@ -189,6 +189,10 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 			return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
 		}
 
+		// Gnark expects for the public witnesses to be added first
+		// But the acir witnesses are visibility-agnostic
+		// We add the public ones first but make sure they are indexed by their
+		// acir index in the witness map
 		for index, param := range a.ABI.Parameters {
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
 				witnessMap[shr.Witness(index+int(outerCircuitIndex))] = builder.PublicVariable(
@@ -199,6 +203,8 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 				)
 			}
 		}
+
+		// Now we traverse the witness tree and add the private witnesses
 		a.WitnessTree.Ascend(func(it btree.Item) bool {
 			witness, ok := it.(shr.Witness)
 			if !ok {
@@ -236,7 +242,9 @@ func (a *ACIR[T, E]) String() string {
 }
 
 // We need the dummy circuit to feed in our custom builder
-// This makes sure that call deferred is actually called on our custom builder
+// This makes sure that `callDeferred` is actually called on our custom builder
+// See desired behaviour [here](https://github.com/Consensys/gnark/blob/master/frontend/compile.go#L159)
+// and notice how it is not called by custom constraint system builders [here](https://github.com/Consensys/gnark/blob/55b0e54d2ae15e886ad37300a8d2b00ad00a8023/frontend/cs/r1cs/builder.go#L278)
 type DummyCircuit struct{}
 
 func (a *DummyCircuit) Define(frontend.API) error {

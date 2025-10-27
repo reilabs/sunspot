@@ -8,7 +8,7 @@ import (
 )
 
 func TestACIRWitnessSumAB(t *testing.T) {
-	witnessStack, err := LoadWitnessStackFromFile[*bn254.BN254Field](
+	witnessStack, err := LoadWitnessStacksFromFile[*bn254.BN254Field](
 		"../noir-samples/expressions/sum_a_b/target/sum_a_b.gz",
 		ecc_bn254.ID.ScalarField(),
 	)
@@ -16,15 +16,15 @@ func TestACIRWitnessSumAB(t *testing.T) {
 		t.Fatalf("Failed to load witness from file: %v", err)
 	}
 
-	if len(witnessStack.ItemStack) == 0 {
+	if len(witnessStack) == 0 {
 		t.Fatal("Witness stack is empty")
 	}
 
-	t.Logf("Loaded witness stack with %d items", len(witnessStack.ItemStack))
+	t.Logf("Loaded witness stack with %d items", len(witnessStack))
 }
 
 func TestACIRWitnessSquareEquation(t *testing.T) {
-	witnessStack, err := LoadWitnessStackFromFile[*bn254.BN254Field](
+	witnessStack, err := LoadWitnessStacksFromFile[*bn254.BN254Field](
 		"../noir-samples/expressions/square_equation/target/square_equation.gz",
 		ecc_bn254.ID.ScalarField(),
 	)
@@ -32,15 +32,15 @@ func TestACIRWitnessSquareEquation(t *testing.T) {
 		t.Fatalf("Failed to load witness from file: %v", err)
 	}
 
-	if len(witnessStack.ItemStack) == 0 {
+	if len(witnessStack) == 0 {
 		t.Fatal("Witness stack is empty")
 	}
 
-	t.Logf("Loaded witness stack with %d items", len(witnessStack.ItemStack))
+	t.Logf("Loaded witness stack with %d items", len(witnessStack))
 }
 
 func TestACIRWitnessRockPaperScissors(t *testing.T) {
-	witnessStack, err := LoadWitnessStackFromFile[*bn254.BN254Field](
+	witnessStack, err := LoadWitnessStacksFromFile[*bn254.BN254Field](
 		"../noir-samples/expressions/rock_paper_scissors/target/rock_paper_scissors.gz",
 		ecc_bn254.ID.ScalarField(),
 	)
@@ -48,5 +48,5 @@ func TestACIRWitnessRockPaperScissors(t *testing.T) {
 		t.Fatalf("Failed to load witness from file: %v", err)
 	}
 
-	t.Logf("Loaded witness stack with %d items", len(witnessStack.ItemStack))
+	t.Logf("Loaded witness stack with %d items", len(witnessStack))
 }

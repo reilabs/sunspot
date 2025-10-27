@@ -273,6 +273,7 @@ func (c *Circuit[T, E]) collectWitnesses(tree *btree.BTree, currentWitnesses map
 	return vars
 }
 
+// FillWitness adds the witnesses used by a circuit incremented by the starting index
 func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve CircuitResolver[T, E], index uint32) (uint32, error) {
 	if witnessTree == nil {
 		return index, fmt.Errorf("no witness tree to fill")
