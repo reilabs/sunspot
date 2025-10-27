@@ -88,7 +88,7 @@ sunspot setup my_circuit.ccs
 sunspot prove my_circuit.json witness.gz my_circuit.ccs proving_key.pk
 
 # Verify a proof
-sunspot verify proof.proof verifying_key.vk
+sunspot verify verifying_key.vk proof.proof public_witness.pw
 ```
 
 For detailed information on each command:
