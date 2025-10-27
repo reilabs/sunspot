@@ -89,12 +89,13 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 		return nil, fmt.Errorf("failed to create new witness: %w", err)
 	}
 
+	params := acir.ABI.Params()
 	values := make(chan any)
 
 	// Calculate the number of private and public variables
 	countPublic := 0
 	countPrivate := 0
-	for _, param := range acir.ABI.Parameters {
+	for _, param := range params {
 		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
 			countPublic++
 		}
@@ -109,7 +110,7 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 
 	go func() {
 		// Add the public variables to the beginning of the witness vector.
-		for index, param := range acir.ABI.Parameters {
+		for index, param := range params {
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
 				outerCircuitStack := witnesses[uint64(len(witnesses)-1)]
 				if value, ok := outerCircuitStack.Get(shr.Witness(index)); ok {
@@ -128,7 +129,7 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 				// For the outermost circuit, we skip the witness values
 				// that have already been added as part of the public variables
 				if i == len(witnesses)-1 {
-					for index, param := range acir.ABI.Parameters {
+					for index, param := range params {
 						if witnessKey == shr.Witness(index) && param.Visibility == hdr.ACIRParameterVisibilityPublic {
 							skipKey = true
 							break

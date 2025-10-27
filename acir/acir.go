@@ -193,7 +193,7 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 		// But the acir witnesses are visibility-agnostic
 		// We add the public ones first but make sure they are indexed by their
 		// acir index in the witness map
-		for index, param := range a.ABI.Parameters {
+		for index, param := range a.ABI.Params() {
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
 				witnessMap[shr.Witness(index+int(outerCircuitIndex))] = builder.PublicVariable(
 					schema.LeafInfo{
