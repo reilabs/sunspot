@@ -65,6 +65,10 @@ jobs:
           noir-samples/memory
           noir-samples/circuit_call
           noir-samples/real_world/provekit_basic
+          noir-samples/zk_passport/exclusion_check
+          noir-samples/zk_passport/inclusion_check
+          noir-samples/zk_passport/age
+          noir-samples/zk_passport/expiry
         )
 
         for project in "${PROJECTS[@]}"; do
