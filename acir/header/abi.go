@@ -13,6 +13,12 @@ type ParamInfo struct {
 	Name       string
 }
 
+// Params flattens all ABI parameters into a list of inputs.
+//
+// The ACIR circuit representation can express complex parameter types
+// (such as arrays, structs, and tuples). However, Groth16/Gnark expects
+// a flat set of scalar inputs. This function recursively expands each
+// parameter—breaking down complex composite types into individual elements.
 func (a *ACIRABI) Params() []ParamInfo {
 	var ret []ParamInfo
 	for _, param := range a.Parameters {
