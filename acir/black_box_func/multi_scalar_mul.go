@@ -12,9 +12,10 @@ import (
 )
 
 type MultiScalarMul[T shr.ACIRField, E constraint.Element] struct {
-	Points  []FunctionInput[T]
-	Scalars []FunctionInput[T]
-	Outputs [3]shr.Witness
+	Points    []FunctionInput[T]
+	Scalars   []FunctionInput[T]
+	predicate FunctionInput[T]
+	Outputs   [3]shr.Witness
 }
 
 func (a *MultiScalarMul[T, E]) UnmarshalReader(r io.Reader) error {
@@ -42,7 +43,9 @@ func (a *MultiScalarMul[T, E]) UnmarshalReader(r io.Reader) error {
 			return err
 		}
 	}
-
+	if err := a.predicate.UnmarshalReader(r); err != nil {
+		return err
+	}
 	for i := 0; i < 3; i++ {
 		if err := a.Outputs[i].UnmarshalReader(r); err != nil {
 			return err
@@ -116,8 +119,16 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 		Y: witnesses[a.Outputs[1]],
 	}
 
+	pred, err := a.predicate.ToVariable(witnesses)
+	if err != nil {
+		return err
+	}
+
 	constrained_output := grumpkin.MultiScalarMul(api, points, scalars)
-	output.AssertIsEqual(api, *constrained_output)
+	// To assert the two points are the same (and ignore if predicate is zero), we have to split into
+	// its X and Y coordinates
+	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.X, output.X)))
+	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.Y, output.Y)))
 	return nil
 }
 

@@ -74,8 +74,8 @@ func NewBlackBoxFunction[T shr.ACIRField, E constraint.Element](r io.Reader) (*B
 		return &BlackBoxFuncCall[T, E]{&ECDSASECP256K1[T, E]{}}, nil
 	case 7:
 		return &BlackBoxFuncCall[T, E]{&ECDSASECP256R1[T, E]{}}, nil
-	// case 8:
-	// 	return &BlackBoxFuncCall[T, E]{&MultiScalarMul[T, E]{}}, nil
+	case 8:
+		return &BlackBoxFuncCall[T, E]{&MultiScalarMul[T, E]{}}, nil
 	// case 9:
 	// 	return &BlackBoxFuncCall[T, E]{&EmbeddedCurveAdd[T, E]{}}, nil
 	// case 10:
