@@ -66,10 +66,10 @@ func NewBlackBoxFunction[T shr.ACIRField, E constraint.Element](r io.Reader) (*B
 		return &BlackBoxFuncCall[T, E]{&Xor[T, E]{}}, nil
 	case 3:
 		return &BlackBoxFuncCall[T, E]{&Range[T, E]{}}, nil
-	// case 4:
-	// 	return &BlackBoxFuncCall[T, E]{&Blake2s[T, E]{}}, nil
-	// case 5:
-	// 	return &BlackBoxFuncCall[T, E]{&Blake3[T, E]{}}, nil
+	case 4:
+		return &BlackBoxFuncCall[T, E]{&Blake2s[T, E]{}}, nil
+	case 5:
+		return &BlackBoxFuncCall[T, E]{&Blake3[T, E]{}}, nil
 	// case 6:
 	// 	return &BlackBoxFuncCall[T, E]{&ECDSASECP256K1[T, E]{}}, nil
 	// case 7:
