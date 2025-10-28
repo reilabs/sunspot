@@ -58,34 +58,34 @@ func NewBlackBoxFunction[T shr.ACIRField, E constraint.Element](r io.Reader) (*B
 		return nil, err
 	}
 	switch kind {
-	case 0:
-		return &BlackBoxFuncCall[T, E]{&AES128Encrypt[T, E]{}}, nil
+	// case 0:
+	// 	return &BlackBoxFuncCall[T, E]{&AES128Encrypt[T, E]{}}, nil
 	case 1:
 		return &BlackBoxFuncCall[T, E]{&And[T, E]{}}, nil
 	case 2:
 		return &BlackBoxFuncCall[T, E]{&Xor[T, E]{}}, nil
 	case 3:
 		return &BlackBoxFuncCall[T, E]{&Range[T, E]{}}, nil
-	case 4:
-		return &BlackBoxFuncCall[T, E]{&Blake2s[T, E]{}}, nil
-	case 5:
-		return &BlackBoxFuncCall[T, E]{&Blake3[T, E]{}}, nil
-	case 6:
-		return &BlackBoxFuncCall[T, E]{&ECDSASECP256K1[T, E]{}}, nil
-	case 7:
-		return &BlackBoxFuncCall[T, E]{&ECDSASECP256R1[T, E]{}}, nil
-	case 8:
-		return &BlackBoxFuncCall[T, E]{&MultiScalarMul[T, E]{}}, nil
-	case 9:
-		return &BlackBoxFuncCall[T, E]{&EmbeddedCurveAdd[T, E]{}}, nil
-	case 10:
-		return &BlackBoxFuncCall[T, E]{&Keccakf1600[T, E]{}}, nil
-	case 11:
-		return &BlackBoxFuncCall[T, E]{&RecursiveAggregation[T, E]{}}, nil
-	case 18:
-		return &BlackBoxFuncCall[T, E]{&Poseidon2Permutation[T, E]{}}, nil
-	case 19:
-		return &BlackBoxFuncCall[T, E]{&SHA256Compression[T, E]{}}, nil
+	// case 4:
+	// 	return &BlackBoxFuncCall[T, E]{&Blake2s[T, E]{}}, nil
+	// case 5:
+	// 	return &BlackBoxFuncCall[T, E]{&Blake3[T, E]{}}, nil
+	// case 6:
+	// 	return &BlackBoxFuncCall[T, E]{&ECDSASECP256K1[T, E]{}}, nil
+	// case 7:
+	// 	return &BlackBoxFuncCall[T, E]{&ECDSASECP256R1[T, E]{}}, nil
+	// case 8:
+	// 	return &BlackBoxFuncCall[T, E]{&MultiScalarMul[T, E]{}}, nil
+	// case 9:
+	// 	return &BlackBoxFuncCall[T, E]{&EmbeddedCurveAdd[T, E]{}}, nil
+	// case 10:
+	// 	return &BlackBoxFuncCall[T, E]{&Keccakf1600[T, E]{}}, nil
+	// case 11:
+	// 	return &BlackBoxFuncCall[T, E]{&RecursiveAggregation[T, E]{}}, nil
+	// case 18:
+	// 	return &BlackBoxFuncCall[T, E]{&Poseidon2Permutation[T, E]{}}, nil
+	// case 19:
+	// 	return &BlackBoxFuncCall[T, E]{&SHA256Compression[T, E]{}}, nil
 	default:
 		return nil, fmt.Errorf("blackbox opcode %d not yet implemented", kind)
 	}

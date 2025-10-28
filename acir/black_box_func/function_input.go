@@ -16,7 +16,6 @@ type FunctionInput[T shr.ACIRField] struct {
 	FunctionInputKind FunctionInputKind
 	ConstantInput     *T
 	Witness           *shr.Witness
-	NumberOfBits      uint32
 }
 
 func (f *FunctionInput[T]) UnmarshalReader(r io.Reader) error {
@@ -46,10 +45,6 @@ func (f *FunctionInput[T]) UnmarshalReader(r io.Reader) error {
 		return ACIRFunctionInputKindError{
 			DecodedKind: f.FunctionInputKind,
 		}
-	}
-
-	if err := binary.Read(r, binary.LittleEndian, &f.NumberOfBits); err != nil {
-		return err
 	}
 	return nil
 }

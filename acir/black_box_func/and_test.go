@@ -33,12 +33,10 @@ func TestAndUnmarshalReader(t *testing.T) {
 			Lhs: FunctionInput[T]{
 				FunctionInputKind: ACIRFunctionInputKindWitness,
 				Witness:           &expectedWitnessLhs,
-				NumberOfBits:      5678,
 			},
 			Rhs: FunctionInput[T]{
 				FunctionInputKind: ACIRFunctionInputKindWitness,
 				Witness:           &expectedWitnessRhs,
-				NumberOfBits:      6789,
 			},
 			Output: shr.Witness(3456),
 		},

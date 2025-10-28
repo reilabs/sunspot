@@ -1,10 +1,8 @@
 package expression_width
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io"
 )
 
 type ExpressionWidth struct {
@@ -19,24 +17,35 @@ const (
 	ACIRExpressionWidthBounded
 )
 
-func (e *ExpressionWidth) UnmarshalReader(r io.Reader) error {
-	if err := binary.Read(r, binary.LittleEndian, &e.Kind); err != nil {
+func (e *ExpressionWidth) UnmarshalJSON(data []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
 
-	switch e.Kind {
-	case ACIRExpressionWidthUnbounded:
-		e.Width = nil
-	case ACIRExpressionWidthBounded:
-		e.Width = new(uint64)
-		if err := binary.Read(r, binary.LittleEndian, e.Width); err != nil {
-			return err
+	for key, value := range raw {
+		switch key {
+		case "Bounded":
+			e.Kind = ACIRExpressionWidthBounded
+			var bounded struct {
+				Width uint64 `json:"width"`
+			}
+			if err := json.Unmarshal(value, &bounded); err != nil {
+				return err
+			}
+			e.Width = &bounded.Width
+
+		case "Unbounded":
+			e.Kind = ACIRExpressionWidthUnbounded
+			e.Width = nil
+
+		default:
+			return fmt.Errorf("unknown ExpressionWidth variant: %s", key)
 		}
-	default:
-		return fmt.Errorf("unknown ExpressionWidth Kind: %d", e.Kind)
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf("invalid ExpressionWidth: %s", string(data))
 }
 
 func (e *ExpressionWidth) Equals(other *ExpressionWidth) bool {

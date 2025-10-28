@@ -23,7 +23,6 @@ func TestFunctionInputUnmarshalReaderConstant(t *testing.T) {
 		FunctionInputKind: ACIRFunctionInputKindConstant,
 		ConstantInput:     &expectedField,
 		Witness:           nil,
-		NumberOfBits:      1234,
 	}
 
 	if !input.Equals(&expected) {
@@ -49,7 +48,6 @@ func TestFunctionInputUnmarshalReaderWitness(t *testing.T) {
 		FunctionInputKind: ACIRFunctionInputKindWitness,
 		ConstantInput:     nil,
 		Witness:           &expectedWitness,
-		NumberOfBits:      5678,
 	}
 
 	if !input.Equals(&expected) {

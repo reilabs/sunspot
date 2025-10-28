@@ -70,12 +70,10 @@ func TestBlake3UnmarshalReaderWithInputs(t *testing.T) {
 			{
 				FunctionInputKind: ACIRFunctionInputKindWitness,
 				Witness:           &expectedWitness1,
-				NumberOfBits:      1024,
 			},
 			{
 				FunctionInputKind: ACIRFunctionInputKindWitness,
 				Witness:           &expectedWitness2,
-				NumberOfBits:      2048,
 			},
 		},
 		Outputs: [32]shr.Witness{},
