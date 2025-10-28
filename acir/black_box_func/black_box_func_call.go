@@ -58,8 +58,8 @@ func NewBlackBoxFunction[T shr.ACIRField, E constraint.Element](r io.Reader) (*B
 		return nil, err
 	}
 	switch kind {
-	// case 0:
-	// 	return &BlackBoxFuncCall[T, E]{&AES128Encrypt[T, E]{}}, nil
+	case 0:
+		return &BlackBoxFuncCall[T, E]{&AES128Encrypt[T, E]{}}, nil
 	case 1:
 		return &BlackBoxFuncCall[T, E]{&And[T, E]{}}, nil
 	case 2:
