@@ -2,8 +2,8 @@ package opcodes
 
 import (
 	"io"
-	mem "sunpot/acir/brillig/memory"
-	shr "sunpot/acir/shared"
+	mem "sunspot/acir/brillig/memory"
+	shr "sunspot/acir/shared"
 )
 
 type Const[T shr.ACIRField] struct {

@@ -2,8 +2,8 @@ package blackboxfunc
 
 import (
 	"os"
-	shr "sunpot/acir/shared"
-	"sunpot/bn254"
+	shr "sunspot/acir/shared"
+	"sunspot/bn254"
 	"testing"
 )
 

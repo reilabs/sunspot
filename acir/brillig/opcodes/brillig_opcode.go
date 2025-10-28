@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	bbo "sunpot/acir/brillig/black_box_ops"
-	shr "sunpot/acir/shared"
+	bbo "sunspot/acir/brillig/black_box_ops"
+	shr "sunspot/acir/shared"
 )
 
 type BrilligOpcode[T shr.ACIRField] struct {

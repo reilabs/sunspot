@@ -1,4 +1,4 @@
-package expression
+package expression_width
 
 import (
 	"os"

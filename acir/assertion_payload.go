@@ -3,7 +3,7 @@ package acir
 import (
 	"encoding/binary"
 	"io"
-	shr "sunpot/acir/shared"
+	shr "sunspot/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 )

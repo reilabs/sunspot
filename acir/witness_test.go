@@ -1,7 +1,7 @@
 package acir
 
 import (
-	"sunpot/bn254"
+	"sunspot/bn254"
 	"testing"
 
 	ecc_bn254 "github.com/consensys/gnark-crypto/ecc/bn254"

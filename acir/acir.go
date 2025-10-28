@@ -10,8 +10,9 @@ import (
 	"math/big"
 	"os"
 	"strconv"
-	hdr "sunpot/acir/header"
-	shr "sunpot/acir/shared"
+	ew "sunspot/acir/expression_width"
+	hdr "sunspot/acir/header"
+	shr "sunspot/acir/shared"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/constraint"
@@ -30,10 +31,9 @@ type ACIR[T shr.ACIRField, E constraint.Element] struct {
 	Program             Program[T, E]               `json:"program"`
 	DebugSymbols        string                      `json:"debug_symbols"`
 	FileMap             map[string]hdr.ACIRFileData `json:"file_map"`
+	ExpressionWidth     ew.ExpressionWidth          `json:"expression_width"`
 	WitnessTree         *btree.BTree                `json:"-"`
 	ConstantWitnessTree *btree.BTree                `json:"-"`
-	Names               []string                    `json:"names"`
-	BrilligNames        []string                    `json:"brillig_names"`
 }
 
 // Loads ACIR from disk and creates representation in memory
@@ -124,30 +124,6 @@ func (a *ACIR[T, E]) UnmarshalJSON(data []byte) error {
 		}
 	} else {
 		return fmt.Errorf("missing or invalid file_map field in ACIR")
-	}
-
-	if names, ok := raw["names"].([]interface{}); ok {
-		for _, name := range names {
-			if str, ok := name.(string); ok {
-				a.Names = append(a.Names, str)
-			} else {
-				return fmt.Errorf("invalid name in names array: %v", name)
-			}
-		}
-	} else {
-		return fmt.Errorf("missing or invalid names field in ACIR")
-	}
-
-	if brilligNames, ok := raw["brillig_names"].([]interface{}); ok {
-		for _, name := range brilligNames {
-			if str, ok := name.(string); ok {
-				a.BrilligNames = append(a.BrilligNames, str)
-			} else {
-				return fmt.Errorf("invalid name in brillig_names array: %v", name)
-			}
-		}
-	} else {
-		return fmt.Errorf("missing or invalid brillig_names field in ACIR")
 	}
 	return nil
 }

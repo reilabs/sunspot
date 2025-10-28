@@ -1,3 +1,3 @@
 # .
-no Go files in /Users/alex/projects/sunpot/noir-samples/black_box_functions/range
+no Go files in /Users/alex/projects/sunspot/noir-samples/black_box_functions/range
 FAIL	. [setup failed]

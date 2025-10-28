@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sunpot/cmd"
+	"sunspot/cmd"
 )
 
 func main() {

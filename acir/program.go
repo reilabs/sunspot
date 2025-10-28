@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	brl "sunpot/acir/brillig"
-	shr "sunpot/acir/shared"
+	brl "sunspot/acir/brillig"
+	shr "sunspot/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"

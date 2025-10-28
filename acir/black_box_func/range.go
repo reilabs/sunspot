@@ -3,7 +3,7 @@ package blackboxfunc
 import (
 	"fmt"
 	"io"
-	shr "sunpot/acir/shared"
+	shr "sunspot/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"

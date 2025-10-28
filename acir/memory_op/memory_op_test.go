@@ -2,9 +2,9 @@ package memory_op
 
 import (
 	"os"
-	exp "sunpot/acir/expression"
-	shr "sunpot/acir/shared"
-	"sunpot/bn254"
+	exp "sunspot/acir/expression"
+	shr "sunspot/acir/shared"
+	"sunspot/bn254"
 	"testing"
 
 	"github.com/consensys/gnark/constraint"
