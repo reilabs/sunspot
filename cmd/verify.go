@@ -24,7 +24,7 @@ var verifyCmd = &cobra.Command{
 			return fmt.Errorf("invalid verification key file: %s (must end with .vk)", vkPath)
 		}
 
-		fmt.Printf("🔑 Loading Proving Key: %s\n", vkPath)
+		fmt.Printf("🔑 Loading Verification Key: %s\n", vkPath)
 		vkFile, err := os.Open(vkPath)
 		if err != nil {
 			return fmt.Errorf("failed to open verifying key: %v", err)
@@ -33,7 +33,7 @@ var verifyCmd = &cobra.Command{
 
 		vk := groth16.NewVerifyingKey(ecc.BN254)
 		if _, err := vk.ReadFrom(vkFile); err != nil {
-			return fmt.Errorf("failed to read proving key: %w", err)
+			return fmt.Errorf("failed to read verification key: %w", err)
 		}
 
 		fmt.Printf("Loading Proof: %s\n", proofPath)
