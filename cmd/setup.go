@@ -54,7 +54,7 @@ var setupCmd = &cobra.Command{
 		}
 		defer pkFile.Close()
 
-		if _, err := pk.WriteTo(pkFile); err != nil {
+		if _, err := pk.WriteRawTo(pkFile); err != nil {
 			return fmt.Errorf("failed to write proving key: %w", err)
 		}
 		fmt.Printf("💾 Proving key written to %s\n", pkPath)
@@ -66,7 +66,7 @@ var setupCmd = &cobra.Command{
 		}
 		defer vkFile.Close()
 
-		if _, err := vk.WriteTo(vkFile); err != nil {
+		if _, err := vk.WriteRawTo(vkFile); err != nil {
 			return fmt.Errorf("failed to write verifying key: %w", err)
 		}
 		fmt.Printf("💾 Verifying key written to %s\n", vkPath)
