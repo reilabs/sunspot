@@ -4,6 +4,8 @@
 
 > 🚧 **Work in Progress:** Sunspot as is provides a Groth16 backend to ACIR circuit representations. It does not yet support verifying the generated proofs on Solana.
 
+> ⚠️ Requires **Noir 1.0.0-beta.13**  
+
 ## Installation
 
 Make sure you have [Go 1.24+](https://go.dev/dl/) installed.
