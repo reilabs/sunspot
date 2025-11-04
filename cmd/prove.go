@@ -98,7 +98,7 @@ var proveCmd = &cobra.Command{
 		}
 		defer proofFile.Close()
 
-		if _, err := proof.WriteTo(proofFile); err != nil {
+		if _, err := proof.WriteRawTo(proofFile); err != nil {
 			return fmt.Errorf("failed to write proof: %w", err)
 		}
 
