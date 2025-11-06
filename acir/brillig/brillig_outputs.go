@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	shr "sunpot/acir/shared"
+	shr "sunspot/acir/shared"
 )
 
 type BrilligOutputs struct {

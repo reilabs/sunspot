@@ -2,8 +2,8 @@ package opcodes
 
 import (
 	"os"
-	mem "sunpot/acir/brillig/memory"
-	"sunpot/bn254"
+	mem "sunspot/acir/brillig/memory"
+	"sunspot/bn254"
 	"testing"
 )
 

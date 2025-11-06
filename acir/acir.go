@@ -10,8 +10,8 @@ import (
 	"math/big"
 	"os"
 	"strconv"
-	hdr "sunpot/acir/header"
-	shr "sunpot/acir/shared"
+	hdr "sunspot/acir/header"
+	shr "sunspot/acir/shared"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/constraint"

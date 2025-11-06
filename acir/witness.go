@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"math/big"
 	"os"
-	hdr "sunpot/acir/header"
-	shr "sunpot/acir/shared"
+	hdr "sunspot/acir/header"
+	shr "sunspot/acir/shared"
 
 	"fmt"
 

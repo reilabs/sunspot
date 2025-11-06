@@ -4,9 +4,9 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"io"
-	exp "sunpot/acir/expression"
-	ops "sunpot/acir/opcodes"
-	shr "sunpot/acir/shared"
+	exp "sunspot/acir/expression"
+	ops "sunspot/acir/opcodes"
+	shr "sunspot/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"

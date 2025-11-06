@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"sunpot/acir/opcodes"
-	shr "sunpot/acir/shared"
+	"sunspot/acir/opcodes"
+	shr "sunspot/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"

@@ -2,7 +2,7 @@ package opcodes
 
 import (
 	"os"
-	"sunpot/bn254"
+	"sunspot/bn254"
 	"testing"
 )
 

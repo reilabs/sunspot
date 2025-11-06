@@ -3,8 +3,8 @@ package memory_init
 import (
 	"encoding/binary"
 	"os"
-	shr "sunpot/acir/shared"
-	"sunpot/bn254"
+	shr "sunspot/acir/shared"
+	"sunspot/bn254"
 	"testing"
 
 	"github.com/consensys/gnark/constraint"

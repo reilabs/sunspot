@@ -2,7 +2,7 @@ package opcodes
 
 import (
 	"io"
-	mem "sunpot/acir/brillig/memory"
+	mem "sunspot/acir/brillig/memory"
 )
 
 type Cast struct {

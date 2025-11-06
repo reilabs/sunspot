@@ -1,7 +1,7 @@
 package acir
 
 import (
-	"sunpot/bn254"
+	"sunspot/bn254"
 	"testing"
 
 	"github.com/consensys/gnark/constraint"
