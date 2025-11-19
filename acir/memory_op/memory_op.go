@@ -101,11 +101,9 @@ func (o *MemoryOp[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witne
 		table_length := (*table).Insert(0)
 
 		for i := 0; i < table_length; i++ {
-			if insertion_index == i {
-				newTable.Insert(o.Value.Calculate(api, witnesses))
-			} else {
-				newTable.Insert((*table).Lookup(i)[0])
-			}
+			is_writable := api.IsZero(api.Sub(insertion_index, frontend.Variable(i)))
+			updated := api.Select(is_writable, o.Value.Calculate(api, witnesses), (*table).Lookup(i)[0])
+			newTable.Insert(updated)
 		}
 
 		o.Memory[o.BlockID] = &newTable
