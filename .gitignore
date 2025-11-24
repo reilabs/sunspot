@@ -24,3 +24,5 @@ Thumbs.db
 
 # Test binary files
 binaries/
+
+target/
