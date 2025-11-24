@@ -193,7 +193,7 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 		// We add the public ones first but make sure they are indexed by their
 		// Noir index in the witness map
 		for index, param := range a.ABI.Params() {
-			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+			if param.IsPublic() {
 				witnessMap[shr.Witness(index+int(outerCircuitIndex))] = builder.PublicVariable(
 					schema.LeafInfo{
 						FullName:   func() string { return param.Name },

@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"math/big"
 	"os"
-	hdr "sunspot/acir/header"
 	shr "sunspot/acir/shared"
 
 	"fmt"
@@ -79,7 +78,7 @@ func LoadWitnessStacksFromFile[T shr.ACIRField](filePath string, modulus *big.In
 // The trick here is that Gnark wants the public variables to be at the beginning of the witness vector,
 // whereas noir witness stacks don't care about which variables are public
 func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Witness, error) {
-	witnesses, err := LoadWitnessStacksFromFile[T](fileName, field)
+	witnessStacks, err := LoadWitnessStacksFromFile[T](fileName, field)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load witness stack from file %s: %w", fileName, err)
 	}
@@ -96,14 +95,13 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 	countPublic := 0
 	countPrivate := 0
 	for _, param := range params {
-		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
+		if param.IsPublic() {
 			countPublic++
 		}
 	}
 
-	for _, itemStack := range witnesses {
-		itemStackCount := itemStack.Len()
-		countPrivate += itemStackCount
+	for _, witnessStack := range witnessStacks {
+		countPrivate += witnessStack.Len()
 	}
 
 	countPrivate -= countPublic
@@ -111,8 +109,8 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 	go func() {
 		// Add the public variables to the beginning of the witness vector.
 		for index, param := range params {
-			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-				outerCircuitStack := witnesses[uint64(len(witnesses)-1)]
+			if param.IsPublic() {
+				outerCircuitStack := witnessStacks[uint64(len(witnessStacks)-1)]
 				if value, ok := outerCircuitStack.Get(shr.Witness(index)); ok {
 					values <- value.ToFrontendVariable()
 				} else {
@@ -121,16 +119,18 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 
 			}
 		}
-		for i := 0; i < len(witnesses); i++ {
-			partialWitness := witnesses[uint64(i)]
+		for i := 0; i < len(witnessStacks); i++ {
+			partialWitness := witnessStacks[uint64(i)]
 			for it := partialWitness.Iter(); it.Next(); {
 				witnessKey := it.Key()
 				skipKey := false
 				// For the outermost circuit, we skip the witness values
 				// that have already been added as part of the public variables
-				if i == len(witnesses)-1 {
+				if i == len(witnessStacks)-1 {
 					for index, param := range params {
-						if witnessKey == shr.Witness(index) && param.Visibility == hdr.ACIRParameterVisibilityPublic {
+						// If any of the public parameters correspond to this witness,
+						// Skip as it already has been added
+						if witnessKey == shr.Witness(index) && param.IsPublic() {
 							skipKey = true
 							break
 						}

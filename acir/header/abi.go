@@ -1,6 +1,8 @@
 package header
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type ACIRABI struct {
 	Parameters []ACIRParameter          `json:"parameters"`
@@ -9,7 +11,7 @@ type ACIRABI struct {
 }
 
 type ParamInfo struct {
-	Visibility ACIRParameterVisibility
+	visibility ACIRParameterVisibility
 	Name       string
 }
 
@@ -34,7 +36,7 @@ func flattenParam(vis ACIRParameterVisibility, name string, typ ACIRParameterTyp
 	switch typ.Kind {
 	case ACIRParameterKindArray:
 		if typ.ArrayType == nil || typ.Length == nil {
-			return []ParamInfo{{Visibility: vis, Name: name}}
+			return []ParamInfo{{visibility: vis, Name: name}}
 		}
 		for i := 0; i < *typ.Length; i++ {
 			elementName := fmt.Sprintf("%s[%d]", name, i)
@@ -43,7 +45,7 @@ func flattenParam(vis ACIRParameterVisibility, name string, typ ACIRParameterTyp
 
 	case ACIRParameterKindTuple:
 		if typ.TupleFields == nil {
-			return []ParamInfo{{Visibility: vis, Name: name}}
+			return []ParamInfo{{visibility: vis, Name: name}}
 		}
 		for index, tupleField := range *typ.TupleFields {
 			fieldName := fmt.Sprintf("%s_%d", name, index)
@@ -52,7 +54,7 @@ func flattenParam(vis ACIRParameterVisibility, name string, typ ACIRParameterTyp
 
 	case ACIRParameterKindStruct:
 		if typ.Fields == nil {
-			return []ParamInfo{{Visibility: vis, Name: name}}
+			return []ParamInfo{{visibility: vis, Name: name}}
 		}
 		for _, field := range *typ.Fields {
 			fieldName := fmt.Sprintf("%s.%s", name, field.Name)
@@ -61,10 +63,14 @@ func flattenParam(vis ACIRParameterVisibility, name string, typ ACIRParameterTyp
 
 	default:
 		result = append(result, ParamInfo{
-			Visibility: vis,
+			visibility: vis,
 			Name:       name,
 		})
 	}
 
 	return result
+}
+
+func (a *ParamInfo) IsPublic() bool {
+	return a.visibility == ACIRParameterVisibilityPublic
 }
