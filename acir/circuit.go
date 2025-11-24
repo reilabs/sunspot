@@ -103,19 +103,18 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 		}
 	}
 
-	/*c.AssertMessages = make(map[ops.OpcodeLocation]AssertionPayload[T], numAssertMessages)
+	c.AssertMessages = make(map[ops.OpcodeLocation]AssertionPayload[T, E], numAssertMessages)
 	for i := uint64(0); i < numAssertMessages; i++ {
-		log.Trace().Msg("Unmarshalling AssertMessage at index: " + fmt.Sprint(i))
 		var opcodeLocation ops.OpcodeLocation
 		if err := opcodeLocation.UnmarshalReader(r); err != nil {
 			return err
 		}
-		var payload AssertionPayload[T]
+		var payload AssertionPayload[T, E]
 		if err := payload.UnmarshalReader(r); err != nil {
 			return err
 		}
 		c.AssertMessages[opcodeLocation] = payload
-	}*/
+	}
 
 	return nil
 }
