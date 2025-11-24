@@ -240,6 +240,14 @@ func TestZKPassportExpiry(t *testing.T) {
 	)
 }
 
+func TestZKPassporSanctionsCheck(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../noir-samples/zk_passport/sanctions/target/sanctions.json",
+		"../noir-samples/zk_passport/sanctions/target/sanctions.gz",
+	)
+}
+
 // Helper function for testing files,
 // Provide circuit and witness path and compile to r1cs, proves and verifies in groth16
 func testProveAndVerify(t *testing.T, acirPath string, witnessPath string) {
@@ -254,7 +262,6 @@ func testProveAndVerify(t *testing.T, acirPath string, witnessPath string) {
 	if err != nil {
 		t.Fatalf("Failed to compile ACIR: %v", err)
 	}
-
 	pk, vk, err := groth16.Setup(ccs)
 	if err != nil {
 		t.Fatalf("Failed to setup Groth16: %v", err)

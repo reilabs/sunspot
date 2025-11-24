@@ -66,6 +66,7 @@ jobs:
           noir-samples/zk_passport/inclusion_check
           noir-samples/zk_passport/age
           noir-samples/zk_passport/expiry
+          noir-samples/zk_passport/sanctions
         )
 
         for project in "${PROJECTS[@]}"; do
