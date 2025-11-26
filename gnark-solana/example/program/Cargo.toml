@@ -1,0 +1,20 @@
+[package]
+name = "program"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+solana-program = "3.0.0"
+spl-token = { version = "9.0.0", default-features = false, features = ["no-entrypoint"] }
+
+verifier-lib = { path = "../../crates/verifier-lib" }
+
+[features]
+custom-heap = []
+custom-panic = []
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

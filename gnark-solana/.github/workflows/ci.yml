@@ -1,0 +1,99 @@
+name: Rust CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "crates/**"
+      - "example/**"
+      - "!**/README.md"
+      - "!**/readme.md"
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "crates/**"
+      - "example/**"
+      - "!**/README.md"
+      - "!**/readme.md"
+  workflow_dispatch:
+
+jobs:
+  ci:
+    name: CI — ${{ matrix.toolchain }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: [stable]
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache cargo target
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-target-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-${{ matrix.toolchain }}-
+              
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+
+      - name: Install Rust toolchain & components
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          profile: minimal
+          components: rustfmt, clippy
+          override: true
+
+      - name: Install Solana toolchain
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/solana-developers/solana-install/main/install.sh | bash
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+      - name: Build Solana program (.so)
+        run: |
+          cargo build-sbf
+
+      - name: Show rustc & cargo versions
+        run: |
+          rustc --version
+          cargo --version
+
+      - name: Check formatting (cargo fmt -- --check)
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy (deny warnings)
+        run: cargo clippy --all-targets --all-features -- -D warnings
+    
+      - name: Build (debug)
+        run: cargo build --all-targets --all-features
+
+      - name: Run tests
+        run: cargo test --all --all-features --no-fail-fast --verbose
+
+      - name: Build (release)
+        run: cargo build --release --all-features
