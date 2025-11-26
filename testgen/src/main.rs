@@ -6,7 +6,7 @@ mod opcodes;
 mod shared;
 
 fn main() {
-    let target_dir = "../../binaries/";
+    let target_dir = "../go/binaries/";
 
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
@@ -25,6 +25,4 @@ fn main() {
     acir_field::generate_tests(target_dir);
     expression::generate_tests(target_dir);
     opcodes::generate_tests(target_dir);
-
-    println!("Hello, world!");
 }

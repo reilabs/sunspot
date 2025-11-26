@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "crates/verifier-lib",
+    "crates/verifier-bin", "example/program",
+]
+
+resolver = "2"
