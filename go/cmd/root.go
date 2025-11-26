@@ -31,4 +31,5 @@ func init() {
 	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(proveCmd)
 	rootCmd.AddCommand(verifyCmd)
+	rootCmd.AddCommand(deployCmd)
 }
