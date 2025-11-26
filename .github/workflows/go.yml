@@ -84,7 +84,7 @@ jobs:
       run: cd go && go build -v ./...
 
     - name: Build Test binaries
-      run: cd rust/testgen && cargo run
+      run: cd testgen && cargo run
 
     - name: Run tests
       run: cd go && go test ./... -timeout 0

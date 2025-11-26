@@ -6,7 +6,7 @@ mod opcodes;
 mod shared;
 
 fn main() {
-    let target_dir = "../../go/binaries/";
+    let target_dir = "../go/binaries/";
 
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::TRACE)
