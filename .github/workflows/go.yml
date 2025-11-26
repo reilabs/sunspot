@@ -78,16 +78,16 @@ jobs:
         done
 
     - name: Install dependencies
-      run: go mod tidy
+      run: cd go && go mod tidy
 
     - name: Build binary
-      run: go build -v ./...
+      run: cd go && go build -v ./...
 
     - name: Build Test binaries
-      run: cd rust/testgen && cargo run && cd ../..
+      run: cd rust/testgen && cargo run
 
     - name: Run tests
-      run: go test ./... -timeout 0
+      run: cd go && go test ./... -timeout 0
 
     - name: Run linters
-      run: go vet ./...
+      run: cd go && go vet ./...
