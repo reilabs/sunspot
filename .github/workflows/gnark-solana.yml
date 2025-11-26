@@ -5,10 +5,10 @@ on:
     branches:
       - main
     paths:
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "crates/**"
-      - "example/**"
+      - "gnark-solana/Cargo.toml"
+      - "gnark-solana/Cargo.lock"
+      - "gnark-solana/crates/**"
+      - "gnark-solana/example/**"
       - "!**/README.md"
       - "!**/readme.md"
 
@@ -16,10 +16,10 @@ on:
     branches:
       - main
     paths:
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "crates/**"
-      - "example/**"
+      - "gnark-solana/Cargo.toml"
+      - "gnark-solana/Cargo.lock"
+      - "gnark-solana/crates/**"
+      - "gnark-solana/example/**"
       - "!**/README.md"
       - "!**/readme.md"
   workflow_dispatch:
