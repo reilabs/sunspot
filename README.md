@@ -74,6 +74,7 @@ sunspot [command]
 | `prove`      | Generate a Groth16 proof and public witness from an ACIR file, a witness, CCS, and proving key |
 | `setup`      | Generate a proving key (pk) and verifying key (vk) from a CCS file               |
 | `verify`     | Verify a proof and public witness with a verification key                        |
+| `deploy`     | Create a verifying solana program executable and keypair|
 
 ### 💡 Examples
 
@@ -89,6 +90,9 @@ sunspot prove my_circuit.json witness.gz my_circuit.ccs proving_key.pk
 
 # Verify a proof
 sunspot verify verifying_key.vk proof.proof public_witness.pw
+
+# Create Solana verification program
+sunspot deploy verifying_key.vk /path/to/verifier/bin/crate
 ```
 
 For detailed information on each command:
