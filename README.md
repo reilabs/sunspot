@@ -1,8 +1,6 @@
 # Sunspot
 
-**sunspot** provides tools to prove and verify [noir](https://noir-lang.org) circuits on solana.
-
-> 🚧 **Work in Progress:** Sunspot as is provides a Groth16 backend to ACIR circuit representations. It does not yet support verifying the generated proofs on Solana.
+**Sunspot** provides tools to prove and verify [noir](https://noir-lang.org) circuits on solana.
 
 > ⚠️ Requires **Noir 1.0.0-beta.13**  
 
@@ -13,7 +11,7 @@ Make sure you have [Go 1.24+](https://go.dev/dl/) installed.
 ```bash
 # Clone the repository
 git clone git@github.com:reilabs/sunspot.git
-cd sunspot
+cd sunspot/go
 
 # Build the binary
 go build -o sunspot .
@@ -76,6 +74,7 @@ sunspot [command]
 | `prove`      | Generate a Groth16 proof and public witness from an ACIR file, a witness, CCS, and proving key |
 | `setup`      | Generate a proving key (pk) and verifying key (vk) from a CCS file               |
 | `verify`     | Verify a proof and public witness with a verification key                        |
+| `deploy`     | Create a verifying solana program executable and keypair|
 
 ### 💡 Examples
 
@@ -91,6 +90,9 @@ sunspot prove my_circuit.json witness.gz my_circuit.ccs proving_key.pk
 
 # Verify a proof
 sunspot verify verifying_key.vk proof.proof public_witness.pw
+
+# Create Solana verification program
+sunspot deploy verifying_key.vk /path/to/verifier/bin/crate
 ```
 
 For detailed information on each command:
@@ -98,3 +100,13 @@ For detailed information on each command:
 ```bash
 sunspot [command] --help
 ```
+
+## Codebase Overview
+
+This project is organized as follows:
+
+- `go/` – Contains functionality to parse Noir circuits and witnesses and produces gnark outputs, also contains CLI functionality in `go/cmd` subdirectory.
+- `gnark-solana/` – Provides functionality to verify gnark proofs on solana, a fuller description of this directory can be found [here](gnark-solana/README.md).
+- `noir-samples/` – Example Noir projects used for unit and integration tests.
+- `testgen` - Creates ACIR snippets to test parsing, does **not** produce semantically valid programs.
+

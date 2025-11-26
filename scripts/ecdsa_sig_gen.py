@@ -1,3 +1,6 @@
+# Script to generate satisfying inputs to the ECDSA Noir samples
+# Not used anywhere else in the project
+
 from ecdsa import SigningKey
 # from ecdsa import NIST256p
 from ecdsa import SECP256k1

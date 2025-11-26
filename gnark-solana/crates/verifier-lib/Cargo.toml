@@ -1,0 +1,25 @@
+[package]
+name = "verifier-lib"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = [ "lib"]
+
+[dependencies]
+ark-serialize = "0.4"
+ark-ff = "0.5.0"
+ark-ec = "0.5.0"
+ark-test-curves = "0.5.0"
+solana-bn254 = "3.1.2"
+thiserror = "2.0.17"
+ark-bn254 = "0.5"
+solana-program = "2.2.0"
+num-traits = "0.2"
+blake3 = { version = "1.8.2", default-features = false, features = ["pure"] }
+sha2 = "0.10.9"
+
+[dev-dependencies]
+num-bigint = "0.4"
+ark-ec = "0.5.0"
+ark-std = "0.5.0"

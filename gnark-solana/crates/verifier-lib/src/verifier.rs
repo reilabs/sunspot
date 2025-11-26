@@ -1,0 +1,185 @@
+//! Provides core logic for Gnark verification
+use crate::{
+    commitments::{batch_verify_pedersen, get_challenge},
+    error::Groth16Error,
+    proof::Groth16Proof,
+    vk::Groth16Verifyingkey,
+    witness::Groth16Witness,
+};
+
+use ark_ff::PrimeField;
+
+use solana_bn254::{
+    prelude::{alt_bn128_g1_addition_be, alt_bn128_g1_multiplication_be, alt_bn128_pairing_be},
+    AltBn128Error,
+};
+use std::ops::Neg;
+
+/// A verifier for Gnark-generated groth16 proofs
+pub struct Groth16Verifier<'a, const NR_INPUTS: usize> {
+    verifyingkey: &'a Groth16Verifyingkey<'a>,
+}
+
+impl<const NR_INPUTS: usize> Groth16Verifier<'_, NR_INPUTS> {
+    /// Constructs a new verifier from a verifying key
+    pub fn new<'a>(verifyingkey: &'a Groth16Verifyingkey<'a>) -> Groth16Verifier<'a, NR_INPUTS> {
+        Groth16Verifier { verifyingkey }
+    }
+
+    /// Verifies a Gnark-generated proof and public witness
+    /// Returns `Ok(())` if verification passes, and error otherwise
+    pub fn verify(
+        &mut self,
+        proof: Groth16Proof,
+        public_witness: Groth16Witness<NR_INPUTS>,
+    ) -> Result<(), Groth16Error> {
+        let mut public_witness_vec = public_witness.entries.to_vec();
+        if !self.verifyingkey.commitment_keys.is_empty() {
+            let challenge = get_challenge::<NR_INPUTS>(
+                self.verifyingkey.public_and_commitment_committed,
+                proof.commitments,
+                &mut public_witness_vec,
+            )?;
+
+            batch_verify_pedersen(
+                self.verifyingkey.commitment_keys,
+                proof.commitments,
+                &proof.commitment_pok,
+                challenge,
+            )?;
+        }
+
+        let prepared_public_inputs = self.prepare_inputs(&public_witness_vec, proof.commitments)?;
+        let vk_alpha_neg = negate_g1(self.verifyingkey.alpha_g1)?;
+        let vk_gamma_neg = g2_from_bytes(&self.verifyingkey.gamma_g2).neg();
+        let vk_delta_neg = g2_from_bytes(&self.verifyingkey.delta_g2).neg();
+
+        // Makes the assertion:
+        //
+        //     e(A, B) * e(-α, β) * e(K_x, -γ) * e(C, -δ) = 1
+        //
+        // where A, B, C are the proof elements, K_x is the prepared public inputs point,
+        // and α, β, γ, δ are verifying key elements.
+        let pairing_input = [
+            proof.ar.as_slice(),
+            proof.bs.as_slice(),
+            &vk_alpha_neg,
+            self.verifyingkey.beta_g2.as_slice(),
+            prepared_public_inputs.as_slice(),
+            g2_to_bytes(&vk_gamma_neg).as_slice(),
+            proof.krs.as_slice(),
+            g2_to_bytes(&vk_delta_neg).as_slice(),
+        ]
+        .concat();
+
+        let pairing_res = alt_bn128_pairing_be(pairing_input.as_slice())
+            .map_err(|_| Groth16Error::ProofVerificationFailed)?;
+
+        // The alt_bn128_pairing function returns 1 if the pairing results in unity
+        // and zero otherwise
+        if pairing_res[31] != 1 {
+            return Err(Groth16Error::ProofVerificationFailed);
+        }
+        Ok(())
+    }
+
+    // Computes the linear combination of the verifying key vector `k` and the public inputs,
+    // then adds the provided commitment G1 elements, for Groth16 verification.
+    //
+    // Formally:
+    //
+    //     prepared_public_inputs = k_0 + x_1*k_1 + ... + x_n*k_n + sum(proof_commitments)
+    //
+    // where `*` denotes elliptic curve scalar multiplication and `+` denotes point addition
+    // on the BN254 curve.
+    // Returns the resulting point encoded in 64-byte form.
+    fn prepare_inputs(
+        &mut self,
+        public_inputs: &[[u8; 32]],
+        proof_commitments: &[[u8; 64]],
+    ) -> Result<[u8; 64], Groth16Error> {
+        let mut prepared_public_inputs = self.verifyingkey.k[0];
+
+        for (i, input) in public_inputs.iter().enumerate() {
+            let mul_res = alt_bn128_g1_multiplication_be(
+                &[&self.verifyingkey.k[i + 1][..], &input[..]].concat(),
+            )
+            .map_err(|_| Groth16Error::PreparingInputsG1MulFailed)?;
+            prepared_public_inputs =
+                alt_bn128_g1_addition_be(&[&mul_res[..], &prepared_public_inputs[..]].concat())
+                    .map_err(|_| Groth16Error::PreparingInputsG1AdditionFailed)?[..]
+                    .try_into()
+                    .map_err(|_| Groth16Error::PreparingInputsG1AdditionFailed)?;
+        }
+
+        for commitment in proof_commitments.iter() {
+            prepared_public_inputs =
+                alt_bn128_g1_addition_be(&[&commitment[..], &prepared_public_inputs[..]].concat())
+                    .map_err(|_| Groth16Error::PreparingInputsG1AdditionFailed)?[..]
+                    .try_into()
+                    .map_err(|_| Groth16Error::PreparingInputsG1AdditionFailed)?;
+        }
+
+        Ok(prepared_public_inputs)
+    }
+}
+
+// Construct an arkworks bn254 g2 extension from bytes
+// We need to do this to perform any operations not supported by solana system calls
+pub(crate) fn g2_from_bytes(be_bytes: &[u8; 128]) -> ark_bn254::G2Affine {
+    let x_1 = ark_bn254::Fq::from_be_bytes_mod_order(&be_bytes[0..32]);
+    let x_0 = ark_bn254::Fq::from_be_bytes_mod_order(&be_bytes[32..64]);
+    let y_1 = ark_bn254::Fq::from_be_bytes_mod_order(&be_bytes[64..96]);
+    let y_0 = ark_bn254::Fq::from_be_bytes_mod_order(&be_bytes[96..128]);
+
+    let x =
+        ark_ff::QuadExtField::<ark_ff::Fp2ConfigWrapper<ark_bn254::Fq2Config>> { c0: x_0, c1: x_1 };
+    let y =
+        ark_ff::QuadExtField::<ark_ff::Fp2ConfigWrapper<ark_bn254::Fq2Config>> { c0: y_0, c1: y_1 };
+
+    ark_bn254::G2Affine {
+        x,
+        y,
+        infinity: false,
+    }
+}
+
+// Write an arkworks bn254 g2 extension element to big endian bytes
+pub(crate) fn g2_to_bytes(point: &ark_bn254::G2Affine) -> [u8; 128] {
+    use ark_ff::BigInteger;
+
+    // Ensure it's not the point at infinity
+    assert!(!point.infinity, "cannot serialize point at infinity");
+
+    // Each coordinate is in Fq2 = (c0 + c1 * u)
+    // and each c0/c1 is an Fq element (32 bytes when to_bytes_be())
+    let x_0_bytes = point.x.c0.into_bigint().to_bytes_be();
+    let x_1_bytes = point.x.c1.into_bigint().to_bytes_be();
+    let y_0_bytes = point.y.c0.into_bigint().to_bytes_be();
+    let y_1_bytes = point.y.c1.into_bigint().to_bytes_be();
+
+    // Concatenate in the same order as your g2_from_bytes expects:
+    // [x_1 | x_0 | y_1 | y_0]
+    let mut out = [0u8; 128];
+    out[0..32].copy_from_slice(&x_1_bytes);
+    out[32..64].copy_from_slice(&x_0_bytes);
+    out[64..96].copy_from_slice(&y_1_bytes);
+    out[96..128].copy_from_slice(&y_0_bytes);
+    out
+}
+
+// Returns -g1 in bytes, using solana system calls
+fn negate_g1(g1_element: [u8; 64]) -> Result<Vec<u8>, AltBn128Error> {
+    // bytes corresponding to -1 in the bn254 scalr field
+    let neg_one: [u8; 32] = [
+        48, 100, 78, 114, 225, 49, 160, 41, 184, 80, 69, 182, 129, 129, 88, 93, 40, 51, 232, 72,
+        121, 185, 112, 145, 67, 225, 245, 147, 240, 0, 0, 0,
+    ];
+
+    let mut operands = [0u8; 96];
+    operands[..64].copy_from_slice(&g1_element[..]);
+    operands[64..96].copy_from_slice(&neg_one);
+    let negated_element = alt_bn128_g1_multiplication_be(&operands)?;
+
+    Ok(negated_element)
+}
