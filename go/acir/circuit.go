@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	ap "sunspot/acir/assertion_payload"
 	bbf "sunspot/acir/black_box_func"
 	"sunspot/acir/brillig"
 	"sunspot/acir/call"
@@ -20,13 +21,13 @@ import (
 )
 
 type Circuit[T shr.ACIRField, E constraint.Element] struct {
-	CurrentWitnessIndex uint32                                        `json:"current_witness_index"`
-	Opcodes             []ops.Opcode[E]                               `json:"opcodes"`            // Opcodes in the circuit
-	ExpressionWidth     exp.ExpressionWidth                           `json:"expression_width"`   // Width of the expressions in the circuit
-	PrivateParameters   btree.BTree                                   `json:"private_parameters"` // Witnesses
-	PublicParameters    btree.BTree                                   `json:"public_parameters"`  // Witnesses
-	ReturnValues        btree.BTree                                   `json:"return_values"`      // Witnesses
-	AssertMessages      map[ops.OpcodeLocation]AssertionPayload[T, E] `json:"assert_messages"`    // Assert messages for the circuit
+	CurrentWitnessIndex uint32                                           `json:"current_witness_index"`
+	Opcodes             []ops.Opcode[E]                                  `json:"opcodes"`            // Opcodes in the circuit
+	ExpressionWidth     exp.ExpressionWidth                              `json:"expression_width"`   // Width of the expressions in the circuit
+	PrivateParameters   btree.BTree                                      `json:"private_parameters"` // Witnesses
+	PublicParameters    btree.BTree                                      `json:"public_parameters"`  // Witnesses
+	ReturnValues        btree.BTree                                      `json:"return_values"`      // Witnesses
+	AssertMessages      map[ops.OpcodeLocation]ap.AssertionPayload[T, E] `json:"assert_messages"`    // Assert messages for the circuit
 	MemoryBlocks        map[uint32]*logderivlookup.Table
 }
 
@@ -98,18 +99,18 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 	var numAssertMessages uint64
 	if err := binary.Read(r, binary.LittleEndian, &numAssertMessages); err != nil {
 		if err == io.EOF {
-			c.AssertMessages = make(map[ops.OpcodeLocation]AssertionPayload[T, E])
+			c.AssertMessages = make(map[ops.OpcodeLocation]ap.AssertionPayload[T, E])
 			return nil
 		}
 	}
 
-	c.AssertMessages = make(map[ops.OpcodeLocation]AssertionPayload[T, E], numAssertMessages)
+	c.AssertMessages = make(map[ops.OpcodeLocation]ap.AssertionPayload[T, E], numAssertMessages)
 	for i := uint64(0); i < numAssertMessages; i++ {
 		var opcodeLocation ops.OpcodeLocation
 		if err := opcodeLocation.UnmarshalReader(r); err != nil {
 			return err
 		}
-		var payload AssertionPayload[T, E]
+		var payload ap.AssertionPayload[T, E]
 		if err := payload.UnmarshalReader(r); err != nil {
 			return err
 		}

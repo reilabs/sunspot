@@ -1,4 +1,4 @@
-package acir
+package assertion_payload
 
 import (
 	"encoding/binary"

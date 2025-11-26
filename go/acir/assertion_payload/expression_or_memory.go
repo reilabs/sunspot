@@ -1,4 +1,4 @@
-package acir
+package assertion_payload
 
 import (
 	"encoding/binary"
@@ -10,6 +10,7 @@ import (
 	"github.com/consensys/gnark/constraint"
 )
 
+// Expression or memory is the basic type used in assertion payloads
 type ExpressionOrMemory[T shr.ACIRField, E constraint.Element] struct {
 	Kind       ExpressionOrMemoryKind
 	Expression *exp.Expression[T, E]
