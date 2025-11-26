@@ -3,8 +3,17 @@ name: NOIR -> GNARK CI
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - "go/**"
+      - "!**/README.md"
+      - "!**/readme.md"
   pull_request:
     branches: [ "main" ]
+    paths:
+      - "go/**"
+      - "!**/README.md"
+      - "!**/readme.md"
+    
 
 jobs:
   test:
