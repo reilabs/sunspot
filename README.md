@@ -2,8 +2,6 @@
 
 **sunspot** provides tools to prove and verify [noir](https://noir-lang.org) circuits on solana.
 
-> 🚧 **Work in Progress:** Sunspot as is provides a Groth16 backend to ACIR circuit representations. It does not yet support verifying the generated proofs on Solana.
-
 > ⚠️ Requires **Noir 1.0.0-beta.13**  
 
 ## Installation
