@@ -31,14 +31,13 @@ solana config set --url https://api.devnet.solana.com
 
    * For example: `verifier-bin/my_verification_key.vk`
 
-Then run the following commands:
+Then run the following command:
 
 ```bash
-VK_PATH="my_verification_key.vk" cargo build
-cargo build-sbf
+VK_PATH="my_verification_key.vk" cargo build-sbf
 ```
 
-> **Note:** The build process automatically looks for the verification key inside the `verifier-bin` folder.
+> **Note:** If provided a relative path, the build process automatically looks for the verification key inside the `verifier-bin` folder.
 > If the `VK_PATH` environment variable is not set, it will default to using:
 >
 > ```

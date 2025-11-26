@@ -1,6 +1,6 @@
 # Sunspot
 
-**sunspot** provides tools to prove and verify [noir](https://noir-lang.org) circuits on solana.
+**Sunspot** provides tools to prove and verify [noir](https://noir-lang.org) circuits on solana.
 
 > ⚠️ Requires **Noir 1.0.0-beta.13**  
 
