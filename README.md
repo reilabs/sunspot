@@ -100,3 +100,13 @@ For detailed information on each command:
 ```bash
 sunspot [command] --help
 ```
+
+## Codebase Overview
+
+This project is organized as follows:
+
+- `go/` – Contains functionality to parse Noir circuits and witnesses and produces gnark outputs, also contains CLI functionality in `go/cmd` subdirectory.
+- `gnark-solana/` – Provides functionality to verify gnark proofs on solana, a fuller description of this directory can be found [here](gnark-solana/README.md).
+- `noir-samples/` – Example Noir projects used for unit and integration tests.
+- `testgen` - Creates ACIR snippets to test parsing, does **not** produce semantically valid programs.
+
