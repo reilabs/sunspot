@@ -113,14 +113,14 @@ jobs:
       # -----------------------------
       # Go Tests
       # -----------------------------
-    #   - name: Build Test binaries
-    #     run: cd testgen && cargo run
+      - name: Build Test binaries
+        run: cd testgen && cargo run
 
-    #   - name: Run Go tests
-    #     run: cd go && go test ./... -timeout 0
+      - name: Run Go tests
+        run: cd go && go test ./... -timeout 0
 
-    #   - name: Run Go vet
-    #     run: cd go && go vet ./...
+      - name: Run Go vet
+        run: cd go && go vet ./...
 
       # -----------------------------
       # Solana + Rust
