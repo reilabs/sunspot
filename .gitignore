@@ -29,3 +29,10 @@ target/
 
 test-ledger
 node_modules
+
+# Sunspot output files
+*.ccs
+*.pk
+*.vk
+*.proof
+*.pw
