@@ -1,3 +1,6 @@
+// Adapted from https://github.com/Lightprotocol/groth16-solana(Appache 2.0 License)
+// Modified by Matthew Klein on 2025-11-26.
+
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq)]

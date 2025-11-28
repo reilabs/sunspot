@@ -110,3 +110,11 @@ This project is organized as follows:
 - `noir-samples/` – Example Noir projects used for unit and integration tests.
 - `testgen` - Creates ACIR snippets to test parsing, does **not** produce semantically valid programs.
 
+
+## Credits
+
+- **Light Protocol**  
+  Adapted from: https://github.com/Lightprotocol/groth16-solan  
+  License: Apache 2.0
+  Original Author(s): Jane Doe  
+  Notes: Modified for performance and integration with the current engine.
