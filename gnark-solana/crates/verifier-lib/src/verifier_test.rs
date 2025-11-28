@@ -56,7 +56,7 @@ mod tests {
 
     #[test]
     fn test_verification_with_commitment_and_pw() {
-        const NR_INPUTS: usize = 1;
+        const NR_INPUTS: usize = 2;
 
         let vk_file = File::open("src/test_files/xor.vk").expect("unable to open vk file");
         let vk = parse_vk(vk_file).expect("Unable to parse vk");
