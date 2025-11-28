@@ -114,7 +114,7 @@ This project is organized as follows:
 ## Credits
 
 - **Light Protocol**  
-  Adapted from: https://github.com/Lightprotocol/groth16-solan  
+  Adapted from: https://github.com/Lightprotocol/groth16-solana  
   License: Apache 2.0
   Original Author(s): Jane Doe  
   Notes: Modified for performance and integration with the current engine.
