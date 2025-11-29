@@ -1,3 +1,6 @@
+// Adapted from https://github.com/Lightprotocol/groth16-solana (Apache 2.0 License)
+// Modified by Matthew Klein on 2025-11-26.
+
 //! Provides core logic for Gnark verification
 use crate::{
     commitments::{batch_verify_pedersen, get_challenge},

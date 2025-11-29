@@ -114,7 +114,5 @@ This project is organized as follows:
 ## Credits
 
 - **Light Protocol**  
-  Adapted from: https://github.com/Lightprotocol/groth16-solana  
-  License: Apache 2.0
-  Original Author(s): Jane Doe  
-  Notes: Modified for performance and integration with the current engine.
+ Our thanks goes to Light protocol, the original authors of [Groth16-solana](https://github.com/Lightprotocol/groth16-solana) repo, who pubilished it under the Apache 2.0 License.
+ We used this for inspiration for our own core Gnark verifier for both the error type definition and the core `verifer.verify()` function.
