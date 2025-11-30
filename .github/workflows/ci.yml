@@ -5,48 +5,223 @@ on:
     branches: [ "main" ]
     paths:
       - "go/**"
-      - "gnark-solana/Cargo.toml"
-      - "gnark-solana/Cargo.lock"
-      - "gnark-solana/crates/**"
-      - "gnark-solana/example/**"
+      - "gnark-solana/**"
+      - "noir-samples/**"
+      - ".github/**"
       - "!**/README.md"
       - "!**/readme.md"
   pull_request:
     branches: [ "main" ]
     paths:
       - "go/**"
-      - "gnark-solana/Cargo.toml"
-      - "gnark-solana/Cargo.lock"
-      - "gnark-solana/crates/**"
-      - "gnark-solana/example/**"
+      - "gnark-solana/**"
+      - "noir-samples/**"
+      - ".github/**"
       - "!**/README.md"
       - "!**/readme.md"
 
+env:
+  NOIR_PROJECTS: |
+    noir-samples/expressions/sum_a_b
+    noir-samples/expressions/square_equation
+    noir-samples/expressions/linear_equation
+    noir-samples/expressions/rock_paper_scissors
+    noir-samples/expressions/polynomial
+    noir-samples/expressions/lcchecker
+    noir-samples/black_box_functions/range
+    noir-samples/black_box_functions/keccak_f1600
+    noir-samples/black_box_functions/and
+    noir-samples/black_box_functions/xor
+    noir-samples/black_box_functions/sha256_compression
+    noir-samples/black_box_functions/sha256_hash
+    noir-samples/black_box_functions/blake2s
+    noir-samples/black_box_functions/blake3
+    noir-samples/black_box_functions/embedded_curve_add
+    noir-samples/black_box_functions/multiscalar_multiplication
+    noir-samples/black_box_functions/poseidon2
+    noir-samples/black_box_functions/ecdsa_secp256r1
+    noir-samples/black_box_functions/ecdsa_secp256k1_failing
+    noir-samples/black_box_functions/ecdsa_secp256k1
+    noir-samples/black_box_functions/aes128encrypt
+    noir-samples/black_box_functions/recursive_aggregation
+    noir-samples/memory
+    noir-samples/circuit_call
+    noir-samples/real_world/provekit_basic
+    noir-samples/zk_passport/exclusion_check
+    noir-samples/zk_passport/inclusion_check
+    noir-samples/zk_passport/age
+    noir-samples/zk_passport/expiry
+    noir-samples/zk_passport/sanctions
+
+  SUNSPOT_PROJECTS: |
+    noir-samples/expressions/sum_a_b
+    noir-samples/black_box_functions/keccak_f1600
+    noir-samples/black_box_functions/xor
+
+
 jobs:
-  ci:
+# -----------------------------------------------------------
+# JOB 1 — NOIR BUILD + EXECUTE
+# -----------------------------------------------------------
+  noir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: noir-lang/noirup@v0.1.2
+        with:
+          toolchain: v1.0.0-beta.13
+
+      - name: Build & execute Noir projects
+        run: |
+          for project in $NOIR_PROJECTS; do
+            echo "▶️ Noir: $project"
+            cd "$project"
+            nargo compile
+            nargo execute
+            cd - > /dev/null
+          done
+
+      - name: Upload Noir targets
+        uses: actions/upload-artifact@v4
+        with:
+          name: noir-targets
+          path: noir-samples/**/target
+          retention-days: 1
+
+# -----------------------------------------------------------
+# JOB 2 — GO BUILD + TEST
+# -----------------------------------------------------------
+  go:
+    needs: noir
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # -----------------------------
-      # Go Setup + Build + Tests
-      # -----------------------------
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - uses: actions/setup-go@v4
         with:
           go-version: '1.24.2'
 
-      - name: Install Go dependencies
-        run: cd go && go mod tidy
+      - run: cd go && go mod tidy
+      - run: cd go && go build -o sunspot -v . && mv sunspot $GITHUB_WORKSPACE/
 
-      - name: Build Go binary
-        run: cd go && go build -o sunspot -v . && mv sunspot ..
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          components: clippy, rustfmt
+      - run: cd testgen && cargo run
 
-      # -----------------------------
-      # Rust Setup
-      # -----------------------------
+      # ------------------------------------------
+      # Download Noir compiled targets into workspace
+      # ------------------------------------------
+      - name: Download Noir targets
+        uses: actions/download-artifact@v4
+        with:
+          name: noir-targets
+          path: noir-samples 
+      - run: cd go && go test ./... -timeout 0
+      - run: cd go && go vet ./...
+
+      - name: Upload Sunspot binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: sunspot-bin
+          path: sunspot
+          retention-days: 1
+
+# -----------------------------------------------------------
+# JOB 3 — SUNSPOT PIPELINE
+# -----------------------------------------------------------
+  sunspot:
+    runs-on: ubuntu-latest
+    needs: [noir, go]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Sunspot binary
+        uses: actions/download-artifact@v4
+        with:
+          name: sunspot-bin
+
+      # ------------------------------------------
+      # Download Noir compiled targets into workspace
+      # ------------------------------------------
+      - name: Download Noir targets
+        uses: actions/download-artifact@v4
+        with:
+          name: noir-targets
+          path: noir-samples
+
+      - name: Run Sunspot workflow
+        run: |
+          mkdir -p artifacts/sunspot
+          chmod +x sunspot
+
+          for project in $SUNSPOT_PROJECTS; do
+            echo "▶️ Sunspot: $project"
+            cd "$project/target"
+
+            JSON=$(ls *.json | head -n1)
+            GZ=$(ls *.gz | head -n1)
+
+            ../../../../sunspot compile "$JSON"
+            CCS=$(ls *.ccs | head -n1)
+
+            ../../../../sunspot setup "$CCS"
+            VK=$(ls *.vk | head -n1)
+            PK=$(ls *.pk | head -n1)
+
+            ../../../../sunspot prove "$JSON" "$GZ" "$CCS" "$PK"
+
+            PW=$(ls *.pw | head -n1)
+            PROOF=$(ls *.proof | head -n1)
+
+            cp -v "$VK" "$PW" "$PROOF" "$GITHUB_WORKSPACE/artifacts/sunspot"
+
+            cd - > /dev/null
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sunspot-output
+          path: artifacts/sunspot
+          retention-days: 1
+
+
+# -----------------------------------------------------------
+# JOB 4 — SOLANA / RUST PROGRAM BUILD
+# -----------------------------------------------------------
+  solana:
+    runs-on: ubuntu-latest
+    needs: [go, sunspot]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Sunspot output
+        uses: actions/download-artifact@v4
+        with:
+          name: sunspot-output
+          path: gnark-solana/crates/verifier-bin/test_files
+
+      - name: Make default.vk
+        run: |
+          cp -v gnark-solana/crates/verifier-bin/test_files/xor.vk gnark-solana/crates/verifier-bin/default.vk
+
+      - name: Download Sunspot output
+        uses: actions/download-artifact@v4
+        with:
+          name: sunspot-output
+          path: gnark-solana/crates/verifier-lib/src/test_files
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+    
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -54,211 +229,23 @@ jobs:
           override: true
           components: clippy, rustfmt
 
-      # -----------------------------
-      # Noir Setup + Build
-      # -----------------------------
-      - name: Set up Noir
-        uses: noir-lang/noirup@v0.1.2
-        with:
-          toolchain: v1.0.0-beta.13
-
-      - name: Build Noir contracts
-        run: |
-          PROJECTS=(
-            noir-samples/expressions/sum_a_b
-            noir-samples/expressions/square_equation
-            noir-samples/expressions/linear_equation
-            noir-samples/expressions/rock_paper_scissors
-            noir-samples/expressions/polynomial
-            noir-samples/expressions/lcchecker
-            noir-samples/black_box_functions/range
-            noir-samples/black_box_functions/keccak_f1600
-            noir-samples/black_box_functions/and
-            noir-samples/black_box_functions/xor
-            noir-samples/black_box_functions/sha256_compression
-            noir-samples/black_box_functions/sha256_hash
-            noir-samples/black_box_functions/blake2s
-            noir-samples/black_box_functions/blake3
-            noir-samples/black_box_functions/embedded_curve_add
-            noir-samples/black_box_functions/multiscalar_multiplication 
-            noir-samples/black_box_functions/poseidon2
-            noir-samples/black_box_functions/ecdsa_secp256r1
-            noir-samples/black_box_functions/ecdsa_secp256k1_failing
-            noir-samples/black_box_functions/ecdsa_secp256k1
-            noir-samples/black_box_functions/aes128encrypt
-            noir-samples/black_box_functions/recursive_aggregation
-            noir-samples/memory
-            noir-samples/circuit_call
-            noir-samples/real_world/provekit_basic
-            noir-samples/zk_passport/exclusion_check
-            noir-samples/zk_passport/inclusion_check
-            noir-samples/zk_passport/age
-            noir-samples/zk_passport/expiry
-            noir-samples/zk_passport/sanctions
-          )
-
-          for project in "${PROJECTS[@]}"; do
-            echo "▶️ Building Noir project: $project"
-            cd "$project"
-            nargo compile
-            nargo execute || (echo "Tests failed in $project" && exit 1)
-            cd - > /dev/null
-          done
-
-      # -----------------------------
-      # Go Tests
-      # -----------------------------
-      - name: Build Test binaries
-        run: cd testgen && cargo run
-
-      - name: Run Go tests
-        run: cd go && go test ./... -timeout 0
-
-      - name: Run Go vet
-        run: cd go && go vet ./...
-
-      # -----------------------------
-      # Solana + Rust
-      # -----------------------------
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
       - name: Install Solana toolchain
         run: |
           curl -sSfL https://raw.githubusercontent.com/solana-developers/solana-install/main/install.sh | bash
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
 
-      - name: Build Test Files
-
-        run: |
-            SUNSPOT_BIN="$GITHUB_WORKSPACE/sunspot"
-
-            PROJECTS=(
-                noir-samples/expressions/sum_a_b
-                noir-samples/black_box_functions/keccak_f1600
-                noir-samples/black_box_functions/xor
-            )
-
-             # Define the two output directories
-            OUTPUT_DIR1="$GITHUB_WORKSPACE/gnark-solana/crates/verifier-lib/src/test_files"
-            OUTPUT_DIR2="$GITHUB_WORKSPACE/gnark-solana/crates/verifier-bin/test_files"
-
-            # Ensure output directories exist
-            mkdir -p "$OUTPUT_DIR1" "$OUTPUT_DIR2"
-
-            for project in "${PROJECTS[@]}"; do
-                echo "▶️ Running Sunspot pipeline for: $project"
-
-                target_dir="$project/target"
-
-                # Ensure target directory exists
-                if [ ! -d "$target_dir" ]; then
-                echo "❌ No target directory found at $target_dir"
-                exit 1
-                fi
-
-                cd "$target_dir" || exit 1
-
-                # Required input files
-                JSON_FILE=$(ls *.json 2>/dev/null | head -n1)
-                GZ_FILE=$(ls *.gz 2>/dev/null | head -n1)
-
-                if [ -z "$JSON_FILE" ] || [ -z "$GZ_FILE" ]; then
-                echo "❌ Missing required input files in $target_dir"
-                echo "Found:"
-                ls -al
-                exit 1
-                fi
-
-                echo "▶️ Using:"
-                echo "  JSON: $JSON_FILE"
-                echo "  GZ:   $GZ_FILE"
-
-                # Step 1: compile -> generates .ccs
-                echo "▶️ Step 1: sunspot compile"
-                "$SUNSPOT_BIN" compile "$JSON_FILE" || (echo "❌ sunspot compile failed" && exit 1)
-
-                # Find the generated .ccs file
-                CCS_FILE=$(ls *.ccs 2>/dev/null | head -n1)
-                if [ -z "$CCS_FILE" ]; then
-                echo "❌ No .ccs file generated by sunspot compile"
-                exit 1
-                fi
-
-                # Step 2: setup -> generates .vk
-                echo "▶️ Step 2: sunspot setup"
-                "$SUNSPOT_BIN" setup "$CCS_FILE" || (echo "❌ sunspot setup failed" && exit 1)
-
-                # Find the generated .pk file
-                PK_FILE=$(ls *.pk 2>/dev/null | head -n1)
-                if [ -z "$PK_FILE" ]; then
-                echo "❌ No .pk file generated by sunspot setup"
-                exit 1
-                fi
-
-                # Find the generated .vk file
-                VK_FILE=$(ls *.vk 2>/dev/null | head -n1)
-                if [ -z "$VK_FILE" ]; then
-                echo "❌ No .vk file generated by sunspot setup"
-                exit 1
-                fi
-
-                # Step 3: prove
-                echo "▶️ Step 3: sunspot prove"
-                "$SUNSPOT_BIN" prove "$JSON_FILE" "$GZ_FILE" "$CCS_FILE" "$PK_FILE" \
-                || (echo "❌ sunspot prove failed" && exit 1)
-
-                # Find the generated .vk file
-                WITNESS_FILE=$(ls *.pw 2>/dev/null | head -n1)
-                if [ -z "$WITNESS_FILE" ]; then
-                echo "❌ No .pw file generated by sunspot setup"
-                exit 1
-                fi
-
-                # Find the generated .vk file
-                PROOF_FILE=$(ls *.proof 2>/dev/null | head -n1)
-                if [ -z "$PROOF_FILE" ]; then
-                echo "❌ No .proof file generated by sunspot setup"
-                exit 1
-                fi
-
-                echo "✔️ Completed Sunspot workflow for $project"
-
-                # Copy all generated files to the two output directories
-                cp -v "$VK_FILE" "$WITNESS_FILE" "$PROOF_FILE" "$OUTPUT_DIR1/"
-                cp -v "$VK_FILE" "$WITNESS_FILE" "$PROOF_FILE" "$OUTPUT_DIR2/"
-
-                echo "✔️ Completed Sunspot workflow for $project. Files copied to output directories."
-
-
-                cd - > /dev/null
-            done
-
-            cp -v "$GITHUB_WORKSPACE/gnark-solana/crates/verifier-bin/test_files/xor.vk" "$GITHUB_WORKSPACE/gnark-solana/crates/verifier-bin/default.vk"
-
-
-      - name: Build Solana program (.so)
+      - name: Build SBF program
         working-directory: gnark-solana
         run: cargo build-sbf
 
-      - name: Check formatting
-        working-directory: gnark-solana
+      - working-directory: gnark-solana
         run: cargo fmt --all -- --check
 
-      - name: Run clippy
-        working-directory: gnark-solana
+      - working-directory: gnark-solana
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-      - name: Build (debug)
-        working-directory: gnark-solana
-        run: cargo build --all-targets --all-features
-
-      - name: Run Rust tests
-        working-directory: gnark-solana
+      - working-directory: gnark-solana
         run: cargo test --all --all-features --no-fail-fast --verbose
 
-      - name: Build (release)
-        working-directory: gnark-solana
+      - working-directory: gnark-solana
         run: cargo build --release --all-features
