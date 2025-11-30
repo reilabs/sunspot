@@ -44,11 +44,6 @@ jobs:
       - name: Build Go binary
         run: cd go && go build -o sunspot -v . && mv sunspot ..
 
-      # (You can use it later — no artifacts needed)
-      # Example:
-      - name: Run built Go binary
-        run: ./sunspot
-
       # -----------------------------
       # Rust Setup
       # -----------------------------
