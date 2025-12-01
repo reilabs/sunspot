@@ -55,6 +55,37 @@ Now you can run `sunspot` from anywhere:
 sunspot --help
 ```
 
+## Setting `GNARK_VERIFIER_BIN`
+
+`GNARK_VERIFIER_BIN` must point to the verifier-bin crate directory in order for `sunspot deploy` to work.
+
+To configure this, add the following line to your shell’s configuration file:
+
+```bash
+export GNARK_VERIFIER_BIN=/path/to/verifier-bin
+```
+
+### Where to add it
+
+* **bash (Linux):** add the line to `~/.bashrc`
+* **bash (macOS):** add the line to `~/.bash_profile`
+* **zsh:** add the line to `~/.zshrc`
+
+After editing the file, reload your shell:
+
+```bash
+source ~/.bashrc       # or ~/.bash_profile, ~/.zshrc depending on your shell
+```
+
+Now `GNARK_VERIFIER_BIN` will be available in all future terminal sessions.
+
+
+Reload your shell:
+
+```bash
+source ~/.bashrc     # or ~/.zshrc
+```
+
 ## Usage
 
 After installing **Sunspot**, you can use it as a command-line tool for working with **Noir circuits on Solana**.

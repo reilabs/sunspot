@@ -11,9 +11,9 @@ import (
 )
 
 var deployCmd = &cobra.Command{
-	Use:   "deploy <path/to/file.vk> [rust-project-dir]",
+	Use:   "deploy <path/to/file.vk>",
 	Short: "Builds a Solana gnark verification program with the given verification key",
-	Args:  cobra.RangeArgs(1, 2),
+	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
 		// --- Step 1: VK file ---
@@ -28,48 +28,51 @@ var deployCmd = &cobra.Command{
 		}
 		fmt.Println("Using VK file:", absVkPath)
 
-		vkDir := filepath.Dir(absVkPath)                         // directory of VK file
-		vkBase := filepath.Base(absVkPath)                       // e.g., example.vk
-		vkName := vkBase[:len(vkBase)-len(filepath.Ext(vkBase))] // e.g., "example"
+		vkDir := filepath.Dir(absVkPath)
+		vkBase := filepath.Base(absVkPath)
+		vkName := vkBase[:len(vkBase)-len(filepath.Ext(vkBase))]
 
-		// Paths for output files
+		// Output paths
 		soPath := filepath.Join(vkDir, vkName+".so")
 		keypairPath := filepath.Join(vkDir, vkName+"-keypair.json")
 
-		// --- Step 2: Rust project directory ---
-		rustDir := "."
-		if len(args) == 2 {
-			rustDir = args[1]
+		// --- Step 2: GNARK_VERIFIER_BIN ---
+		verifierDir := os.Getenv("GNARK_VERIFIER_BIN")
+		if verifierDir == "" {
+			log.Fatalf("Environment variable GNARK_VERIFIER_BIN is not set.\n" +
+				"Please set it to the Rust verifier-bin crate directory.")
 		}
 
-		absRustDir, err := filepath.Abs(rustDir)
+		absVerifierDir, err := filepath.Abs(verifierDir)
 		if err != nil {
-			log.Fatalf("Failed to resolve Rust project directory '%s': %v", rustDir, err)
+			log.Fatalf("Failed to resolve GNARK_VERIFIER_BIN '%s': %v", verifierDir, err)
 		}
-		fmt.Println("Using Rust project directory:", absRustDir)
+		if _, err := os.Stat(absVerifierDir); err != nil {
+			log.Fatalf("GNARK_VERIFIER_BIN directory does not exist: %s", absVerifierDir)
+		}
 
-		// Environment
+		fmt.Println("Using verifier-bin crate directory:", absVerifierDir)
+
+		// --- Step 3: cargo build-sbf ---
 		env := append(os.Environ(), "VK_PATH="+absVkPath)
 
-		// --- Step 3: cargo-sbf build ---
 		cargoSbf := exec.Command("cargo", "build-sbf", "--sbf-out-dir", vkDir)
 		cargoSbf.Env = env
-		cargoSbf.Dir = absRustDir
+		cargoSbf.Dir = absVerifierDir
 		cargoSbf.Stdout = os.Stdout
 		cargoSbf.Stderr = os.Stderr
 
-		fmt.Println("Running cargo-sbf build...")
+		fmt.Println("Running cargo build-sbf...")
 		if err := cargoSbf.Run(); err != nil {
-			log.Fatalf("cargo-sbf failed: %v", err)
+			log.Fatalf("cargo build-sbf failed: %v", err)
 		}
 
-		// Rename verifier-bin.so
+		// --- Step 4: Rename outputs ---
 		originalSo := filepath.Join(vkDir, "verifier_bin.so")
 		if err := os.Rename(originalSo, soPath); err != nil {
 			log.Fatalf("Failed to rename .so: %v", err)
 		}
 
-		// Rename verifier-bin-keypair.json
 		originalKeypair := filepath.Join(vkDir, "verifier_bin-keypair.json")
 		if err := os.Rename(originalKeypair, keypairPath); err != nil {
 			log.Fatalf("Failed to rename keypair.json: %v", err)
