@@ -6,7 +6,7 @@
 
 ## Installation
 
-Make sure you have [Go 1.24+](https://go.dev/dl/) installed.
+Make sure you have [Go 1.24+](https://go.dev/dl/) and [Solana tools](https://solana.com/docs/intro/installation) installed.
 
 ```bash
 # Clone the repository
