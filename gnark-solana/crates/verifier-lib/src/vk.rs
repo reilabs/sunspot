@@ -5,8 +5,8 @@ use std::fs::File;
 use std::io::{self, Read, Write};
 use std::path::Path;
 
-/// Verifying key for a Groth16 zero-knowledge proof.
-pub struct Groth16Verifyingkey<'a> {
+/// Verifying key for a Gnark-flavoured Groth16 zero-knowledge proof.
+pub struct GnarkVerifyingkey<'a> {
     /// Number of public inputs for the circuit.
     pub nr_pubinputs: usize,
 
@@ -40,8 +40,8 @@ pub fn generate_key_file(source_file: &str, target_file: &str) -> io::Result<()>
     write_vk_const_file(&vk, target_file)
 }
 
-/// Parses a gnark generated verification key into the local Groth16 type
-pub(crate) fn parse_vk<'a, R: Read>(mut reader: R) -> io::Result<Groth16Verifyingkey<'a>> {
+/// Parses a gnark generated verification key into the local Gnark type
+pub(crate) fn parse_vk<'a, R: Read>(mut reader: R) -> io::Result<GnarkVerifyingkey<'a>> {
     let mut vk_alpha_g1 = [0u8; 64];
     reader.read_exact(&mut vk_alpha_g1)?;
     let mut vk_beta_g1 = [0u8; 64];
@@ -70,7 +70,7 @@ pub(crate) fn parse_vk<'a, R: Read>(mut reader: R) -> io::Result<Groth16Verifyin
     let commitment_keys_vec = read_commitment_keys(&mut reader, nb_commitment_keys)?;
     let commitment_keys = Box::leak(commitment_keys_vec.into_boxed_slice());
 
-    let vk = Groth16Verifyingkey {
+    let vk = GnarkVerifyingkey {
         nr_pubinputs: vk_ic_slice
             .len()
             .saturating_sub(1)
@@ -150,13 +150,13 @@ fn read_u32(reader: &mut impl Read) -> io::Result<u32> {
 
 /// Reads the main verifier file, appends the generated verifying key constant,
 /// and writes the combined output to a new target file without modifying the original.
-fn write_vk_const_file<P: AsRef<Path>>(vk: &Groth16Verifyingkey, target_file: P) -> io::Result<()> {
+fn write_vk_const_file<P: AsRef<Path>>(vk: &GnarkVerifyingkey, target_file: P) -> io::Result<()> {
     // Create a new file for the combined output
     let mut f = File::create(&target_file)?;
 
     // Add a clear separator
     writeln!(f, "// === Auto-generated verifying key constant ===")?;
-    writeln!(f, "use gnark_verifier_solana::vk::Groth16Verifyingkey;")?;
+    writeln!(f, "use gnark_verifier_solana::vk::GnarkVerifyingkey;")?;
     // Helper function to format byte arrays as hex
     fn fmt_byte_array(bytes: &[u8]) -> String {
         let mut s = String::from("[");
@@ -186,7 +186,7 @@ fn write_vk_const_file<P: AsRef<Path>>(vk: &Groth16Verifyingkey, target_file: P)
     // Write out the verifying key constant
     writeln!(
         f,
-        "pub const VK: Groth16Verifyingkey<'static> = Groth16Verifyingkey {{"
+        "pub const VK: GnarkVerifyingkey<'static> = GnarkVerifyingkey {{"
     )?;
     writeln!(f, "    nr_pubinputs: {},", vk.nr_pubinputs)?;
     writeln!(f, "    alpha_g1: {},", fmt_byte_array(&vk.alpha_g1))?;

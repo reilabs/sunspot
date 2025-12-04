@@ -4,10 +4,10 @@
 //! Provides core logic for Gnark verification
 use crate::{
     commitments::{batch_verify_pedersen, get_challenge},
-    error::Groth16Error,
-    proof::Groth16Proof,
-    vk::Groth16Verifyingkey,
-    witness::Groth16Witness,
+    error::GnarkError,
+    proof::GnarkProof,
+    vk::GnarkVerifyingkey,
+    witness::GnarkWitness,
 };
 
 use ark_ff::PrimeField;
@@ -19,23 +19,23 @@ use solana_bn254::{
 use std::ops::Neg;
 
 /// A verifier for Gnark-generated groth16 proofs
-pub struct Groth16Verifier<'a, const NR_INPUTS: usize> {
-    verifyingkey: &'a Groth16Verifyingkey<'a>,
+pub struct GnarkVerifier<'a, const NR_INPUTS: usize> {
+    verifyingkey: &'a GnarkVerifyingkey<'a>,
 }
 
-impl<const NR_INPUTS: usize> Groth16Verifier<'_, NR_INPUTS> {
+impl<const NR_INPUTS: usize> GnarkVerifier<'_, NR_INPUTS> {
     /// Constructs a new verifier from a verifying key
-    pub fn new<'a>(verifyingkey: &'a Groth16Verifyingkey<'a>) -> Groth16Verifier<'a, NR_INPUTS> {
-        Groth16Verifier { verifyingkey }
+    pub fn new<'a>(verifyingkey: &'a GnarkVerifyingkey<'a>) -> GnarkVerifier<'a, NR_INPUTS> {
+        GnarkVerifier { verifyingkey }
     }
 
     /// Verifies a Gnark-generated proof and public witness
     /// Returns `Ok(())` if verification passes, and error otherwise
     pub fn verify(
         &mut self,
-        proof: Groth16Proof,
-        public_witness: Groth16Witness<NR_INPUTS>,
-    ) -> Result<(), Groth16Error> {
+        proof: GnarkProof,
+        public_witness: GnarkWitness<NR_INPUTS>,
+    ) -> Result<(), GnarkError> {
         let mut public_witness_vec = public_witness.entries.to_vec();
         if !self.verifyingkey.commitment_keys.is_empty() {
             let challenge = get_challenge::<NR_INPUTS>(
@@ -76,12 +76,12 @@ impl<const NR_INPUTS: usize> Groth16Verifier<'_, NR_INPUTS> {
         .concat();
 
         let pairing_res = alt_bn128_pairing_be(pairing_input.as_slice())
-            .map_err(|_| Groth16Error::ProofVerificationFailed)?;
+            .map_err(|_| GnarkError::ProofVerificationFailed)?;
 
         // The alt_bn128_pairing function returns 1 if the pairing results in unity
         // and zero otherwise
         if pairing_res[31] != 1 {
-            return Err(Groth16Error::ProofVerificationFailed);
+            return Err(GnarkError::ProofVerificationFailed);
         }
         Ok(())
     }
@@ -100,27 +100,27 @@ impl<const NR_INPUTS: usize> Groth16Verifier<'_, NR_INPUTS> {
         &mut self,
         public_inputs: &[[u8; 32]],
         proof_commitments: &[[u8; 64]],
-    ) -> Result<[u8; 64], Groth16Error> {
+    ) -> Result<[u8; 64], GnarkError> {
         let mut prepared_public_inputs = self.verifyingkey.k[0];
 
         for (i, input) in public_inputs.iter().enumerate() {
             let mul_res = alt_bn128_g1_multiplication_be(
                 &[&self.verifyingkey.k[i + 1][..], &input[..]].concat(),
             )
-            .map_err(|_| Groth16Error::PreparingInputsG1MulFailed)?;
+            .map_err(|_| GnarkError::PreparingInputsG1MulFailed)?;
             prepared_public_inputs =
                 alt_bn128_g1_addition_be(&[&mul_res[..], &prepared_public_inputs[..]].concat())
-                    .map_err(|_| Groth16Error::PreparingInputsG1AdditionFailed)?[..]
+                    .map_err(|_| GnarkError::PreparingInputsG1AdditionFailed)?[..]
                     .try_into()
-                    .map_err(|_| Groth16Error::PreparingInputsG1AdditionFailed)?;
+                    .map_err(|_| GnarkError::PreparingInputsG1AdditionFailed)?;
         }
 
         for commitment in proof_commitments.iter() {
             prepared_public_inputs =
                 alt_bn128_g1_addition_be(&[&commitment[..], &prepared_public_inputs[..]].concat())
-                    .map_err(|_| Groth16Error::PreparingInputsG1AdditionFailed)?[..]
+                    .map_err(|_| GnarkError::PreparingInputsG1AdditionFailed)?[..]
                     .try_into()
-                    .map_err(|_| Groth16Error::PreparingInputsG1AdditionFailed)?;
+                    .map_err(|_| GnarkError::PreparingInputsG1AdditionFailed)?;
         }
 
         Ok(prepared_public_inputs)

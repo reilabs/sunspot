@@ -4,7 +4,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq)]
-pub enum Groth16Error {
+pub enum GnarkError {
     #[error("Incompatible Verifying Key with number of public inputs")]
     IncompatibleVerifyingKeyWithNrPublicInputs,
     #[error("ProofVerificationFailed")]
@@ -39,37 +39,37 @@ pub enum Groth16Error {
     PublicWitnessParsingError,
 }
 
-impl From<ark_serialize::SerializationError> for Groth16Error {
+impl From<ark_serialize::SerializationError> for GnarkError {
     fn from(e: ark_serialize::SerializationError) -> Self {
-        Groth16Error::ArkworksSerializationError(e.to_string())
+        GnarkError::ArkworksSerializationError(e.to_string())
     }
 }
 
-impl From<solana_bn254::AltBn128Error> for Groth16Error {
+impl From<solana_bn254::AltBn128Error> for GnarkError {
     fn from(e: solana_bn254::AltBn128Error) -> Self {
-        Groth16Error::SolanaBN254Error(e.to_string())
+        GnarkError::SolanaBN254Error(e.to_string())
     }
 }
 
-impl From<Groth16Error> for u32 {
-    fn from(error: Groth16Error) -> Self {
+impl From<GnarkError> for u32 {
+    fn from(error: GnarkError) -> Self {
         match error {
-            Groth16Error::IncompatibleVerifyingKeyWithNrPublicInputs => 0,
-            Groth16Error::ProofVerificationFailed => 1,
-            Groth16Error::PreparingInputsG1AdditionFailed => 2,
-            Groth16Error::PreparingInputsG1MulFailed => 3,
-            Groth16Error::InvalidG1Length => 4,
-            Groth16Error::InvalidG2Length => 5,
-            Groth16Error::InvalidPublicInputsLength => 6,
-            Groth16Error::DecompressingG1Failed => 7,
-            Groth16Error::DecompressingG2Failed => 8,
-            Groth16Error::PublicInputGreaterThanFieldSize => 9,
-            Groth16Error::ArkworksSerializationError(_) => 10,
-            Groth16Error::ProofConversionError => 11,
-            Groth16Error::SolanaBN254Error(_) => 12,
-            Groth16Error::HashError(_) => 13,
-            Groth16Error::PedersenVerificationError(_) => 14,
-            Groth16Error::PublicWitnessParsingError => 15,
+            GnarkError::IncompatibleVerifyingKeyWithNrPublicInputs => 0,
+            GnarkError::ProofVerificationFailed => 1,
+            GnarkError::PreparingInputsG1AdditionFailed => 2,
+            GnarkError::PreparingInputsG1MulFailed => 3,
+            GnarkError::InvalidG1Length => 4,
+            GnarkError::InvalidG2Length => 5,
+            GnarkError::InvalidPublicInputsLength => 6,
+            GnarkError::DecompressingG1Failed => 7,
+            GnarkError::DecompressingG2Failed => 8,
+            GnarkError::PublicInputGreaterThanFieldSize => 9,
+            GnarkError::ArkworksSerializationError(_) => 10,
+            GnarkError::ProofConversionError => 11,
+            GnarkError::SolanaBN254Error(_) => 12,
+            GnarkError::HashError(_) => 13,
+            GnarkError::PedersenVerificationError(_) => 14,
+            GnarkError::PublicWitnessParsingError => 15,
         }
     }
 }

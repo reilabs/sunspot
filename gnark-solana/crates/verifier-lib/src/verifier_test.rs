@@ -5,10 +5,10 @@ mod tests {
     use ark_ec::CurveGroup;
 
     use crate::{
-        proof::Groth16Proof,
-        verifier::{g2_from_bytes, g2_to_bytes, Groth16Verifier},
+        proof::GnarkProof,
+        verifier::{g2_from_bytes, g2_to_bytes, GnarkVerifier},
         vk::parse_vk,
-        witness::Groth16Witness,
+        witness::GnarkWitness,
     };
 
     #[test]
@@ -17,16 +17,16 @@ mod tests {
 
         let vk_file = File::open("src/test_files/sum_a_b.vk").expect("unable to open vk file");
         let vk = parse_vk(vk_file).expect("Unable to parse vk");
-        let mut verifier = Groth16Verifier::<'_, NR_INPUTS>::new(&vk);
+        let mut verifier = GnarkVerifier::<'_, NR_INPUTS>::new(&vk);
 
         let proof_file =
             File::open("src/test_files/sum_a_b.proof").expect("unable to open proof file");
-        let proof = Groth16Proof::parse(proof_file).expect("Unable to parse proof");
+        let proof = GnarkProof::parse(proof_file).expect("Unable to parse proof");
 
         let pw_file = File::open("src/test_files/sum_a_b.pw").expect("unable to open pw file");
 
         let public_inputs =
-            Groth16Witness::<NR_INPUTS>::parse(pw_file).expect("Unable to parse public witness");
+            GnarkWitness::<NR_INPUTS>::parse(pw_file).expect("Unable to parse public witness");
 
         let res = verifier.verify(proof, public_inputs);
 
@@ -38,16 +38,16 @@ mod tests {
 
         let vk_file = File::open("src/test_files/keccak_f1600.vk").expect("unable to open vk file");
         let vk = parse_vk(vk_file).expect("Unable to parse vk");
-        let mut verifier = Groth16Verifier::<'_, NR_INPUTS>::new(&vk);
+        let mut verifier = GnarkVerifier::<'_, NR_INPUTS>::new(&vk);
 
         let proof_file =
             File::open("src/test_files/keccak_f1600.proof").expect("unable to open proof file");
-        let proof = Groth16Proof::parse(proof_file).expect("Unable to parse proof");
+        let proof = GnarkProof::parse(proof_file).expect("Unable to parse proof");
 
         let pw_file = File::open("src/test_files/keccak_f1600.pw").expect("unable to open pw file");
 
         let public_inputs =
-            Groth16Witness::<NR_INPUTS>::parse(pw_file).expect("Unable to parse public witness");
+            GnarkWitness::<NR_INPUTS>::parse(pw_file).expect("Unable to parse public witness");
 
         let res = verifier.verify(proof, public_inputs);
 
@@ -60,15 +60,15 @@ mod tests {
 
         let vk_file = File::open("src/test_files/xor.vk").expect("unable to open vk file");
         let vk = parse_vk(vk_file).expect("Unable to parse vk");
-        let mut verifier = Groth16Verifier::<'_, NR_INPUTS>::new(&vk);
+        let mut verifier = GnarkVerifier::<'_, NR_INPUTS>::new(&vk);
 
         let proof_file = File::open("src/test_files/xor.proof").expect("unable to open proof file");
-        let proof = Groth16Proof::parse(proof_file).expect("Unable to parse proof");
+        let proof = GnarkProof::parse(proof_file).expect("Unable to parse proof");
 
         let pw_file = File::open("src/test_files/xor.pw").expect("unable to open pw file");
 
         let public_inputs =
-            Groth16Witness::<NR_INPUTS>::parse(pw_file).expect("Unable to parse public witness");
+            GnarkWitness::<NR_INPUTS>::parse(pw_file).expect("Unable to parse public witness");
 
         let res = verifier.verify(proof, public_inputs);
 

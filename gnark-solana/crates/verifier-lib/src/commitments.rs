@@ -3,7 +3,7 @@ use ark_ff::{BigInteger, PrimeField};
 use solana_bn254::prelude::{alt_bn128_g1_multiplication_be, alt_bn128_pairing_be};
 
 use crate::{
-    error::Groth16Error,
+    error::GnarkError,
     hash::{hash_to_field, WrappedHashToField},
 };
 
@@ -15,17 +15,17 @@ pub(crate) fn batch_verify_pedersen(
     commitments: &[[u8; 64]],
     pok: &[u8; 64],
     challenge: Fr,
-) -> Result<(), Groth16Error> {
+) -> Result<(), GnarkError> {
     // Ensure parameter sizes and shared G2 base (all vk[i][0..128] equal).
     if commitments.len() != vk.len() {
-        return Err(Groth16Error::PedersenVerificationError(
+        return Err(GnarkError::PedersenVerificationError(
             "commitments lengths mismatch".to_string(),
         ));
     }
 
     for i in 0..vk.len() {
         if i != 0 && vk[i][0..128] != vk[0][0..128] {
-            return Err(Groth16Error::PedersenVerificationError(
+            return Err(GnarkError::PedersenVerificationError(
                 "parameter mismatch: G2 element".to_string(),
             ));
         }
@@ -69,11 +69,11 @@ pub(crate) fn batch_verify_pedersen(
     }
 
     let pairing_res = alt_bn128_pairing_be(pairing_input.as_slice())
-        .map_err(|_| Groth16Error::ProofVerificationFailed)?;
+        .map_err(|_| GnarkError::ProofVerificationFailed)?;
 
     // Product of pairings must be the identity
     if pairing_res[31] != 1 {
-        return Err(Groth16Error::PedersenVerificationError(
+        return Err(GnarkError::PedersenVerificationError(
             "Pedersen pairing check falied".to_string(),
         ));
     }
@@ -84,7 +84,7 @@ pub(crate) fn get_challenge<const NR_INPUTS: usize>(
     vk_public_and_commitment_committed: &[&[u64]],
     proof_commitments: &[[u8; 64]],
     public_witness: &mut Vec<[u8; 32]>,
-) -> Result<ark_bn254::Fr, Groth16Error> {
+) -> Result<ark_bn254::Fr, GnarkError> {
     let commitments_serialized = solve_commitment_wire::<NR_INPUTS>(
         vk_public_and_commitment_committed,
         proof_commitments,

@@ -1,11 +1,11 @@
 //! Provides utilities for parsing Gnark-generated proofs
 use std::io::{self, Read};
 
-use crate::{error::Groth16Error, vk::read_vk_ic};
+use crate::{error::GnarkError, vk::read_vk_ic};
 
-/// The Groth16 elliptic curve proof elements.
+/// The Gnark elliptic curve proof elements.
 /// Notation follows Figure 4. in DIZK paper <https://eprint.iacr.org/2018/691.pdf>
-pub struct Groth16Proof<'a> {
+pub struct GnarkProof<'a> {
     /// G1 element
     pub ar: [u8; 64],
     /// G2 element
@@ -18,8 +18,8 @@ pub struct Groth16Proof<'a> {
     pub commitment_pok: [u8; 64],
 }
 
-impl Groth16Proof<'_> {
-    /// Parses the Groth16 proof from a reader.
+impl GnarkProof<'_> {
+    /// Parses the Gnark proof from a reader.
     pub fn parse<R: Read>(mut reader: R) -> io::Result<Self> {
         let mut proof_a = [0u8; 64];
         reader.read_exact(&mut proof_a)?;
@@ -46,9 +46,9 @@ impl Groth16Proof<'_> {
     }
     /// Parses the Groth16 proof from bytes.
     /// Should be of length 324 + N_COMMITMENTS * 64
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Groth16Error> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, GnarkError> {
         if bytes.len() < 256 + 4 + 64 {
-            return Err(Groth16Error::ProofConversionError);
+            return Err(GnarkError::ProofConversionError);
         }
 
         // Parse A, B, C
@@ -67,13 +67,13 @@ impl Groth16Proof<'_> {
         let num_commitments = u32::from_be_bytes(
             bytes[offset..offset + 4]
                 .try_into()
-                .map_err(|_| Groth16Error::ProofConversionError)?,
+                .map_err(|_| GnarkError::ProofConversionError)?,
         ) as usize;
         offset += 4;
 
         let expected_len = offset + num_commitments * 64 + 64;
         if bytes.len() != expected_len {
-            return Err(Groth16Error::ProofConversionError);
+            return Err(GnarkError::ProofConversionError);
         }
 
         let mut commitments_vec = Vec::with_capacity(num_commitments);
@@ -110,7 +110,7 @@ mod tests {
         let file = File::open("src/test_files/sum_a_b.proof").unwrap();
 
         // Parse the verifying key
-        let proof = super::Groth16Proof::parse(file);
+        let proof = super::GnarkProof::parse(file);
 
         assert!(proof.is_ok())
     }
@@ -121,7 +121,7 @@ mod tests {
         let file = File::open("src/test_files/keccak_f1600.proof").unwrap();
 
         // Parse the verifying key
-        let proof = super::Groth16Proof::parse(file);
+        let proof = super::GnarkProof::parse(file);
         assert!(proof.is_ok())
     }
 
@@ -152,7 +152,7 @@ mod tests {
             50, 32, 186, 121, 113,
         ];
 
-        let proof = super::Groth16Proof::from_bytes(&bytes);
+        let proof = super::GnarkProof::from_bytes(&bytes);
         assert!(proof.is_ok())
     }
 }
