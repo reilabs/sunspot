@@ -4,7 +4,7 @@ use std::io::{self, Read};
 use crate::{error::Groth16Error, vk::read_vk_ic};
 
 /// The Groth16 elliptic curve proof elements.
-/// Notation follows Figure 4. in DIZK paper https://eprint.iacr.org/2018/691.pdf
+/// Notation follows Figure 4. in DIZK paper <https://eprint.iacr.org/2018/691.pdf>
 pub struct Groth16Proof<'a> {
     /// G1 element
     pub ar: [u8; 64],
@@ -12,7 +12,7 @@ pub struct Groth16Proof<'a> {
     pub bs: [u8; 128],
     /// G1 element
     pub krs: [u8; 64],
-    /// Pedersen commitments a la https://eprint.iacr.org/2022/1072
+    /// Pedersen commitments a la <https://eprint.iacr.org/2022/1072>
     pub commitments: &'a [[u8; 64]],
     /// Batched proof of knowledge of the above commitments
     pub commitment_pok: [u8; 64],
