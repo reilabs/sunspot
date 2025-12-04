@@ -1,3 +1,4 @@
+//! Provides functionality for verifier-side Fiat_Shamir challenge generation.
 use ark_bn254::Fr;
 use ark_ff::{BigInteger, PrimeField};
 use sha2::{Digest, Sha256};
