@@ -1,4 +1,7 @@
 mod vk;
+use gnark_verifier_solana::{
+    proof::Groth16Proof, verifier::Groth16Verifier, witness::Groth16Witness,
+};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::{entrypoint, ProgramResult},
@@ -9,7 +12,6 @@ use solana_program::{
     pubkey::Pubkey,
 };
 use spl_token::instruction::mint_to;
-use verifier_lib::{proof::Groth16Proof, verifier::Groth16Verifier, witness::Groth16Witness};
 
 // Custom condition error
 #[derive(Debug)]

@@ -11,10 +11,10 @@ crate-type = ["cdylib", "lib"]
 [dependencies]
 solana-program = "3.0.0"
 blake3 = { version = "1.8.2", default-features = false, features = ["pure"] }
-verifier-lib = { path = "../verifier-lib" } 
+gnark-verifier-solana = { path = "../verifier-lib" } 
 
 [build-dependencies]
-verifier-lib = { path = "../verifier-lib" }
+gnark-verifier-solana = { path = "../verifier-lib" }
 
 [features]
 custom-heap = []

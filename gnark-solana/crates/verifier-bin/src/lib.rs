@@ -4,6 +4,9 @@
 mod generated_vk;
 mod tests;
 
+use gnark_verifier_solana::{
+    proof::Groth16Proof, verifier::Groth16Verifier, witness::Groth16Witness,
+};
 use solana_program::{
     account_info::AccountInfo,
     entrypoint::{entrypoint, ProgramResult},
@@ -11,7 +14,6 @@ use solana_program::{
     program_error::ProgramError,
     pubkey::Pubkey,
 };
-use verifier_lib::{proof::Groth16Proof, verifier::Groth16Verifier, witness::Groth16Witness};
 
 entrypoint!(process_instruction);
 

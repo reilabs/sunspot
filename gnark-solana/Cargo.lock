@@ -1350,6 +1350,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "gnark-verifier-solana"
+version = "0.1.0"
+dependencies = [
+ "ark-bn254 0.5.0",
+ "ark-ec 0.5.0",
+ "ark-ff 0.5.0",
+ "ark-serialize 0.4.2",
+ "ark-std 0.5.0",
+ "ark-test-curves",
+ "blake3",
+ "num-bigint 0.4.6",
+ "num-traits",
+ "sha2 0.10.9",
+ "solana-bn254 3.1.2",
+ "solana-program 2.2.1",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "group"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2291,9 +2310,9 @@ dependencies = [
 name = "program"
 version = "0.1.0"
 dependencies = [
+ "gnark-verifier-solana",
  "solana-program 3.0.0",
  "spl-token",
- "verifier-lib",
 ]
 
 [[package]]
@@ -5822,29 +5841,10 @@ name = "verifier-bin"
 version = "0.1.0"
 dependencies = [
  "blake3",
+ "gnark-verifier-solana",
  "litesvm",
  "solana-program 3.0.0",
  "solana-sdk",
- "verifier-lib",
-]
-
-[[package]]
-name = "verifier-lib"
-version = "0.1.0"
-dependencies = [
- "ark-bn254 0.5.0",
- "ark-ec 0.5.0",
- "ark-ff 0.5.0",
- "ark-serialize 0.4.2",
- "ark-std 0.5.0",
- "ark-test-curves",
- "blake3",
- "num-bigint 0.4.6",
- "num-traits",
- "sha2 0.10.9",
- "solana-bn254 3.1.2",
- "solana-program 2.2.1",
- "thiserror 2.0.17",
 ]
 
 [[package]]

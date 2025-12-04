@@ -156,7 +156,7 @@ fn write_vk_const_file<P: AsRef<Path>>(vk: &Groth16Verifyingkey, target_file: P)
 
     // Add a clear separator
     writeln!(f, "// === Auto-generated verifying key constant ===")?;
-    writeln!(f, "use verifier_lib::vk::Groth16Verifyingkey;")?;
+    writeln!(f, "use gnark_verifier_solana::vk::Groth16Verifyingkey;")?;
     // Helper function to format byte arrays as hex
     fn fmt_byte_array(bytes: &[u8]) -> String {
         let mut s = String::from("[");

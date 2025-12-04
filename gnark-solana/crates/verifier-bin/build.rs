@@ -1,7 +1,7 @@
 // build.rs
+use gnark_verifier_solana::vk::generate_key_file;
 use std::env;
 use std::path::Path;
-use verifier_lib::vk::generate_key_file;
 
 fn main() {
     println!("cargo:rerun-if-env-changed=VK_PATH");

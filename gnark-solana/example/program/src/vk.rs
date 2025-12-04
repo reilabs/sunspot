@@ -1,5 +1,5 @@
 // === Auto-generated verifying key constant ===
-use verifier_lib::vk::Groth16Verifyingkey;
+use gnark_verifier_solana::vk::Groth16Verifyingkey;
 #[rustfmt::skip]
 pub const VK: Groth16Verifyingkey<'static> = Groth16Verifyingkey {
     nr_pubinputs: 1,
