@@ -1,3 +1,5 @@
+//! Utilities for verifying Gnark commitments
+
 use ark_bn254::Fr;
 use ark_ff::{BigInteger, PrimeField};
 use solana_bn254::prelude::{alt_bn128_g1_multiplication_be, alt_bn128_pairing_be};
@@ -7,9 +9,28 @@ use crate::{
     hash::{hash_to_field, WrappedHashToField},
 };
 
-/// Verifies a batched Pedersen proof of knowledge:
-/// Checks the pairing equation:
-///     ∏ e(C_i · challenge^i , H2_i) * e(pok, G2_base) == 1
+/// Verifies a batched Pedersen proof of knowledge
+///
+/// The verifier checks the pairing equation
+///
+/// $$
+/// \left(
+///   \prod_{i=0}^{n-1} e\left(C_i \cdot \mathrm{challenge}^i, H2_i\right)
+/// \right)
+/// \cdot
+/// e(\mathrm{pok}, G2_{\mathrm{base}})
+/// = 1
+/// $$
+///
+/// where
+/// - $C_i$ are the Pedersen commitments
+/// - $H2_i$ are the corresponding G2 parameters from the verifying key
+/// - $\mathrm{challenge}$ is the Fiat–Shamir challenge scalar
+/// - $\mathrm{pok}$ is the proof of knowledge element
+/// - $G2_{\mathrm{base}}$ is the shared G2 base used for all openings
+///
+/// The batched proof is accepted only if the full product of pairings
+/// equals the identity element of the BN254 target group
 pub(crate) fn batch_verify_pedersen(
     vk: &[[u8; 256]],
     commitments: &[[u8; 64]],
@@ -80,6 +101,8 @@ pub(crate) fn batch_verify_pedersen(
     Ok(())
 }
 
+/// Computes the Fiat–Shamir challenge scalar used for verifying
+/// Gnark commitments.
 pub(crate) fn get_challenge<const NR_INPUTS: usize>(
     vk_public_and_commitment_committed: &[&[u64]],
     proof_commitments: &[[u8; 64]],
@@ -94,6 +117,35 @@ pub(crate) fn get_challenge<const NR_INPUTS: usize>(
     Ok(field_elements[0])
 }
 
+/// Computes the derived commitment wire values used in the Gnark commitment
+/// scheme.
+///
+/// For each commitment `i`, the function:
+/// 1. Serializes the G1 commitment point `proof_commitments[i]`
+/// 2. Appends all public-witness field elements referenced by
+///    `vk_public_and_commitment_committed[i]`
+/// 3. Hashes the concatenated bytes to a field element using
+///    `HashToField("bsb22-commitment")`
+/// 4. Appends the resulting field element to `public_witness`
+/// 5. Stores the 32-byte hash output in the returned `commitments_serialized`
+///    buffer
+///
+///
+/// Mathematically, for each commitment index $i$,
+///
+/// $$
+/// h_i = \mathrm{HashToField}\left(
+///   C_i \| \{ x_j \mid j \in \mathrm{indices}(i) \}
+/// \right)
+/// $$
+///
+/// where:
+/// - $C_i$ is the uncompressed G1 commitment,
+/// - $x_j$ are the referenced public-witness field elements,
+/// - and $h_i$ is the derived field element appended to the witness.
+///
+/// Returns a vector containing all serialized $h_i$ values, each encoded in
+/// 32 bytes and concatenated in order.
 fn solve_commitment_wire<const NR_INPUTS: usize>(
     vk_public_and_commitment_committed: &[&[u64]],
     proof_commitments: &[[u8; 64]],
