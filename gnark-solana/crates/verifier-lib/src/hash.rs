@@ -1,8 +1,9 @@
+//! Provides functionality for verifier-side Fiat_Shamir challenge generation.
 use ark_bn254::Fr;
 use ark_ff::{BigInteger, PrimeField};
 use sha2::{Digest, Sha256};
 
-use crate::error::Groth16Error;
+use crate::error::GnarkError;
 
 /// A simple wrapper that accumulates bytes and hashes them to a field element.
 pub(crate) struct WrappedHashToField {
@@ -49,7 +50,7 @@ impl WrappedHashToField {
 
 /// Hashes to field elements with 128-bit security.
 /// Equivalent to the Go `Hash` function.
-pub(crate) fn hash_to_field(msg: &[u8], dst: &[u8], count: usize) -> Result<Vec<Fr>, Groth16Error> {
+pub(crate) fn hash_to_field(msg: &[u8], dst: &[u8], count: usize) -> Result<Vec<Fr>, GnarkError> {
     // 128 bits of security
     // L = ceil((ceil(log2(p)) + k) / 8), where k = 128
     let bits = Fr::MODULUS_BIT_SIZE as usize;
@@ -77,22 +78,18 @@ pub(crate) fn hash_to_field(msg: &[u8], dst: &[u8], count: usize) -> Result<Vec<
 
 /// ExpandMsgXmd per RFC 9380 §5.4.1 using SHA-256.
 /// Expands `msg` and `dst` into `len_in_bytes` pseudorandom bytes.
-fn expand_message_xmd(
-    msg: &[u8],
-    dst: &[u8],
-    len_in_bytes: usize,
-) -> Result<Vec<u8>, Groth16Error> {
+fn expand_message_xmd(msg: &[u8], dst: &[u8], len_in_bytes: usize) -> Result<Vec<u8>, GnarkError> {
     const B_IN_BYTES: usize = 64; // SHA-256 block size (in bytes)
     const H_LEN: usize = 32; // SHA-256 output size (in bytes)
 
     let ell = len_in_bytes.div_ceil(H_LEN);
     if ell > 255 {
-        return Err(Groth16Error::HashError(
+        return Err(GnarkError::HashError(
             "invalid len_in_bytes: too large".into(),
         ));
     }
     if dst.len() > 255 {
-        return Err(Groth16Error::HashError(
+        return Err(GnarkError::HashError(
             "invalid DST length (>255 bytes)".into(),
         ));
     }

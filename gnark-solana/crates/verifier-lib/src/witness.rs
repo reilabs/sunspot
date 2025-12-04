@@ -1,15 +1,15 @@
 //! Provides utilities for parsing Gnark-generated public witnesses
 use std::io::{self, Read};
 
-use crate::error::Groth16Error;
+use crate::error::GnarkError;
 
-/// The Groth16 witness — public inputs to the circuit.
-pub struct Groth16Witness<const NR_INPUTS: usize> {
+/// The Gnark witness — public inputs to the circuit.
+pub struct GnarkWitness<const NR_INPUTS: usize> {
     /// The variables in the public witness
     pub entries: [[u8; 32]; NR_INPUTS],
 }
 
-impl<const NR_INPUTS: usize> Groth16Witness<NR_INPUTS> {
+impl<const NR_INPUTS: usize> GnarkWitness<NR_INPUTS> {
     /// Parses the witness (public inputs) from a reader.
     pub fn parse<R: Read>(mut reader: R) -> io::Result<Self> {
         // We first parse through 12 bytes,
@@ -29,12 +29,12 @@ impl<const NR_INPUTS: usize> Groth16Witness<NR_INPUTS> {
 
     /// Constructs a witness directly from a byte slice.
     /// Expects the same layout as `parse()`: 12-byte header + NR_INPUTS * 32 bytes of data.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Groth16Error> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, GnarkError> {
         const HEADER_LEN: usize = 12;
         let expected_len = HEADER_LEN + NR_INPUTS * 32;
 
         if bytes.len() != expected_len {
-            return Err(Groth16Error::PublicWitnessParsingError);
+            return Err(GnarkError::PublicWitnessParsingError);
         }
 
         // Skip 12-byte header
@@ -61,7 +61,7 @@ mod tests {
         let mut file = File::open("src/test_files/sum_a_b.pw").unwrap();
 
         const NR_INPUTS: usize = 1;
-        let witness = super::Groth16Witness::<NR_INPUTS>::parse(&file);
+        let witness = super::GnarkWitness::<NR_INPUTS>::parse(&file);
 
         assert!(witness.is_ok());
         let witness = witness.unwrap();

@@ -10,7 +10,7 @@ crate-type = ["cdylib", "lib"]
 solana-program = "3.0.0"
 spl-token = { version = "9.0.0", default-features = false, features = ["no-entrypoint"] }
 
-verifier-lib = { path = "../../crates/verifier-lib" }
+gnark-verifier-solana = { path = "../../crates/verifier-lib" }
 
 [features]
 custom-heap = []
