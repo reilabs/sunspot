@@ -2,7 +2,7 @@
 name = "gnark-verifier-solana"
 version = "0.1.0"
 edition = "2021"
-license="Apache 2.0"
+license="Apache-2.0"
 authors=["Reilabs"]
 repository = "https://github.com/reilabs/sunspot/tree/main/gnark-solana/crates/verifier-lib"
 description = "A library to verify Gnark proofs on solana"
