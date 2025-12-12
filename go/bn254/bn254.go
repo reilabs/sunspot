@@ -7,7 +7,7 @@ import (
 	"io"
 	"math/big"
 	"strings"
-	shr "sunspot/acir/shared"
+	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"

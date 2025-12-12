@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"sunspot/bn254"
+	"sunspot/go/bn254"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/spf13/cobra"

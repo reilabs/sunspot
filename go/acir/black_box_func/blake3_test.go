@@ -2,8 +2,8 @@ package blackboxfunc
 
 import (
 	"os"
-	shr "sunspot/acir/shared"
-	"sunspot/bn254"
+	shr "sunspot/go/acir/shared"
+	"sunspot/go/bn254"
 	"testing"
 
 	"github.com/consensys/gnark/constraint"

@@ -3,8 +3,8 @@ package blackboxfunc
 import (
 	"encoding/binary"
 	"io"
-	shr "sunspot/acir/shared"
-	"sunspot/poseidon2"
+	shr "sunspot/go/acir/shared"
+	"sunspot/go/poseidon2"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"

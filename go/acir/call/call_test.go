@@ -3,9 +3,9 @@ package call
 import (
 	"encoding/binary"
 	"os"
-	exp "sunspot/acir/expression"
-	shr "sunspot/acir/shared"
-	"sunspot/bn254"
+	exp "sunspot/go/acir/expression"
+	shr "sunspot/go/acir/shared"
+	"sunspot/go/bn254"
 	"testing"
 
 	"github.com/consensys/gnark/constraint"

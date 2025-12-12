@@ -3,7 +3,7 @@ package assertion_payload
 import (
 	"encoding/binary"
 	"io"
-	shr "sunspot/acir/shared"
+	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 )

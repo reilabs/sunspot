@@ -3,8 +3,8 @@ package blackboxfunc
 import (
 	"encoding/binary"
 	"io"
-	shr "sunspot/acir/shared"
-	grumpkin "sunspot/sw-grumpkin"
+	shr "sunspot/go/acir/shared"
+	grumpkin "sunspot/go/sw-grumpkin"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
