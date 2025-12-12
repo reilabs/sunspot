@@ -2,7 +2,7 @@ package black_box_ops
 
 import (
 	"io"
-	mem "sunspot/acir/brillig/memory"
+	mem "sunspot/go/acir/brillig/memory"
 )
 
 type ToRadix struct {

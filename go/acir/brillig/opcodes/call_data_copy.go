@@ -2,7 +2,7 @@ package opcodes
 
 import (
 	"io"
-	mem "sunspot/acir/brillig/memory"
+	mem "sunspot/go/acir/brillig/memory"
 )
 
 type CallDataCopy struct {

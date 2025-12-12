@@ -3,7 +3,7 @@ package opcodes
 import (
 	"encoding/binary"
 	"io"
-	mem "sunspot/acir/brillig/memory"
+	mem "sunspot/go/acir/brillig/memory"
 )
 
 type BinaryFieldOp struct {

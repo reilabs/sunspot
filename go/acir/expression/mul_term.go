@@ -2,7 +2,7 @@ package expression
 
 import (
 	"io"
-	shr "sunspot/acir/shared"
+	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
 	"github.com/google/btree"

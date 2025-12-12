@@ -1,4 +1,4 @@
-module sunspot
+module sunspot/go
 
 go 1.24.2
 
