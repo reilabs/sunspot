@@ -2,7 +2,13 @@
 
 **Sunspot** provides tools to prove and verify [noir](https://noir-lang.org) circuits on solana.
 
-> ⚠️ Requires **Noir 1.0.0-beta.13**  
+> ⚠️ Requires **Noir 1.0.0-beta.13**
+
+## Security
+
+**Sunspot has not been audited yet and is provided as-is. We make no guarantees to its safety or reliability.**
+
+To report security vulnerabilities, please use the `Security` tab on this repository.
 
 ## Installation
 
