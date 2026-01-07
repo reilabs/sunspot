@@ -86,12 +86,6 @@ source ~/.bashrc       # or ~/.bash_profile, ~/.zshrc depending on your shell
 Now `GNARK_VERIFIER_BIN` will be available in all future terminal sessions.
 
 
-Reload your shell:
-
-```bash
-source ~/.bashrc     # or ~/.zshrc
-```
-
 ## Usage
 
 After installing **Sunspot**, you can use it as a command-line tool for working with **Noir circuits on Solana**.
@@ -129,7 +123,7 @@ sunspot prove my_circuit.json witness.gz my_circuit.ccs proving_key.pk
 sunspot verify verifying_key.vk proof.proof public_witness.pw
 
 # Create Solana verification program
-sunspot deploy verifying_key.vk /path/to/verifier/bin/crate
+sunspot deploy verifying_key.vk 
 ```
 
 For detailed information on each command:
