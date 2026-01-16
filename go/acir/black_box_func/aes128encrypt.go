@@ -97,7 +97,28 @@ func (a *AES128Encrypt[T, E]) Equals(other BlackBoxFunction[E]) bool {
 }
 
 func (a *AES128Encrypt[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	return tree != nil
+	if tree == nil {
+		return false
+	}
+	for _, input := range a.Inputs {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		}
+	}
+	for _, input := range a.Iv {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		}
+	}
+	for _, input := range a.Key {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		}
+	}
+	for _, output := range a.Outputs {
+		tree.ReplaceOrInsert(output + shr.Witness(index))
+	}
+	return true
 }
 
 func (a *AES128Encrypt[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {

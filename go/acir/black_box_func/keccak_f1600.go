@@ -86,7 +86,12 @@ func (a *Keccakf1600[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) boo
 		return false
 	}
 	for _, input := range a.Inputs {
-		tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		}
+	}
+	for _, output := range a.Outputs {
+		tree.ReplaceOrInsert(output + shr.Witness(index))
 	}
 	return true
 }

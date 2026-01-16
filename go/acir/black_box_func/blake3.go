@@ -114,7 +114,18 @@ func (a *Blake3[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness
 }
 
 func (a *Blake3[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	return tree != nil
+	if tree == nil {
+		return false
+	}
+	for _, input := range a.Inputs {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		}
+	}
+	for _, output := range a.Outputs {
+		tree.ReplaceOrInsert(output + shr.Witness(index))
+	}
+	return true
 }
 
 func blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]uints.U32, m [16]uints.U32, t uints.U64, len, flags uints.U32) ([8]uints.U32, error) {

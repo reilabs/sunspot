@@ -51,6 +51,8 @@ func (a *Range[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 	if tree == nil {
 		return false
 	}
-	tree.ReplaceOrInsert(*a.Input.Witness + shr.Witness(index))
+	if a.Input.IsWitness() {
+		tree.ReplaceOrInsert(*a.Input.Witness + shr.Witness(index))
+	}
 	return true
 }

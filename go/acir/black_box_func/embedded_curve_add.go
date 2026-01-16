@@ -105,12 +105,15 @@ func (a *EmbeddedCurveAdd[T, E]) FillWitnessTree(tree *btree.BTree, index uint32
 		return false
 	}
 	for _, input := range a.Input1 {
-
-		tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		}
 	}
 
 	for _, input := range a.Input2 {
-		tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		}
 	}
 
 	for _, output := range a.Outputs {
