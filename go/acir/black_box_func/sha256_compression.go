@@ -97,5 +97,21 @@ func (a *SHA256Compression[T, E]) Define(api frontend.Builder[E], witnesses map[
 }
 
 func (a *SHA256Compression[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	return tree != nil
+	if tree == nil {
+		return false
+	}
+	for _, input := range a.Inputs {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		}
+	}
+	for _, input := range a.HashValues {
+		if input.IsWitness() {
+			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
+		}
+	}
+	for _, output := range a.Outputs {
+		tree.ReplaceOrInsert(output + shr.Witness(index))
+	}
+	return true
 }
