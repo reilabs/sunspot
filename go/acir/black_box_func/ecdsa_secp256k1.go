@@ -19,6 +19,7 @@ type ECDSASECP256K1[T shr.ACIRField, E constraint.Element] struct {
 	PublicKeyY    [32]FunctionInput[T]
 	Signature     [64]FunctionInput[T]
 	HashedMessage [32]FunctionInput[T]
+	predicate     FunctionInput[T]
 	Output        shr.Witness
 }
 
@@ -45,6 +46,10 @@ func (a *ECDSASECP256K1[T, Equals]) UnmarshalReader(r io.Reader) error {
 		if err := a.HashedMessage[i].UnmarshalReader(r); err != nil {
 			return err
 		}
+	}
+
+	if err := a.predicate.UnmarshalReader(r); err != nil {
+		return err
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &a.Output); err != nil {
@@ -125,7 +130,11 @@ func (a *ECDSASECP256K1[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	}
 
 	msg := scalarField.NewElement(hash_value)
-	api.AssertIsEqual(witnesses[a.Output], Q.IsValid(api, sw_emulated.GetSecp256k1Params(), msg, &sig))
+	pred, err := a.predicate.ToVariable(witnesses)
+	if err != nil {
+		return err
+	}
+	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(witnesses[a.Output], Q.IsValid(api, sw_emulated.GetSecp256k1Params(), msg, &sig))))
 	return nil
 }
 
