@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-	"strings"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
@@ -42,21 +41,7 @@ func (b *BN254Field) UnmarshalReader(r io.Reader) error {
 	if _, err := io.ReadFull(r, bn254Bytes); err != nil {
 		return fmt.Errorf("failed to read BN254 field bytes: %w", err)
 	}
-	str := string(bn254Bytes)
-
-	if len(str) >= 2 && strings.HasPrefix(str, "0x") {
-		if _, ok := b.value.SetString(str[2:], 16); !ok {
-			return fmt.Errorf("failed to set BN254 field element from hex string: %s", str)
-		}
-	} else if strings.ContainsAny(str, "abcdefABCDEF") {
-		if _, ok := b.value.SetString(str, 16); !ok {
-			return fmt.Errorf("failed to set BN254 element from hex string: %s", str)
-		}
-	} else {
-		if _, ok := b.value.SetString(str, 16); !ok {
-			return fmt.Errorf("failed to set BN254 element value from string: %s", str)
-		}
-	}
+	b.value.SetBytes(bn254Bytes)
 	return nil
 }
 

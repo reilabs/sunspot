@@ -21,9 +21,9 @@ import (
 )
 
 type Circuit[T shr.ACIRField, E constraint.Element] struct {
+	CircuitName         string
 	CurrentWitnessIndex uint32                                           `json:"current_witness_index"`
 	Opcodes             []ops.Opcode[E]                                  `json:"opcodes"`            // Opcodes in the circuit
-	ExpressionWidth     exp.ExpressionWidth                              `json:"expression_width"`   // Width of the expressions in the circuit
 	PrivateParameters   btree.BTree                                      `json:"private_parameters"` // Witnesses
 	PublicParameters    btree.BTree                                      `json:"public_parameters"`  // Witnesses
 	ReturnValues        btree.BTree                                      `json:"return_values"`      // Witnesses
@@ -32,6 +32,17 @@ type Circuit[T shr.ACIRField, E constraint.Element] struct {
 }
 
 func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
+	var length uint64
+	if err := binary.Read(r, binary.LittleEndian, &length); err != nil {
+		return err
+	}
+
+	data := make([]byte, length)
+	if _, err := io.ReadFull(r, data); err != nil {
+		return err
+	}
+
+	c.CircuitName = string(data)
 	if err := binary.Read(r, binary.LittleEndian, &c.CurrentWitnessIndex); err != nil {
 		return err
 	}
@@ -51,10 +62,6 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 			return fmt.Errorf("failed to unmarshal opcode at index %d: %w", i, err)
 		}
 		c.Opcodes[i] = op
-	}
-
-	if err := c.ExpressionWidth.UnmarshalReader(r); err != nil {
-		return err
 	}
 
 	var numPrivateParameters uint64
