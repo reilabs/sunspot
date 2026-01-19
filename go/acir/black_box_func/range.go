@@ -1,6 +1,7 @@
 package blackboxfunc
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 	shr "sunspot/go/acir/shared"
@@ -13,10 +14,14 @@ import (
 
 type Range[T shr.ACIRField, E constraint.Element] struct {
 	Input FunctionInput[T]
+	nBits uint32
 }
 
 func (a *Range[T, E]) UnmarshalReader(r io.Reader) error {
 	if err := a.Input.UnmarshalReader(r); err != nil {
+		return err
+	}
+	if err := binary.Read(r, binary.LittleEndian, &a.nBits); err != nil {
 		return err
 	}
 	return nil
@@ -43,7 +48,7 @@ func (a Range[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]f
 	}
 
 	rangechecker := rangecheck.New(api)
-	rangechecker.Check(w, int(a.Input.NumberOfBits))
+	rangechecker.Check(w, int(a.nBits))
 	return nil
 }
 

@@ -1,6 +1,7 @@
 package blackboxfunc
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 	shr "sunspot/go/acir/shared"
@@ -15,6 +16,7 @@ type And[T shr.ACIRField, E constraint.Element] struct {
 	Lhs    FunctionInput[T]
 	Rhs    FunctionInput[T]
 	Output shr.Witness
+	nBits  uint32
 }
 
 func (a *And[T, E]) UnmarshalReader(r io.Reader) error {
@@ -22,6 +24,9 @@ func (a *And[T, E]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 	if err := a.Rhs.UnmarshalReader(r); err != nil {
+		return err
+	}
+	if err := binary.Read(r, binary.LittleEndian, &a.nBits); err != nil {
 		return err
 	}
 	if err := a.Output.UnmarshalReader(r); err != nil {

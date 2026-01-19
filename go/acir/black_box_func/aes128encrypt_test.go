@@ -34,7 +34,6 @@ func TestAES128EncryptUnmarshalReaderEmpty(t *testing.T) {
 		expectedIv[i] = FunctionInput[T]{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedIvWitness,
-			NumberOfBits:      5678,
 		}
 	}
 	expectedKey := [16]FunctionInput[T]{}
@@ -42,7 +41,6 @@ func TestAES128EncryptUnmarshalReaderEmpty(t *testing.T) {
 		expectedKey[i] = FunctionInput[T]{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedKeyWitness,
-			NumberOfBits:      91011,
 		}
 	}
 
@@ -85,7 +83,6 @@ func TestAES128EncryptUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		expectedIv[i] = FunctionInput[T]{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedIvWitness,
-			NumberOfBits:      5678,
 		}
 	}
 	expectedKey := [16]FunctionInput[T]{}
@@ -93,7 +90,6 @@ func TestAES128EncryptUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		expectedKey[i] = FunctionInput[T]{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedKeyWitness,
-			NumberOfBits:      6789,
 		}
 	}
 
@@ -103,12 +99,10 @@ func TestAES128EncryptUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedWitnessInput1,
-			NumberOfBits:      5678,
 		},
 		{
 			FunctionInputKind: ACIRFunctionInputKindWitness,
 			Witness:           &expectedWitnessInput2,
-			NumberOfBits:      6789,
 		},
 	}
 
