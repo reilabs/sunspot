@@ -13,9 +13,10 @@ import (
 )
 
 type EmbeddedCurveAdd[T shr.ACIRField, E constraint.Element] struct {
-	Input1  [3]FunctionInput[T]
-	Input2  [3]FunctionInput[T]
-	Outputs [3]shr.Witness
+	Input1    [3]FunctionInput[T]
+	Input2    [3]FunctionInput[T]
+	predicate FunctionInput[T]
+	Outputs   [3]shr.Witness
 }
 
 func (a *EmbeddedCurveAdd[T, E]) UnmarshalReader(r io.Reader) error {
@@ -29,6 +30,10 @@ func (a *EmbeddedCurveAdd[T, E]) UnmarshalReader(r io.Reader) error {
 		if err := a.Input2[i].UnmarshalReader(r); err != nil {
 			return err
 		}
+	}
+
+	if err := a.predicate.UnmarshalReader(r); err != nil {
+		return err
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &a.Outputs); err != nil {
@@ -89,13 +94,15 @@ func (a *EmbeddedCurveAdd[T, E]) Define(api frontend.Builder[E], witnesses map[s
 		Y: point2Y,
 	}
 
-	z := grumpkin.G1Affine{
-		X: witnesses[a.Outputs[0]],
-		Y: witnesses[a.Outputs[1]],
-	}
-
 	// Assert that the addition is correct
-	z.AssertIsEqual(api, *x.AddUnified(api, y))
+	pred, err := a.predicate.ToVariable(witnesses)
+	if err != nil {
+		return err
+	}
+	constrained_output := x.AddUnified(api, y)
+	// Assert that the addition is correct, ignoring if the predicate is zero
+	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.X, witnesses[a.Outputs[0]])))
+	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.Y, witnesses[a.Outputs[1]])))
 
 	return nil
 }
