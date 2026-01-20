@@ -134,10 +134,10 @@ func (a *RecursiveAggregation[T, E]) AggregateGroth16(api frontend.Builder[E], w
 	if err != nil {
 		return err
 	}
-	// pred, err := a.predicate.ToVariable(witnesses)
-	// if err != nil {
-	// 	return err
-	// }
+
+	// TODO Find a way to make this dependent on the predicate input
+	// ATM we attempt to verify all proofs and don't check the predicate
+
 	v.AssertProof(vk, proof, witness)
 
 	return nil
