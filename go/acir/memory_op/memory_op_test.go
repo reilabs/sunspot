@@ -46,7 +46,6 @@ func TestMemoryOpWithoutPredicate(t *testing.T) {
 			LinearCombinations: []exp.LinearCombination[T]{},
 			Constant:           bn254.Zero(),
 		},
-		Predicate: nil,
 	}
 
 	if !opcode.Equals(&expectedOpcode) {
@@ -87,11 +86,6 @@ func TestMemoryOpWithPredicate(t *testing.T) {
 			Constant:           bn254.Zero(),
 		},
 		Value: exp.Expression[T, E]{
-			MulTerms:           []exp.MulTerm[T]{},
-			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           bn254.Zero(),
-		},
-		Predicate: &exp.Expression[T, E]{
 			MulTerms:           []exp.MulTerm[T]{},
 			LinearCombinations: []exp.LinearCombination[T]{},
 			Constant:           bn254.Zero(),
