@@ -39,7 +39,6 @@ fn generate_memory_op_test_without_predicate(path: &str) {
                 q_c: FieldElement::from(3u32),
             },
         },
-        predicate: None,
     };
     // Placeholder for actual data
 
@@ -88,11 +87,6 @@ fn generate_memory_op_test_with_predicate(path: &str) {
                 q_c: FieldElement::from(6u32),
             },
         },
-        predicate: Some(Expression::<FieldElement> {
-            mul_terms: vec![],
-            linear_combinations: vec![],
-            q_c: FieldElement::from(7u32),
-        }),
     };
     // Placeholder for actual data
 

@@ -13,8 +13,7 @@ fn generate_function_input_test_constant(path: &str) {
 
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
-    let function_input = FunctionInput::<FieldElement>::constant(FieldElement::from(1234u64), 1234)
-        .expect("Failed to create constant function input");
+    let function_input = FunctionInput::<FieldElement>::Constant(FieldElement::from(1234u64));
 
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
@@ -42,7 +41,7 @@ fn generate_function_input_test_witness(path: &str) {
 
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
-    let function_input = FunctionInput::<FieldElement>::witness(Witness(1234), 5678);
+    let function_input = FunctionInput::<FieldElement>::Witness(Witness(1234));
 
     let config = bincode::config::standard()
         .with_fixed_int_encoding()

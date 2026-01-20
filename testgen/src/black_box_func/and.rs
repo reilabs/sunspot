@@ -1,6 +1,10 @@
 use std::io::Write;
 
-use acir::{circuit::opcodes::{BlackBoxFuncCall, FunctionInput}, native_types::Witness, FieldElement};
+use acir::{
+    FieldElement,
+    circuit::opcodes::{BlackBoxFuncCall, FunctionInput},
+    native_types::Witness,
+};
 use tracing::trace;
 
 fn generate_and_test(path: &str) {
@@ -13,21 +17,22 @@ fn generate_and_test(path: &str) {
 
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
-    
+
     // Example data for the 'and' function call
     let and_function_call = BlackBoxFuncCall::AND {
-        lhs: FunctionInput::<FieldElement>::witness(Witness(1234), 5678),
-        rhs: FunctionInput::<FieldElement>::witness(Witness(2345), 6789),
+        lhs: FunctionInput::<FieldElement>::Witness(Witness(1234)),
+        rhs: FunctionInput::<FieldElement>::Witness(Witness(2345)),
+        num_bits: 5678,
         output: Witness(3456),
     };
-    
+
     let config = bincode::config::standard()
         .with_fixed_int_encoding()
         .with_little_endian();
-    
-    let data = bincode::serde::encode_to_vec(&and_function_call, config)
-        .expect("Failed to encode data");
-    
+
+    let data =
+        bincode::serde::encode_to_vec(&and_function_call, config).expect("Failed to encode data");
+
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 

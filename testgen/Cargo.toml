@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-acir = { git = "https://github.com/noir-lang/noir", package = "acir", tag = "v1.0.0-beta.3" }
+acir = { git = "https://github.com/noir-lang/noir", package = "acir", tag = "v1.0.0-beta.18" }
 bincode = { "version" = "2.0.1", "features" = ["serde"] }
-brillig = { git = "https://github.com/noir-lang/noir", package = "brillig", tag = "v1.0.0-beta.3" }
+brillig = { git = "https://github.com/noir-lang/noir", package = "brillig", tag = "v1.0.0-beta.18" }
 clap = { "version" = "4.5.38", "features" = ["derive"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"

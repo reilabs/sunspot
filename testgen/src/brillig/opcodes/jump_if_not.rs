@@ -14,7 +14,7 @@ fn generate_jump_if_not_test(path: &str) {
 
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
-    let jump_if_not_opcode = Opcode::<FieldElement>::JumpIfNot {
+    let jump_if_not_opcode = Opcode::<FieldElement>::JumpIf {
         condition: MemoryAddress::Direct(1234),
         location: Label::from(5678u16),
     };

@@ -1,8 +1,11 @@
 use std::io::Write;
 
-use acir::{circuit::opcodes::{BlackBoxFuncCall, FunctionInput}, native_types::Witness, FieldElement};
+use acir::{
+    FieldElement,
+    circuit::opcodes::{BlackBoxFuncCall, FunctionInput},
+    native_types::Witness,
+};
 use tracing::trace;
-
 
 fn generate_aes128encrypt_test_empty(path: &str) {
     let file_name = format!("{path}/aes128encrypt_empty.bin");
@@ -16,12 +19,8 @@ fn generate_aes128encrypt_test_empty(path: &str) {
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     let aes128encrypt_function_call = BlackBoxFuncCall::AES128Encrypt {
         inputs: vec![],
-        iv: Box::new([
-            FunctionInput::<FieldElement>::witness(Witness(1234), 5678); 16
-        ]),
-        key: Box::new([
-            FunctionInput::<FieldElement>::witness(Witness(5678), 91011); 16
-        ]),
+        iv: Box::new([FunctionInput::<FieldElement>::Witness(Witness(1234)); 16]),
+        key: Box::new([FunctionInput::<FieldElement>::Witness(Witness(5678)); 16]),
         outputs: vec![],
     };
     let config = bincode::config::standard()
@@ -52,20 +51,12 @@ fn generate_aes128encrypt_test_with_inputs_and_outputs(path: &str) {
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     let aes128encrypt_function_call = BlackBoxFuncCall::AES128Encrypt {
         inputs: vec![
-            FunctionInput::<FieldElement>::witness(Witness(1234), 5678),
-            FunctionInput::<FieldElement>::witness(Witness(2345), 6789),
+            FunctionInput::<FieldElement>::Witness(Witness(1234)),
+            FunctionInput::<FieldElement>::Witness(Witness(2345)),
         ],
-        iv: Box::new([
-            FunctionInput::<FieldElement>::witness(Witness(3456), 7890); 16
-        ]),
-        key: Box::new([
-            FunctionInput::<FieldElement>::witness(Witness(4567), 8901); 16
-        ]),
-        outputs: vec![
-            Witness(1234),
-            Witness(2345),
-            Witness(3456),
-        ],
+        iv: Box::new([FunctionInput::<FieldElement>::Witness(Witness(3456)); 16]),
+        key: Box::new([FunctionInput::<FieldElement>::Witness(Witness(4567)); 16]),
+        outputs: vec![Witness(1234), Witness(2345), Witness(3456)],
     };
     let config = bincode::config::standard()
         .with_fixed_int_encoding()

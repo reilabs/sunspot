@@ -1,6 +1,10 @@
 use std::io::Write;
 
-use acir::{circuit::opcodes::{BlackBoxFuncCall, FunctionInput}, native_types::Witness, FieldElement};
+use acir::{
+    FieldElement,
+    circuit::opcodes::{BlackBoxFuncCall, FunctionInput},
+    native_types::Witness,
+};
 use tracing::trace;
 
 fn generate_blake3_test_empty(path: &str) {
@@ -50,8 +54,8 @@ fn generate_blake3_test_with_inputs(path: &str) {
 
     let blake3_function_call = BlackBoxFuncCall::<FieldElement>::Blake3 {
         inputs: vec![
-            FunctionInput::witness(Witness(1234), 1024),
-            FunctionInput::witness(Witness(5678), 2048),
+            FunctionInput::Witness(Witness(1234)),
+            FunctionInput::Witness(Witness(5678)),
         ],
         outputs: Box::new([Witness(1234); 32]),
     };
