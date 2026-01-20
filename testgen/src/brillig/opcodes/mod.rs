@@ -10,7 +10,6 @@ mod foreign_call;
 mod indirect_const;
 mod jump;
 mod jump_if;
-mod jump_if_not;
 mod load;
 mod mov;
 mod not;
@@ -34,7 +33,6 @@ pub fn generate_tests(directory: &str) {
     const_testgen::generate_tests(&directory);
     foreign_call::generate_tests(&directory);
     indirect_const::generate_tests(&directory);
-    jump_if_not::generate_tests(&directory);
     jump_if::generate_tests(&directory);
     jump::generate_tests(&directory);
     load::generate_tests(&directory);

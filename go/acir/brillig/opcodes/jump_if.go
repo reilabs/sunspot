@@ -6,6 +6,8 @@ import (
 	mem "sunspot/go/acir/brillig/memory"
 )
 
+type Label uint64
+
 type JumpIf struct {
 	Condition mem.MemoryAddress
 	Location  Label

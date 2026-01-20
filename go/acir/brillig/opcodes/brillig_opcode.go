@@ -14,7 +14,6 @@ type BrilligOpcode[T shr.ACIRField] struct {
 	BinaryIntOp    *BinaryIntOp
 	Not            *Not
 	Cast           *Cast
-	JumpIfNot      *JumpIfNot
 	JumpIf         *JumpIf
 	Jump           *Jump
 	CalldataCopy   *CallDataCopy
@@ -38,7 +37,6 @@ const (
 	ACIRBrilligOpcodeBinaryIntOp
 	ACIRBrilligOpcodeNot
 	ACIRBrilligOpcodeCast
-	ACIRBrilligOpcodeJumpIfNot
 	ACIRBrilligOpcodeJumpIf
 	ACIRBrilligOpcodeJump
 	ACIRBrilligOpcodeCalldataCopy
@@ -94,11 +92,7 @@ func (b *BrilligOpcode[T]) UnmarshalReader(r io.Reader) error {
 		if err := b.Cast.UnmarshalReader(r); err != nil {
 			return err
 		}
-	case ACIRBrilligOpcodeJumpIfNot:
-		b.JumpIfNot = &JumpIfNot{}
-		if err := b.JumpIfNot.UnmarshalReader(r); err != nil {
-			return err
-		}
+
 	case ACIRBrilligOpcodeJumpIf:
 		b.JumpIf = &JumpIf{}
 		if err := b.JumpIf.UnmarshalReader(r); err != nil {
@@ -190,8 +184,6 @@ func (b *BrilligOpcode[T]) Equals(other BrilligOpcode[T]) bool {
 		return b.Not.Equals(*other.Not)
 	case ACIRBrilligOpcodeCast:
 		return b.Cast.Equals(*other.Cast)
-	case ACIRBrilligOpcodeJumpIfNot:
-		return b.JumpIfNot.Equals(*other.JumpIfNot)
 	case ACIRBrilligOpcodeJumpIf:
 		return b.JumpIf.Equals(*other.JumpIf)
 	case ACIRBrilligOpcodeJump:
