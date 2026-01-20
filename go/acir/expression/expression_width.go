@@ -66,9 +66,9 @@ func (e *ExpressionWidth) MarshalJSON() ([]byte, error) {
 	fieldsMap := make(map[string]interface{})
 	switch e.Kind {
 	case ACIRExpressionWidthUnbounded:
-		fieldsMap["unbounded"] = nil
+		fieldsMap["Unbounded"] = nil
 	case ACIRExpressionWidthBounded:
-		fieldsMap["bounded"] = *e.Width
+		fieldsMap["Bounded"] = *e.Width
 	}
 	return json.Marshal(fieldsMap)
 }

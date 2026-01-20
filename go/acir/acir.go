@@ -126,6 +126,18 @@ func (a *ACIR[T, E]) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("missing or invalid file_map field in ACIR")
 	}
 
+	// 2. Now you can treat the value as bytes
+	if ewVal, ok := raw["expression_width"]; ok {
+		data, err := json.Marshal(ewVal)
+		if err != nil {
+			return fmt.Errorf("error marshalling expression_width: %w", err)
+		}
+
+		if err := json.Unmarshal(data, &a.ExpressionWidth); err != nil {
+			return fmt.Errorf("error unmarshalling ACIR ABI (expression_width): %w", err)
+		}
+	}
+
 	return nil
 }
 
