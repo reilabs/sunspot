@@ -14,7 +14,6 @@ import (
 type Poseidon2Permutation[T shr.ACIRField, E constraint.Element] struct {
 	Inputs  []FunctionInput[T]
 	Outputs []shr.Witness
-	Len     uint32
 }
 
 func (a *Poseidon2Permutation[T, E]) UnmarshalReader(r io.Reader) error {
@@ -39,16 +38,12 @@ func (a *Poseidon2Permutation[T, E]) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 
-	if err := binary.Read(r, binary.LittleEndian, &a.Len); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (a *Poseidon2Permutation[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	value, ok := other.(*Poseidon2Permutation[T, E])
-	if !ok || len(a.Inputs) != len(value.Inputs) || len(a.Outputs) != len(value.Outputs) || a.Len != value.Len {
+	if !ok || len(a.Inputs) != len(value.Inputs) || len(a.Outputs) != len(value.Outputs) {
 		return false
 	}
 
