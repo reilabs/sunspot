@@ -22,6 +22,7 @@ type RecursiveAggregation[T shr.ACIRField, E constraint.Element] struct {
 	PublicInputs    []FunctionInput[T]
 	KeyHash         FunctionInput[T]
 	ProofType       uint32
+	predicate       FunctionInput[T]
 }
 
 func (a *RecursiveAggregation[T, E]) UnmarshalReader(r io.Reader) error {
@@ -51,6 +52,7 @@ func (a *RecursiveAggregation[T, E]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &PublicInputsCount); err != nil {
 		return err
 	}
+
 	a.PublicInputs = make([]FunctionInput[T], PublicInputsCount)
 	for i := uint64(0); i < PublicInputsCount; i++ {
 		if err := a.PublicInputs[i].UnmarshalReader(r); err != nil {
@@ -63,6 +65,10 @@ func (a *RecursiveAggregation[T, E]) UnmarshalReader(r io.Reader) error {
 	}
 
 	if err := binary.Read(r, binary.LittleEndian, &a.ProofType); err != nil {
+		return err
+	}
+
+	if err := a.predicate.UnmarshalReader(r); err != nil {
 		return err
 	}
 
@@ -124,12 +130,15 @@ func (a *RecursiveAggregation[T, E]) AggregateGroth16(api frontend.Builder[E], w
 		return err
 	}
 
-	verifier, err := groth16.NewVerifier[emulated.BN254Fr, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](api)
+	v, err := groth16.NewVerifier[emulated.BN254Fr, sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl](api)
 	if err != nil {
 		return err
 	}
-
-	verifier.AssertProof(vk, proof, witness)
+	// pred, err := a.predicate.ToVariable(witnesses)
+	// if err != nil {
+	// 	return err
+	// }
+	v.AssertProof(vk, proof, witness)
 
 	return nil
 }

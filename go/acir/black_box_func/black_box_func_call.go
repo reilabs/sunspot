@@ -82,9 +82,9 @@ func NewBlackBoxFunction[T shr.ACIRField, E constraint.Element](r io.Reader) (*B
 		return &BlackBoxFuncCall[T, E]{&Keccakf1600[T, E]{}}, nil
 	case 11:
 		return &BlackBoxFuncCall[T, E]{&RecursiveAggregation[T, E]{}}, nil
-	case 18:
+	case 12:
 		return &BlackBoxFuncCall[T, E]{&Poseidon2Permutation[T, E]{}}, nil
-	case 19:
+	case 13:
 		return &BlackBoxFuncCall[T, E]{&SHA256Compression[T, E]{}}, nil
 	default:
 		return nil, fmt.Errorf("blackbox opcode %d not yet implemented", kind)
