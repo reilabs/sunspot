@@ -9,6 +9,7 @@ import (
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
+	"github.com/consensys/gnark/std/rangecheck"
 	"github.com/google/btree"
 )
 
@@ -49,17 +50,21 @@ func (a *Xor[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]fr
 	if err != nil {
 		return err
 	}
+	rangechecker := rangecheck.New(api)
 	lhs, err := a.Lhs.ToVariable(witnesses)
 	if err != nil {
 		return err
 	}
+	rangechecker.Check(lhs, int(a.nBits))
 	lhs_b := uapi.ValueOf(lhs)
 
 	rhs, err := a.Rhs.ToVariable(witnesses)
 	if err != nil {
 		return err
 	}
+	rangechecker.Check(rhs, int(a.nBits))
 	rhs_b := uapi.ValueOf(rhs)
+
 	output, ok := witnesses[a.Output]
 	if !ok {
 		return fmt.Errorf("witness %d not found in witnesses map", a.Output)
