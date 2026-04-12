@@ -5,11 +5,16 @@ import (
 	shr "sunspot/go/acir/shared"
 	grumpkin "sunspot/go/sw-grumpkin"
 
+	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 )
 
 var twoTo128 = new(big.Int).Lsh(big.NewInt(1), 128)
+
+// grumpkinScalarModulusHighLimb is floor(p / 2^128) where p is the grumpkin
+// scalar modulus — the upper bound for a scalar's high 128-bit limb.
+var grumpkinScalarModulusHighLimb = new(big.Int).Rsh(ecc.GRUMPKIN.ScalarField(), 128)
 
 // ScalarFromLimbs recomposes a scalar from its (lo, hi) 128-bit limb
 // FunctionInputs into lo + hi * 2^128.
@@ -26,6 +31,7 @@ func ScalarFromLimbs[T shr.ACIRField, E constraint.Element](
 	if err != nil {
 		return nil, err
 	}
+	api.AssertIsLessOrEqual(scalarHi, grumpkinScalarModulusHighLimb)
 	return api.Add(scalarLo, api.Mul(scalarHi, twoTo128)), nil
 }
 
