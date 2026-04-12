@@ -1,6 +1,7 @@
 package memory_op
 
 import (
+	"math/big"
 	"os"
 	exp "sunspot/go/acir/expression"
 	shr "sunspot/go/acir/shared"
@@ -34,17 +35,17 @@ func TestMemoryOpWithoutPredicate(t *testing.T) {
 		Operation: exp.Expression[T, E]{
 			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
 			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-			Constant:           bn254.Zero(),
+			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(1)},
 		},
 		Index: exp.Expression[T, E]{
 			MulTerms:           []exp.MulTerm[T]{},
 			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           bn254.Zero(),
+			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(2)},
 		},
 		Value: exp.Expression[T, E]{
 			MulTerms:           []exp.MulTerm[T]{},
 			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           bn254.Zero(),
+			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(3)},
 		},
 	}
 
@@ -78,17 +79,17 @@ func TestMemoryOpWithPredicate(t *testing.T) {
 		Operation: exp.Expression[T, E]{
 			MulTerms:           []exp.MulTerm[T]{},
 			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           bn254.Zero(),
+			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(4)},
 		},
 		Index: exp.Expression[T, E]{
 			MulTerms:           []exp.MulTerm[T]{},
 			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           bn254.Zero(),
+			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(5)},
 		},
 		Value: exp.Expression[T, E]{
 			MulTerms:           []exp.MulTerm[T]{},
 			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           bn254.Zero(),
+			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(6)},
 		},
 	}
 
