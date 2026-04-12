@@ -60,8 +60,8 @@ func TestExpressionUnmarshalReaderWithLinearCombinations(t *testing.T) {
 		MulTerms: []MulTerm[T]{},
 		LinearCombinations: []LinearCombination[T]{
 			{Term: bn254.One(), Witness: 0},
-			{Term: bn254.One(), Witness: 1234},
-			{Term: bn254.One(), Witness: 5678},
+			{Term: &bn254.BN254Field{Value: *big.NewInt(2)}, Witness: 1234},
+			{Term: &bn254.BN254Field{Value: *big.NewInt(3)}, Witness: 5678},
 		},
 		Constant: bn254.Zero(),
 	}
@@ -89,8 +89,8 @@ func TestExpressionUnmarshalReaderWithMulTerms(t *testing.T) {
 	expectedExpression := Expression[T, E]{
 		MulTerms: []MulTerm[T]{
 			{Term: bn254.One(), WitnessLeft: 0, WitnessRight: 1},
-			{Term: bn254.One(), WitnessLeft: 1234, WitnessRight: 5678},
-			{Term: bn254.One(), WitnessLeft: 5678, WitnessRight: 1234},
+			{Term: &bn254.BN254Field{Value: *big.NewInt(2)}, WitnessLeft: 1234, WitnessRight: 5678},
+			{Term: &bn254.BN254Field{Value: *big.NewInt(3)}, WitnessLeft: 5678, WitnessRight: 1234},
 		},
 		LinearCombinations: []LinearCombination[T]{},
 		Constant:           bn254.Zero(),
@@ -119,13 +119,13 @@ func TestExpressionUnmarshalReaderMulTermsWithLinearCombinations(t *testing.T) {
 	expectedExpression := Expression[T, E]{
 		MulTerms: []MulTerm[T]{
 			{Term: bn254.One(), WitnessLeft: 0, WitnessRight: 1},
-			{Term: bn254.One(), WitnessLeft: 1234, WitnessRight: 5678},
-			{Term: bn254.One(), WitnessLeft: 5678, WitnessRight: 1234},
+			{Term: &bn254.BN254Field{Value: *big.NewInt(2)}, WitnessLeft: 1234, WitnessRight: 5678},
+			{Term: &bn254.BN254Field{Value: *big.NewInt(3)}, WitnessLeft: 5678, WitnessRight: 1234},
 		},
 		LinearCombinations: []LinearCombination[T]{
 			{Term: bn254.One(), Witness: 0},
-			{Term: bn254.One(), Witness: 1234},
-			{Term: bn254.One(), Witness: 5678},
+			{Term: &bn254.BN254Field{Value: *big.NewInt(2)}, Witness: 1234},
+			{Term: &bn254.BN254Field{Value: *big.NewInt(3)}, Witness: 5678},
 		},
 		Constant: bn254.Zero(),
 	}

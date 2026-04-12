@@ -125,7 +125,7 @@ func TestCallUnmarshalReaderWithPredicate(t *testing.T) {
 		Predicate: &exp.Expression[T, E]{
 			MulTerms:           []exp.MulTerm[T]{},
 			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           bn254.Zero(),
+			Constant:           bn254.One(),
 		}, // Assuming a valid predicate expression
 	}
 
@@ -161,7 +161,7 @@ func TestCallUnmarshalReaderWithInputsAndOutputs(t *testing.T) {
 		Predicate: &exp.Expression[T, E]{
 			MulTerms:           []exp.MulTerm[T]{},
 			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           bn254.Zero(),
+			Constant:           bn254.One(),
 		}, // Assuming a valid predicate expression
 	}
 

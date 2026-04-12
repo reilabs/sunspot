@@ -1,6 +1,7 @@
 package opcodes
 
 import (
+	"math/big"
 	"os"
 	mem "sunspot/go/acir/brillig/memory"
 	"sunspot/go/bn254"
@@ -30,7 +31,7 @@ func TestConstUnmarshalReader(t *testing.T) {
 				Kind:           mem.BitSizeKindInteger,
 				IntegerBitSize: &expectedIntegerBitSize,
 			},
-			Value: bn254.Zero(),
+			Value: &bn254.BN254Field{Value: *new(big.Int).SetUint64(5678)},
 		},
 	}
 
