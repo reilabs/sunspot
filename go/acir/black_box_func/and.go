@@ -77,10 +77,10 @@ func (a *And[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
 		return false
 	}
 
-	if a.Lhs.FunctionInputKind == 1 {
+	if a.Lhs.IsWitness() {
 		tree.ReplaceOrInsert(*a.Lhs.Witness + shr.Witness(index))
 	}
-	if a.Rhs.FunctionInputKind == 1 {
+	if a.Rhs.IsWitness() {
 		tree.ReplaceOrInsert(*a.Rhs.Witness + shr.Witness(index))
 	}
 	tree.ReplaceOrInsert(a.Output + shr.Witness(index))
