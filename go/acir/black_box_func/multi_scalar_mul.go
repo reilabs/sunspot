@@ -3,7 +3,6 @@ package blackboxfunc
 import (
 	"encoding/binary"
 	"io"
-	"math/big"
 	shr "sunspot/go/acir/shared"
 	grumpkin "sunspot/go/sw-grumpkin"
 
@@ -90,47 +89,32 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 
 	scalars := make([]interface{}, len(a.Scalars)/2)
 
-	for i := 0; i < len(a.Points); i += 3 {
-		pointX, err := a.Points[i].ToVariable(witnesses)
-		if err != nil {
-			return err
-		}
-
-		pointY, err := a.Points[i+1].ToVariable(witnesses)
-		if err != nil {
-			return err
-		}
-
-		point := grumpkin.G1Affine{
-			X: pointX,
-			Y: pointY,
-		}
-		points[i/3] = &point
-	}
-
-	twoTo128 := new(big.Int).Lsh(big.NewInt(1), 128)
-	for i := 0; i < len(a.Scalars); i += 2 {
-		scalarLo, err := a.Scalars[i].ToVariable(witnesses)
-		if err != nil {
-			return err
-		}
-		scalarHi, err := a.Scalars[i+1].ToVariable(witnesses)
-		if err != nil {
-			return err
-		}
-		scalars[i/2] = api.Add(scalarLo, api.Mul(scalarHi, twoTo128))
-	}
-	output := grumpkin.G1Affine{
-		X: witnesses[a.Outputs[0]],
-		Y: witnesses[a.Outputs[1]],
-	}
-
-	constrained_output := grumpkin.MultiScalarMul(api, points, scalars)
-
 	pred, err := a.predicate.ToVariable(witnesses)
 	if err != nil {
 		return err
 	}
+
+	for i := 0; i < len(a.Points); i += 3 {
+		point, err := EmbeddedPointFromInputs(api, witnesses, pred,
+			[3]FunctionInput[T]{a.Points[i], a.Points[i+1], a.Points[i+2]})
+		if err != nil {
+			return err
+		}
+		points[i/3] = &point
+	}
+
+	for i := 0; i < len(a.Scalars); i += 2 {
+		scalar, err := ScalarFromLimbs(api, witnesses, a.Scalars[i], a.Scalars[i+1])
+		if err != nil {
+			return err
+		}
+		scalars[i/2] = scalar
+	}
+
+	output := maskedEmbeddedPoint(api, pred,
+		witnesses[a.Outputs[0]], witnesses[a.Outputs[1]], witnesses[a.Outputs[2]])
+
+	constrained_output := grumpkin.MultiScalarMul(api, points, scalars)
 
 	// To assert the two points are the same (and ignore if predicate is zero), we have to split into
 	// its X and Y coordinates
