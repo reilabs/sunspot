@@ -46,7 +46,11 @@ func (b *BN254Field) UnmarshalReader(r io.Reader) error {
 }
 
 func (b BN254Field) Equals(other shr.ACIRField) bool {
-	return true // Implement the equality check logic here
+	o, ok := other.(*BN254Field)
+	if !ok {
+		return false
+	}
+	return b.value.Cmp(&o.value) == 0
 }
 
 func (b BN254Field) ToElement() shr.GenericFPElement {
