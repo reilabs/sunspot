@@ -29,7 +29,7 @@ func (a *Range[T, E]) UnmarshalReader(r io.Reader) error {
 
 func (a Range[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	value, ok := other.(*Range[T, E])
-	return ok && a.Input.Equals(&value.Input)
+	return ok && a.Input.Equals(&value.Input) && a.nBits == value.nBits
 }
 
 func (a Range[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
