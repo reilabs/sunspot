@@ -1,6 +1,7 @@
 package blackboxfunc
 
 import (
+	"math/big"
 	"os"
 	shr "sunspot/go/acir/shared"
 	"sunspot/go/bn254"
@@ -18,7 +19,7 @@ func TestFunctionInputUnmarshalReaderConstant(t *testing.T) {
 		t.Fatalf("Failed to unmarshal FunctionInput: %v", err)
 	}
 
-	expectedField := bn254.Zero()
+	expectedField := &bn254.BN254Field{Value: *big.NewInt(1234)}
 	expected := FunctionInput[*bn254.BN254Field]{
 		FunctionInputKind: ACIRFunctionInputKindConstant,
 		ConstantInput:     &expectedField,
