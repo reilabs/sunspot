@@ -3,6 +3,7 @@ package blackboxfunc
 import (
 	"encoding/binary"
 	"io"
+	"math/big"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/google/btree"
@@ -134,7 +135,16 @@ func (a *ECDSASECP256R1[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	if err != nil {
 		return err
 	}
-	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(witnesses[a.Output], Q.IsValid(api, sw_emulated.GetP256Params(), msg, &sig))))
+
+	// Noir's verify_signature rejects signatures with s > n/2 (low-s form) to
+	// prevent malleability; gnark's IsValid does not, so enforce it here.
+	validSig := Q.IsValid(api, sw_emulated.GetP256Params(), msg, &sig)
+	halfOrder := new(big.Int).Rsh(emulated.P256Fr{}.Modulus(), 1)
+	sBits := scalarField.ToBits(&sig.S)
+	isLowS := isLessOrEqualConstant(api, sBits, halfOrder)
+	result := api.Mul(validSig, isLowS)
+
+	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(witnesses[a.Output], result)))
 	return nil
 }
 

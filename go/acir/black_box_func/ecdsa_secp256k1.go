@@ -3,6 +3,7 @@ package blackboxfunc
 import (
 	"encoding/binary"
 	"io"
+	"math/big"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -23,7 +24,7 @@ type ECDSASECP256K1[T shr.ACIRField, E constraint.Element] struct {
 	Output        shr.Witness
 }
 
-func (a *ECDSASECP256K1[T, Equals]) UnmarshalReader(r io.Reader) error {
+func (a *ECDSASECP256K1[T, E]) UnmarshalReader(r io.Reader) error {
 	for i := 0; i < 32; i++ {
 		if err := a.PublicKeyX[i].UnmarshalReader(r); err != nil {
 			return err
@@ -134,7 +135,18 @@ func (a *ECDSASECP256K1[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	if err != nil {
 		return err
 	}
-	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(witnesses[a.Output], Q.IsValid(api, sw_emulated.GetSecp256k1Params(), msg, &sig))))
+
+	validSig := Q.IsValid(api, sw_emulated.GetSecp256k1Params(), msg, &sig)
+
+	// Noir's verify_signature rejects signatures with s > n/2 (low-s form) to
+	// prevent malleability; gnark's IsValid does not, so enforce it here.
+	halfOrder := new(big.Int).Rsh(emulated.Secp256k1Fr{}.Modulus(), 1)
+	sBits := scalarField.ToBits(&sig.S)
+	isLowS := isLessOrEqualConstant(api, sBits, halfOrder)
+
+	result := api.Mul(validSig, isLowS)
+
+	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(witnesses[a.Output], result)))
 	return nil
 }
 
@@ -172,7 +184,6 @@ func (a *ECDSASECP256K1[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) 
 // ACIR has signature variables as big endian bytes
 // but gnark wants them as 4 * 64 but limbs.
 // See https://pkg.go.dev/github.com/consensys/gnark/std/math/emulated@v0.14.0#hdr-Element_representation
-
 func BytesTo64BitLimbs[T shr.ACIRField](
 	api frontend.API,
 	vars []FunctionInput[T],
