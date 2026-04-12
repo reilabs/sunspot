@@ -39,7 +39,7 @@ func (a *Xor[T, E]) UnmarshalReader(r io.Reader) error {
 func (a *Xor[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	value, ok := other.(*Xor[T, E])
 
-	if !ok || !a.Lhs.Equals(&value.Lhs) || !a.Rhs.Equals(&value.Rhs) {
+	if !ok || !a.Lhs.Equals(&value.Lhs) || !a.Rhs.Equals(&value.Rhs) || a.nBits != value.nBits {
 		return false
 	}
 	return a.Output == value.Output
