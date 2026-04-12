@@ -14,18 +14,18 @@ import (
 )
 
 type BN254Field struct {
-	value big.Int
+	Value big.Int
 }
 
 func Zero() *BN254Field {
 	return &BN254Field{
-		value: *new(big.Int).SetUint64(0),
+		Value: *new(big.Int).SetUint64(0),
 	}
 }
 
 func One() *BN254Field {
 	return &BN254Field{
-		value: *new(big.Int).SetInt64(1),
+		Value: *new(big.Int).SetInt64(1),
 	}
 }
 
@@ -41,7 +41,7 @@ func (b *BN254Field) UnmarshalReader(r io.Reader) error {
 	if _, err := io.ReadFull(r, bn254Bytes); err != nil {
 		return fmt.Errorf("failed to read BN254 field bytes: %w", err)
 	}
-	b.value.SetBytes(bn254Bytes)
+	b.Value.SetBytes(bn254Bytes)
 	return nil
 }
 
@@ -50,12 +50,12 @@ func (b BN254Field) Equals(other shr.ACIRField) bool {
 	if !ok {
 		return false
 	}
-	return b.value.Cmp(&o.value) == 0
+	return b.Value.Cmp(&o.Value) == 0
 }
 
 func (b BN254Field) ToElement() shr.GenericFPElement {
 	var element fp.Element
-	element.SetBigInt(&b.value)
+	element.SetBigInt(&b.Value)
 	return shr.GenericFPElement{
 		Kind:           shr.GenericFPElementKindBN254,
 		BN254FpElement: &element,
@@ -64,14 +64,14 @@ func (b BN254Field) ToElement() shr.GenericFPElement {
 
 func (b BN254Field) ToFrontendVariable() frontend.Variable {
 	var element fr.Element
-	element.SetBigInt(&b.value)
+	element.SetBigInt(&b.Value)
 	return element
 }
 
 func (b BN254Field) String() string {
-	return b.value.String()
+	return b.Value.String()
 }
 
 func (b BN254Field) ToBigInt() *big.Int {
-	return new(big.Int).Set(&b.value)
+	return new(big.Int).Set(&b.Value)
 }
