@@ -33,22 +33,13 @@ func (a Range[T, E]) Equals(other BlackBoxFunction[E]) bool {
 }
 
 func (a Range[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
-	if a.Input.FunctionInputKind == ACIRFunctionInputKindConstant {
-		return nil
-	}
-
-	witness := a.Input.Witness
-	if witness == nil {
-		return fmt.Errorf("witness is nil for Range function input")
-	}
-
-	w, ok := witnesses[*witness]
-	if !ok {
-		return fmt.Errorf("witness %v not found in witnesses map", *witness)
+	input, err := a.Input.ToVariable(witnesses)
+	if err != nil {
+		return fmt.Errorf("failed to resolve Range function input: %w", err)
 	}
 
 	rangechecker := rangecheck.New(api)
-	rangechecker.Check(w, int(a.nBits))
+	rangechecker.Check(input, int(a.nBits))
 	return nil
 }
 
