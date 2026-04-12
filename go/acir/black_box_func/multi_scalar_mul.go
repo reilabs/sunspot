@@ -3,6 +3,7 @@ package blackboxfunc
 import (
 	"encoding/binary"
 	"io"
+	"math/big"
 	shr "sunspot/go/acir/shared"
 	grumpkin "sunspot/go/sw-grumpkin"
 
@@ -107,14 +108,18 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 		points[i/3] = &point
 	}
 
+	twoTo128 := new(big.Int).Lsh(big.NewInt(1), 128)
 	for i := 0; i < len(a.Scalars); i += 2 {
-		scalar, err := a.Scalars[i].ToVariable(witnesses)
+		scalarLo, err := a.Scalars[i].ToVariable(witnesses)
 		if err != nil {
 			return err
 		}
-		scalars[i/2] = scalar
+		scalarHi, err := a.Scalars[i+1].ToVariable(witnesses)
+		if err != nil {
+			return err
+		}
+		scalars[i/2] = api.Add(scalarLo, api.Mul(scalarHi, twoTo128))
 	}
-
 	output := grumpkin.G1Affine{
 		X: witnesses[a.Outputs[0]],
 		Y: witnesses[a.Outputs[1]],
