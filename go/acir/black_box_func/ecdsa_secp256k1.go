@@ -60,7 +60,10 @@ func (a *ECDSASECP256K1[T, E]) UnmarshalReader(r io.Reader) error {
 }
 
 func (a *ECDSASECP256K1[T, E]) Equals(other BlackBoxFunction[E]) bool {
-	value := other.(*ECDSASECP256K1[T, E])
+	value, ok := other.(*ECDSASECP256K1[T, E])
+	if !ok {
+		return false
+	}
 	if len(a.PublicKeyX) != len(value.PublicKeyX) ||
 		len(a.PublicKeyY) != len(value.PublicKeyY) ||
 		len(a.Signature) != len(value.Signature) ||
