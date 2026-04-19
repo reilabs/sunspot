@@ -9,7 +9,6 @@ import (
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
-	"github.com/consensys/gnark/std/rangecheck"
 	"github.com/google/btree"
 )
 
@@ -30,6 +29,9 @@ func (a *And[T, E]) UnmarshalReader(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &a.nBits); err != nil {
 		return err
 	}
+	if a.nBits > 128 {
+		panic(fmt.Sprintf("AND: nBits=%d exceeds supported maximum of 128", a.nBits))
+	}
 	if err := a.Output.UnmarshalReader(r); err != nil {
 		return err
 	}
@@ -46,44 +48,9 @@ func (a *And[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]fr
 	if err != nil {
 		return err
 	}
-	rangechecker := rangecheck.New(api)
-	lhs, err := a.Lhs.ToVariable(witnesses)
-	if err != nil {
-		return err
-	}
-	rangechecker.Check(lhs, int(a.nBits))
-	lhs_b := uapi.ValueOf(lhs)
-
-	rhs, err := a.Rhs.ToVariable(witnesses)
-	if err != nil {
-		return err
-	}
-	rangechecker.Check(rhs, int(a.nBits))
-	rhs_b := uapi.ValueOf(rhs)
-
-	output, ok := witnesses[a.Output]
-	if !ok {
-		return fmt.Errorf("witness %d not found in witnesses map", a.Output)
-	}
-	output_b := uapi.ValueOf(output)
-
-	uapi.AssertEq(output_b, uapi.And(lhs_b, rhs_b))
-
-	return nil
+	return defineBitwise(api, uapi, witnesses, a.Lhs, a.Rhs, a.Output, int(a.nBits), uapi.And)
 }
 
 func (a *And[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-
-	if a.Lhs.IsWitness() {
-		tree.ReplaceOrInsert(*a.Lhs.Witness + shr.Witness(index))
-	}
-	if a.Rhs.IsWitness() {
-		tree.ReplaceOrInsert(*a.Rhs.Witness + shr.Witness(index))
-	}
-	tree.ReplaceOrInsert(a.Output + shr.Witness(index))
-
-	return true
+	return fillBitwiseWitnessTree(tree, index, a.Lhs, a.Rhs, a.Output)
 }

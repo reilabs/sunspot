@@ -22,7 +22,7 @@ fn generate_and_test(path: &str) {
     let and_function_call = BlackBoxFuncCall::AND {
         lhs: FunctionInput::<FieldElement>::Witness(Witness(1234)),
         rhs: FunctionInput::<FieldElement>::Witness(Witness(2345)),
-        num_bits: 5678,
+        num_bits: 64,
         output: Witness(3456),
     };
 

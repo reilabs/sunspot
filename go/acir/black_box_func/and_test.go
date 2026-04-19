@@ -39,7 +39,7 @@ func TestAndUnmarshalReader(t *testing.T) {
 				Witness:           &expectedWitnessRhs,
 			},
 			Output: shr.Witness(3456),
-			nBits:  5678,
+			nBits:  64,
 		},
 	}
 
