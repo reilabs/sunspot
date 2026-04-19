@@ -109,6 +109,7 @@ func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
 			c.AssertMessages = make(map[ops.OpcodeLocation]ap.AssertionPayload[T, E])
 			return nil
 		}
+		return err
 	}
 
 	c.AssertMessages = make(map[ops.OpcodeLocation]ap.AssertionPayload[T, E], numAssertMessages)
