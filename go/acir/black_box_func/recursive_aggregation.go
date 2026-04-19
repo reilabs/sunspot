@@ -106,6 +106,20 @@ func (a *RecursiveAggregation[T, E]) Equals(other BlackBoxFunction[E]) bool {
 }
 
 func (a *RecursiveAggregation[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
+	// Constrain KeyHash to 0. Noir's compiler leaves key_hash unconstrained
+	// (see noir_stdlib/src/lib.nr and acvm-repo/acvm/src/pwg/blackbox/mod.rs,
+	// which delegates RecursiveAggregation to the backend), so without this
+	// assertion a prover could supply any value. That enables two issues:
+	// (1) malleability — the same (VK, proof, public_inputs) verifies under
+	// different KeyHash values; and (2) if an outer circuit authenticates
+	// the inner VK only via KeyHash, a prover can pair a fake VK with a
+	// self-chosen matching hash.
+	keyHash, err := a.KeyHash.ToVariable(witnesses)
+	if err != nil {
+		return err
+	}
+	api.AssertIsEqual(keyHash, frontend.Variable(0))
+
 	switch a.ProofType {
 	case 0:
 		return a.AggregateGroth16(api, witnesses)
