@@ -35,11 +35,18 @@ func (p *Program[T, E]) UnmarshalReader(r io.Reader) error {
 	}
 
 	var unconstrainedFuncCount uint64
-	if err := binary.Read(r, binary.BigEndian, &unconstrainedFuncCount); err != nil {
+	if err := binary.Read(r, binary.LittleEndian, &unconstrainedFuncCount); err != nil {
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			return nil
 		}
 		return err
+	}
+
+	p.UnconstrainedFunctions = make([]brl.BrilligBytecode[T], unconstrainedFuncCount)
+	for i := uint64(0); i < unconstrainedFuncCount; i++ {
+		if err := p.UnconstrainedFunctions[i].UnmarshalReader(r); err != nil {
+			return err
+		}
 	}
 
 	return nil

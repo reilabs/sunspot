@@ -123,6 +123,8 @@ func (b *BrilligOpcode[T]) UnmarshalReader(r io.Reader) error {
 		if err := b.IndirectConst.UnmarshalReader(r); err != nil {
 			return err
 		}
+	case ACIRBrilligOpcodeReturn:
+		// Unit variant; no payload.
 	case ACIRBrilligOpcodeForeignCall:
 		b.ForeignCall = &ForeignCall{}
 		if err := b.ForeignCall.UnmarshalReader(r); err != nil {
@@ -196,6 +198,8 @@ func (b *BrilligOpcode[T]) Equals(other BrilligOpcode[T]) bool {
 		return b.Const.Equals(*other.Const)
 	case ACIRBrilligOpcodeIndirectConst:
 		return b.IndirectConst.Equals(*other.IndirectConst)
+	case ACIRBrilligOpcodeReturn:
+		return true
 	case ACIRBrilligOpcodeForeignCall:
 		return b.ForeignCall.Equals(*other.ForeignCall)
 	case ACIRBrilligOpcodeMov:

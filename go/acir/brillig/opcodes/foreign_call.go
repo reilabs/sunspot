@@ -20,7 +20,7 @@ func (f *ForeignCall) UnmarshalReader(r io.Reader) error {
 		return err
 	}
 	functionBytes := make([]byte, functionLength)
-	if _, err := r.Read(functionBytes); err != nil {
+	if _, err := io.ReadFull(r, functionBytes); err != nil {
 		return err
 	}
 	f.Function = string(functionBytes)

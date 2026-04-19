@@ -8,10 +8,21 @@ import (
 )
 
 type BrilligBytecode[T shr.ACIRField] struct {
-	Bytecode []ops.BrilligOpcode[T]
+	FunctionName string
+	Bytecode     []ops.BrilligOpcode[T]
 }
 
 func (b *BrilligBytecode[T]) UnmarshalReader(r io.Reader) error {
+	var nameLen uint64
+	if err := binary.Read(r, binary.LittleEndian, &nameLen); err != nil {
+		return err
+	}
+	nameData := make([]byte, nameLen)
+	if _, err := io.ReadFull(r, nameData); err != nil {
+		return err
+	}
+	b.FunctionName = string(nameData)
+
 	var bytecodeSize uint64
 	if err := binary.Read(r, binary.LittleEndian, &bytecodeSize); err != nil {
 		return err
