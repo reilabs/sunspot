@@ -8,7 +8,6 @@ import (
 type Poseidon2Permutation struct {
 	Message mem.HeapVector
 	Output  mem.HeapArray
-	Len     mem.MemoryAddress
 }
 
 func (p *Poseidon2Permutation) UnmarshalReader(r io.Reader) error {
@@ -17,10 +16,6 @@ func (p *Poseidon2Permutation) UnmarshalReader(r io.Reader) error {
 	}
 
 	if err := p.Output.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	if err := p.Len.UnmarshalReader(r); err != nil {
 		return err
 	}
 

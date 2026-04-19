@@ -16,12 +16,6 @@ type BlackBoxOp struct {
 	EcdsaSecp256r1       *EcdsaSecp256r1
 	MultiScalarMul       *MultiScalarMul
 	EmbeddedCurveAdd     *EmbeddedCurveAdd
-	BigIntAdd            *BigIntAdd
-	BigIntSub            *BigIntSub
-	BigIntMul            *BigIntMul
-	BigIntDiv            *BigIntDiv
-	BigIntFromLeBytes    *BigIntFromLEBytes
-	BigIntToLeBytes      *BigIntToLEBytes
 	Poseidon2Permutation *Poseidon2Permutation
 	Sha256Compression    *Sha256Compression
 	ToRadix              *ToRadix
@@ -38,12 +32,6 @@ const (
 	ACIRBlackBoxOpEcdsaSecp256r1
 	ACIRBlackBoxOpMultiScalarMul
 	ACIRBlackBoxOpEmbeddedCurveAdd
-	ACIRBlackBoxOpBigIntAdd
-	ACIRBlackBoxOpBigIntSub
-	ACIRBlackBoxOpBigIntMul
-	ACIRBlackBoxOpBigIntDiv
-	ACIRBlackBoxOpBigIntFromLeBytes
-	ACIRBlackBoxOpBigIntToLeBytes
 	ACIRBlackBoxOpPoseidon2Permutation
 	ACIRBlackBoxOpSha256Compression
 	ACIRBlackBoxOpToRadix
@@ -91,24 +79,6 @@ func (bbo *BlackBoxOp) UnmarshalReader(r io.Reader) error {
 	case ACIRBlackBoxOpEmbeddedCurveAdd:
 		bbo.EmbeddedCurveAdd = &EmbeddedCurveAdd{}
 		return bbo.EmbeddedCurveAdd.UnmarshalReader(r)
-	case ACIRBlackBoxOpBigIntAdd:
-		bbo.BigIntAdd = &BigIntAdd{}
-		return bbo.BigIntAdd.UnmarshalReader(r)
-	case ACIRBlackBoxOpBigIntSub:
-		bbo.BigIntSub = &BigIntSub{}
-		return bbo.BigIntSub.UnmarshalReader(r)
-	case ACIRBlackBoxOpBigIntMul:
-		bbo.BigIntMul = &BigIntMul{}
-		return bbo.BigIntMul.UnmarshalReader(r)
-	case ACIRBlackBoxOpBigIntDiv:
-		bbo.BigIntDiv = &BigIntDiv{}
-		return bbo.BigIntDiv.UnmarshalReader(r)
-	case ACIRBlackBoxOpBigIntFromLeBytes:
-		bbo.BigIntFromLeBytes = &BigIntFromLEBytes{}
-		return bbo.BigIntFromLeBytes.UnmarshalReader(r)
-	case ACIRBlackBoxOpBigIntToLeBytes:
-		bbo.BigIntToLeBytes = &BigIntToLEBytes{}
-		return bbo.BigIntToLeBytes.UnmarshalReader(r)
 	case ACIRBlackBoxOpPoseidon2Permutation:
 		bbo.Poseidon2Permutation = &Poseidon2Permutation{}
 		return bbo.Poseidon2Permutation.UnmarshalReader(r)
