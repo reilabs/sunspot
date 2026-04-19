@@ -16,7 +16,6 @@ type Expression[T shr.ACIRField, E constraint.Element] struct {
 	MulTerms           []MulTerm[T]           `json:"mul_terms"`           // Terms that are multiplied together
 	LinearCombinations []LinearCombination[T] `json:"linear_combinations"` // Linear combinations of variables
 	Constant           T                      `json:"constant"`
-	constantWitnessID  shr.Witness            // Constant term in the expression
 }
 
 func (e *Expression[T, E]) Define(
