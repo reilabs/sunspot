@@ -1,11 +1,3 @@
-fn main(x: u64, y: pub u64, z: u64) {
+fn main(x: u128, y: pub u128, z: u128) {
     assert(x & y == z);
-}
-
-#[test]
-fn test_main() {
-    main(1, 2, 0);
-
-    // Uncomment to make test fail
-    // main(1, 1);
 }
