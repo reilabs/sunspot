@@ -6,7 +6,7 @@ import (
 	"io"
 	ap "sunspot/go/acir/assertion_payload"
 	bbf "sunspot/go/acir/black_box_func"
-	"sunspot/go/acir/brillig"
+	"sunspot/go/acir/brillig_call"
 	"sunspot/go/acir/call"
 	exp "sunspot/go/acir/expression"
 	"sunspot/go/acir/memory_init"
@@ -332,7 +332,7 @@ func NewOpcode[T shr.ACIRField, E constraint.Element](r io.Reader) (ops.Opcode[E
 	case 3:
 		return &memory_init.MemoryInit[T, E]{}, nil
 	case 4:
-		return &brillig.BrilligCall[T, E]{}, nil
+		return &brillig_call.BrilligCall[T, E]{}, nil
 	case 5:
 		return &call.Call[T, E]{}, nil
 	default:

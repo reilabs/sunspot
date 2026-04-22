@@ -1,6 +1,5 @@
 mod acir_field;
 mod black_box_func;
-mod brillig;
 mod expression;
 mod opcodes;
 mod shared;
@@ -21,7 +20,6 @@ fn main() {
 
     black_box_func::generate_tests(target_dir);
     shared::generate_tests(target_dir);
-    brillig::generate_tests(target_dir);
     acir_field::generate_tests(target_dir);
     expression::generate_tests(target_dir);
     opcodes::generate_tests(target_dir);

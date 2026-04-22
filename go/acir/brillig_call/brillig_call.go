@@ -1,4 +1,4 @@
-package brillig
+package brillig_call
 
 import (
 	"encoding/binary"
