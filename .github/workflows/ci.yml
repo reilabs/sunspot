@@ -28,6 +28,7 @@ env:
     noir-samples/expressions/rock_paper_scissors
     noir-samples/expressions/polynomial
     noir-samples/expressions/lcchecker
+    noir-samples/expressions/unused_witness
     noir-samples/black_box_functions/range
     noir-samples/black_box_functions/keccak_f1600
     noir-samples/black_box_functions/and
@@ -45,7 +46,8 @@ env:
     noir-samples/black_box_functions/aes128encrypt
     noir-samples/black_box_functions/recursive_aggregation
     noir-samples/memory
-    noir-samples/circuit_call
+    noir-samples/circuit_calls/all_witnesses_used
+    noir-samples/circuit_calls/unused_witness
     noir-samples/real_world/provekit_basic
     noir-samples/zk_passport/exclusion_check
     noir-samples/zk_passport/inclusion_check
