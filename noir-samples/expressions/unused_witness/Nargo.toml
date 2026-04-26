@@ -1,0 +1,6 @@
+[package]
+name = "unused_witness"
+type = "bin"
+authors = [""]
+
+[dependencies]
