@@ -50,6 +50,14 @@ func TestACIRPolynomial(t *testing.T) {
 	)
 }
 
+func TestACIRUnusedWitness(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../../noir-samples/expressions/unused_witness/target/unused_witness.json",
+		"../../noir-samples/expressions/unused_witness/target/unused_witness.gz",
+	)
+}
+
 func TestACIRRange(t *testing.T) {
 	testProveAndVerify(
 		t,
@@ -185,11 +193,19 @@ func TestACIRRecursiveAggregation(t *testing.T) {
 	)
 }
 
-func TestACIRCircuitCall(t *testing.T) {
+func TestACIRCircuitCallUsedWitness(t *testing.T) {
 	testProveAndVerify(
 		t,
-		"../../noir-samples/circuit_call/target/circuit_call.json",
-		"../../noir-samples/circuit_call/target/circuit_call.gz",
+		"../../noir-samples/circuit_calls/all_witnesses_used/target/all_witnesses_used.json",
+		"../../noir-samples/circuit_calls/all_witnesses_used/target/all_witnesses_used.gz",
+	)
+}
+
+func TestACIRCircuitCallUnusedWitnesses(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../../noir-samples/circuit_calls/unused_witness/target/unused_witness.json",
+		"../../noir-samples/circuit_calls/unused_witness/target/unused_witness.gz",
 	)
 }
 func TestACIRLCChecker(t *testing.T) {

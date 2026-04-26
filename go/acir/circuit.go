@@ -142,7 +142,10 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 	}
 
 	// 2. Collect witnesses for current circuit
-	currentWitnesses := c.collectCurrentWitnesses(witnesses, index)
+	currentWitnesses, err := c.collectCurrentWitnesses(witnesses, index)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// 3. Add the constraints for the circuit
 	if err := c.constrainCircuit(api, currentWitnesses); err != nil {
@@ -205,23 +208,28 @@ func (c *Circuit[T, E]) defineSubcircuits(api frontend.Builder[E], witnesses map
 // Get the partial witness for a particular circuit call
 // The partial witness for a whole programme consists of a concatenation of a postorder traversal of the programme tree.
 // We perform a postorder traversal and 'pop' the witness that we need by incrementing the global index
-func (c *Circuit[T, E]) collectCurrentWitnesses(witnesses map[shr.Witness]frontend.Variable, index *uint32) map[shr.Witness]frontend.Variable {
+func (c *Circuit[T, E]) collectCurrentWitnesses(witnesses map[shr.Witness]frontend.Variable, index *uint32) (map[shr.Witness]frontend.Variable, error) {
 	currentWitnesses := make(map[shr.Witness]frontend.Variable, c.CurrentWitnessIndex+1)
 
 	for i := range c.CurrentWitnessIndex + 1 {
-		v, ok := witnesses[shr.Witness(i+uint32(*index))]
+		global := shr.Witness(i + uint32(*index))
+		v, ok := witnesses[global]
 		if !ok {
-			// Sometimes circuits skip an index.
-			// Insert dummy witness variable to make the number of witnesses
-			// consistent with the `CurrentWitnessIndex` in the ACIR of the circuit
-			currentWitnesses[shr.Witness(i)] = frontend.Variable(0)
-			continue
+			// FillWitnessTree's catch-all loop guarantees a tree entry for every
+			// slot 0..=CurrentWitnessIndex of every circuit, and Compile creates a
+			// gnark variable for each tree entry — so this lookup must succeed if
+			// the global index is advanced consistently between the two passes.
+			return nil, fmt.Errorf(
+				"circuit %q: missing witness for slot %d (global %d); "+
+					"FillWitnessTree did not insert this index",
+				c.CircuitName, i, global,
+			)
 		}
 		currentWitnesses[shr.Witness(i)] = v
 	}
 
 	*index += c.CurrentWitnessIndex + 1
-	return currentWitnesses
+	return currentWitnesses, nil
 }
 
 // Add constraints for a specific circuit call within a programme
@@ -294,7 +302,10 @@ func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve Circui
 				return index, fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
 			}
 			subCircuitWitnessTree := btree.New(2)
-			subCircuit.FillWitnessTree(subCircuitWitnessTree, resolve, index)
+			subCircuitOwnStart, err := subCircuit.FillWitnessTree(subCircuitWitnessTree, resolve, index)
+			if err != nil {
+				return index, err
+			}
 
 			subCircuitWitnessTree.Ascend(func(it btree.Item) bool {
 				witness, ok := it.(shr.Witness)
@@ -302,13 +313,21 @@ func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve Circui
 					panic("Item in subwitness tree not of type witness")
 				}
 				witnessTree.ReplaceOrInsert(witness)
-				index++
 				return true
 			})
+			// Advance by the sub-circuit's full slot count (descendants + own),
+			// matching collectCurrentWitnesses. Counting tree items would undercount
+			// when the sub-circuit has unused witness slots.
+			index = subCircuitOwnStart + subCircuit.CurrentWitnessIndex + 1
 		}
 	}
 	for _, opcode := range c.Opcodes {
 		opcode.FillWitnessTree(witnessTree, index)
+	}
+	// Ensure every local slot has a tree entry, including slots that no opcode
+	// references (unused witnesses).
+	for i := uint32(0); i <= c.CurrentWitnessIndex; i++ {
+		witnessTree.ReplaceOrInsert(shr.Witness(i + index))
 	}
 	return index, nil
 }

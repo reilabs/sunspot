@@ -15,10 +15,17 @@ import (
 	"github.com/tidwall/btree"
 )
 
+// WitnessStack pairs a circuit's witness map with the function it corresponds to.
+// StackIndex is the index into ACIR Program.Functions.
+type WitnessStack[T shr.ACIRField] struct {
+	StackIndex uint32
+	Witnesses  btree.Map[shr.Witness, T]
+}
+
 // WitnessStacks stores witnesses from `nargo execute` in postorder based on circuit calls.
 // For each execution, witnesses of called subcircuits are stored before their caller,
 // so the main circuit’s witnesses appear last.
-type WitnessStacks[T shr.ACIRField] map[uint64]btree.Map[shr.Witness, T]
+type WitnessStacks[T shr.ACIRField] map[uint64]WitnessStack[T]
 
 // Loads the witness stacks from a compressed file
 func LoadWitnessStacksFromFile[T shr.ACIRField](filePath string, modulus *big.Int) (WitnessStacks[T], error) {
@@ -69,7 +76,7 @@ func LoadWitnessStacksFromFile[T shr.ACIRField](filePath string, modulus *big.In
 
 			witnessMap.Set(witness, value)
 		}
-		witnesses[i] = witnessMap
+		witnesses[i] = WitnessStack[T]{StackIndex: stackIndex, Witnesses: witnessMap}
 	}
 	return witnesses, nil
 }
@@ -101,9 +108,12 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 		}
 	}
 
+	// Drive the count from the constraint system (one variable per slot in
+	// 0..=CurrentWitnessIndex of every circuit) rather than the witness file,
+	// which may omit slots that no opcode references.
 	for _, itemStack := range witnesses {
-		itemStackCount := itemStack.Len()
-		countPrivate += itemStackCount
+		c := &acir.Program.Functions[itemStack.StackIndex]
+		countPrivate += int(c.CurrentWitnessIndex) + 1
 	}
 
 	countPrivate -= countPublic
@@ -113,7 +123,7 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 		for index, param := range params {
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
 				outerCircuitStack := witnesses[uint64(len(witnesses)-1)]
-				if value, ok := outerCircuitStack.Get(shr.Witness(index)); ok {
+				if value, ok := outerCircuitStack.Witnesses.Get(shr.Witness(index)); ok {
 					values <- value.ToFrontendVariable()
 				} else {
 					log.Warn().Msgf("Public parameter %s not found in outermost circuit stack", param.Name)
@@ -123,8 +133,9 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 		}
 		for i := 0; i < len(witnesses); i++ {
 			partialWitness := witnesses[uint64(i)]
-			for it := partialWitness.Iter(); it.Next(); {
-				witnessKey := it.Key()
+			c := &acir.Program.Functions[partialWitness.StackIndex]
+			for j := uint32(0); j <= c.CurrentWitnessIndex; j++ {
+				witnessKey := shr.Witness(j)
 				skipKey := false
 				// For the outermost circuit, we skip the witness values
 				// that have already been added as part of the public variables
@@ -135,14 +146,18 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 							break
 						}
 					}
-					if acir.WitnessTree != nil && !acir.WitnessTree.Has(witnessKey) {
-						skipKey = true
-					}
 				}
 				if skipKey {
 					continue
 				}
-				witnessValue := it.Value()
+				// Slots not present in the witness file are filled with zero, matching
+				// barretenberg's witness_map_to_witness_vector behavior.
+				witnessValue, ok := partialWitness.Witnesses.Get(witnessKey)
+				if !ok {
+					fmt.Println("Missing witness at index ", j)
+					values <- 0
+					continue
+				}
 				values <- witnessValue.ToFrontendVariable()
 			}
 		}

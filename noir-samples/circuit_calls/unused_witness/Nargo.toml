@@ -1,5 +1,5 @@
 [package]
-name = "circuit_call"
+name = "unused_witness"
 type = "bin"
 authors = [""]
 
