@@ -1,0 +1,6 @@
+[package]
+name = "public_witnesses_callee"
+type = "bin"
+authors = [""]
+
+[dependencies]
