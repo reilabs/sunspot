@@ -154,7 +154,6 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 				// barretenberg's witness_map_to_witness_vector behavior.
 				witnessValue, ok := partialWitness.Witnesses.Get(witnessKey)
 				if !ok {
-					fmt.Println("Missing witness at index ", j)
 					values <- 0
 					continue
 				}
