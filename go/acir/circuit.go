@@ -156,8 +156,8 @@ func (c *Circuit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 	c.constrainCircuitCalls(api, currentWitnesses, callConnections)
 
 	// 5. Collect circuit inputs and outputs
-	inputs := c.collectWitnesses(&c.PrivateParameters, currentWitnesses)
-	outputs := c.collectWitnesses(&c.ReturnValues, currentWitnesses)
+	inputs := c.collectWitnesses(currentWitnesses, &c.PrivateParameters, &c.PublicParameters)
+	outputs := c.collectWitnesses(currentWitnesses, &c.ReturnValues)
 
 	return inputs, outputs, nil
 }
@@ -275,10 +275,19 @@ func (c *Circuit[T, E]) constrainCircuitCalls(api frontend.Builder[E], currentWi
 	}
 }
 
-// Construct a list of input/ output variables of a circuit given a tree of witness indices and a index->variable mapping
-func (c *Circuit[T, E]) collectWitnesses(tree *btree.BTree, currentWitnesses map[shr.Witness]frontend.Variable) []frontend.Variable {
+// Construct a list of input/ output variables of a circuit given trees of witness
+// indices and a index->variable mapping. Entries from all trees are visited in
+// global witness-index order (Witness.Less sorts by uint32).
+func (c *Circuit[T, E]) collectWitnesses(currentWitnesses map[shr.Witness]frontend.Variable, trees ...*btree.BTree) []frontend.Variable {
+	merged := btree.New(2)
+	for _, tree := range trees {
+		tree.Ascend(func(it btree.Item) bool {
+			merged.ReplaceOrInsert(it)
+			return true
+		})
+	}
 	var vars []frontend.Variable
-	tree.Ascend(func(it btree.Item) bool {
+	merged.Ascend(func(it btree.Item) bool {
 		witness, ok := it.(shr.Witness)
 		if !ok {
 			return false

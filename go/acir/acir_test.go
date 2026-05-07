@@ -208,6 +208,14 @@ func TestACIRCircuitCallUnusedWitnesses(t *testing.T) {
 		"../../noir-samples/circuit_calls/unused_witness/target/unused_witness.gz",
 	)
 }
+
+func TestACIRCircuitCallPublicWitnessCallee(t *testing.T) {
+	testProveAndVerify(
+		t,
+		"../../noir-samples/circuit_calls/public_witnesses_callee/target/public_witnesses_callee.json",
+		"../../noir-samples/circuit_calls/public_witnesses_callee/target/public_witnesses_callee.gz",
+	)
+}
 func TestACIRLCChecker(t *testing.T) {
 	testProveAndVerify(
 		t,
