@@ -47,6 +47,7 @@ env:
     noir-samples/black_box_functions/recursive_aggregation
     noir-samples/memory
     noir-samples/circuit_calls/all_witnesses_used
+    noir-samples/circuit_calls/public_witnesses_callee
     noir-samples/circuit_calls/unused_witness
     noir-samples/real_world/provekit_basic
     noir-samples/zk_passport/exclusion_check
