@@ -13,7 +13,6 @@ import (
 	"github.com/consensys/gnark/std/math/bits"
 	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/recursion/groth16"
-	"github.com/google/btree"
 )
 
 type RecursiveAggregation[T shr.ACIRField, E constraint.Element] struct {
@@ -157,29 +156,6 @@ func (a *RecursiveAggregation[T, E]) AggregateGroth16(api frontend.Builder[E], w
 	return nil
 }
 
-func (a *RecursiveAggregation[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	for i := range a.VerificationKey {
-		if a.VerificationKey[i].IsWitness() {
-			tree.ReplaceOrInsert(*a.VerificationKey[i].Witness + shr.Witness(index))
-		}
-	}
-
-	for i := range a.Proof {
-		if a.Proof[i].IsWitness() {
-			tree.ReplaceOrInsert(*a.Proof[i].Witness + shr.Witness(index))
-		}
-	}
-	for i := range a.PublicInputs {
-		if a.PublicInputs[i].IsWitness() {
-			tree.ReplaceOrInsert(*a.PublicInputs[i].Witness + shr.Witness(index))
-		}
-	}
-
-	if a.KeyHash.IsWitness() {
-		tree.ReplaceOrInsert(*a.KeyHash.Witness + shr.Witness(index))
-	}
-	return tree != nil
-}
 
 func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable, kLen int) (groth16.VerifyingKey[sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl], error) {
 	vk := groth16.VerifyingKey[sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{}

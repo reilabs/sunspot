@@ -9,7 +9,6 @@ import (
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
-	"github.com/google/btree"
 )
 
 type Expression[T shr.ACIRField, E constraint.Element] struct {
@@ -106,25 +105,6 @@ func (e *Expression[T, E]) Calculate(api frontend.API, witnesses map[shr.Witness
 	return sum
 }
 
-func (e *Expression[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-
-	for _, term := range e.MulTerms {
-		if !term.FillWitnessTree(tree, index) {
-			return false
-		}
-	}
-
-	for _, lc := range e.LinearCombinations {
-		if !lc.FillWitnessTree(tree, index) {
-			return false
-		}
-	}
-
-	return true
-}
 
 func (e *Expression[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap := make(map[string]interface{})

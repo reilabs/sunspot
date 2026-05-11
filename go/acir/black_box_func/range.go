@@ -9,7 +9,6 @@ import (
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/rangecheck"
-	"github.com/google/btree"
 )
 
 type Range[T shr.ACIRField, E constraint.Element] struct {
@@ -43,12 +42,3 @@ func (a Range[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]f
 	return nil
 }
 
-func (a *Range[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-	if a.Input.IsWitness() {
-		tree.ReplaceOrInsert(*a.Input.Witness + shr.Witness(index))
-	}
-	return true
-}

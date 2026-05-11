@@ -5,7 +5,6 @@ import (
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
-	"github.com/google/btree"
 )
 
 type MulTerm[T shr.ACIRField] struct {
@@ -63,13 +62,3 @@ func (Mt *MulTerm[T]) Calculate(api frontend.API, witnesses map[shr.Witness]fron
 	return api.Mul(left, right, Mt.Term.ToFrontendVariable())
 }
 
-func (mt *MulTerm[T]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-
-	tree.ReplaceOrInsert(mt.WitnessLeft + shr.Witness(index))
-	tree.ReplaceOrInsert(mt.WitnessRight + shr.Witness(index))
-
-	return true
-}

@@ -215,13 +215,12 @@ func (c *Circuit[T, E]) collectCurrentWitnesses(witnesses map[shr.Witness]fronte
 		global := shr.Witness(i + uint32(*index))
 		v, ok := witnesses[global]
 		if !ok {
-			// FillWitnessTree's catch-all loop guarantees a tree entry for every
-			// slot 0..=CurrentWitnessIndex of every circuit, and Compile creates a
-			// gnark variable for each tree entry — so this lookup must succeed if
-			// the global index is advanced consistently between the two passes.
+			// Compile allocates a variable for every slot in [0, totalSlots),
+			// so this lookup must succeed if the global index is advanced
+			// consistently with the layout computed by Program.WitnessLayout.
 			return nil, fmt.Errorf(
 				"circuit %q: missing witness for slot %d (global %d); "+
-					"FillWitnessTree did not insert this index",
+					"witness layout did not allocate this index",
 				c.CircuitName, i, global,
 			)
 		}
@@ -298,45 +297,24 @@ func (c *Circuit[T, E]) collectWitnesses(currentWitnesses map[shr.Witness]fronte
 	return vars
 }
 
-// FillWitness adds the witnesses used by a circuit incremented by the starting index
-func (c *Circuit[T, E]) FillWitnessTree(witnessTree *btree.BTree, resolve CircuitResolver[T, E], index uint32) (uint32, error) {
-	if witnessTree == nil {
-		return index, fmt.Errorf("no witness tree to fill")
-	}
-
+// countSubcircuitSlots walks the call tree in opcode order and returns the
+// global slot at which this circuit's own witnesses begin: the starting
+// `index` plus the total slot count of every transitively-called subcircuit.
+func (c *Circuit[T, E]) countSubcircuitSlots(resolve CircuitResolver[T, E], index uint32) (uint32, error) {
 	for _, opcode := range c.Opcodes {
-		if callOp, ok := opcode.(*call.Call[T, E]); ok {
-			subCircuit, err := resolve(callOp.ID)
-			if err != nil {
-				return index, fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
-			}
-			subCircuitWitnessTree := btree.New(2)
-			subCircuitOwnStart, err := subCircuit.FillWitnessTree(subCircuitWitnessTree, resolve, index)
-			if err != nil {
-				return index, err
-			}
-
-			subCircuitWitnessTree.Ascend(func(it btree.Item) bool {
-				witness, ok := it.(shr.Witness)
-				if !ok {
-					panic("Item in subwitness tree not of type witness")
-				}
-				witnessTree.ReplaceOrInsert(witness)
-				return true
-			})
-			// Advance by the sub-circuit's full slot count (descendants + own),
-			// matching collectCurrentWitnesses. Counting tree items would undercount
-			// when the sub-circuit has unused witness slots.
-			index = subCircuitOwnStart + subCircuit.CurrentWitnessIndex + 1
+		callOp, ok := opcode.(*call.Call[T, E])
+		if !ok {
+			continue
 		}
-	}
-	for _, opcode := range c.Opcodes {
-		opcode.FillWitnessTree(witnessTree, index)
-	}
-	// Ensure every local slot has a tree entry, including slots that no opcode
-	// references (unused witnesses).
-	for i := uint32(0); i <= c.CurrentWitnessIndex; i++ {
-		witnessTree.ReplaceOrInsert(shr.Witness(i + index))
+		subCircuit, err := resolve(callOp.ID)
+		if err != nil {
+			return index, fmt.Errorf("failed to resolve circuit %d: %w", callOp.ID, err)
+		}
+		subOwnStart, err := subCircuit.countSubcircuitSlots(resolve, index)
+		if err != nil {
+			return index, err
+		}
+		index = subOwnStart + subCircuit.CurrentWitnessIndex + 1
 	}
 	return index, nil
 }

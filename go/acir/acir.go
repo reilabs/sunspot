@@ -19,21 +19,17 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/consensys/gnark/frontend/schema"
-	"github.com/google/btree"
-	"github.com/rs/zerolog/log"
 )
 
 // Struct representation of an ACIR programme
 type ACIR[T shr.ACIRField, E constraint.Element] struct {
-	NoirVersion         string                      `json:"noir_version"`
-	Hash                uint64                      `json:"hash"`
-	ABI                 hdr.ACIRABI                 `json:"abi"`
-	Program             Program[T, E]               `json:"program"`
-	DebugSymbols        string                      `json:"debug_symbols"`
-	FileMap             map[string]hdr.ACIRFileData `json:"file_map"`
-	ExpressionWidth     expression.ExpressionWidth  `json:"expression_width"`
-	WitnessTree         *btree.BTree                `json:"-"`
-	ConstantWitnessTree *btree.BTree                `json:"-"`
+	NoirVersion     string                      `json:"noir_version"`
+	Hash            uint64                      `json:"hash"`
+	ABI             hdr.ACIRABI                 `json:"abi"`
+	Program         Program[T, E]               `json:"program"`
+	DebugSymbols    string                      `json:"debug_symbols"`
+	FileMap         map[string]hdr.ACIRFileData `json:"file_map"`
+	ExpressionWidth expression.ExpressionWidth  `json:"expression_width"`
 }
 
 // Loads ACIR from disk and creates representation in memory
@@ -166,24 +162,19 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 			return nil, fmt.Errorf("failed to create R1CS builder: %w", err)
 		}
 
-		witnessMap := make(map[shr.Witness]frontend.Variable)
-		var outerCircuitIndex uint32
-		a.WitnessTree, outerCircuitIndex, err = a.Program.GetWitnesses()
+		totalSlots, mainStart, err := a.Program.WitnessLayout()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get witness tree: %w", err)
+			return nil, fmt.Errorf("failed to compute witness layout: %w", err)
 		}
 
-		if a.WitnessTree == nil {
-			return nil, fmt.Errorf("witness tree is nil, cannot compile ACIR")
-		}
+		witnessMap := make(map[shr.Witness]frontend.Variable, totalSlots)
 
-		// Gnark expects for the public witnesses to be added first
-		// But the Noir witnesses are visibility-agnostic
-		// We add the public ones first but make sure they are indexed by their
-		// Noir index in the witness map
+		// Gnark expects public witnesses to be added before private ones. Noir's
+		// public params occupy the first slots of the main circuit (i.e. starting
+		// at mainStart, which sits after every transitively-called subcircuit).
 		for index, param := range a.ABI.Params() {
 			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-				witnessMap[shr.Witness(index+int(outerCircuitIndex))] = builder.PublicVariable(
+				witnessMap[shr.Witness(uint32(index)+mainStart)] = builder.PublicVariable(
 					schema.LeafInfo{
 						FullName:   func() string { return param.Name },
 						Visibility: schema.Public,
@@ -192,23 +183,19 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 			}
 		}
 
-		// Now we traverse the witness tree and add the private witnesses
-		a.WitnessTree.Ascend(func(it btree.Item) bool {
-			witness, ok := it.(shr.Witness)
-			if !ok {
-				log.Warn().Msgf("Item in witness tree is not of type shr.Witness: %T", it)
-				return true // Continue processing other items
-			}
-			if _, ok := witnessMap[witness]; !ok {
-				witnessMap[witness] = builder.SecretVariable(
+		// Allocate a private variable for every remaining slot. We don't inspect
+		// opcodes to determine which witnesses are referenced — every index from
+		// 0 to totalSlots-1 gets a variable.
+		for i := uint32(0); i < totalSlots; i++ {
+			if _, ok := witnessMap[shr.Witness(i)]; !ok {
+				witnessMap[shr.Witness(i)] = builder.SecretVariable(
 					schema.LeafInfo{
-						FullName:   func() string { return fmt.Sprintf("__witness_%d", witness) },
+						FullName:   func() string { return fmt.Sprintf("__witness_%d", i) },
 						Visibility: schema.Secret,
 					},
 				)
 			}
-			return true
-		})
+		}
 
 		err = a.Program.Define(builder, witnessMap)
 		if err != nil {

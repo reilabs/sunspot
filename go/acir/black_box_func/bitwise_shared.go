@@ -11,7 +11,6 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
 	"github.com/consensys/gnark/std/rangecheck"
-	"github.com/google/btree"
 )
 
 // defineBitwise emits the constraints for a bitwise op (AND, XOR, ...) between
@@ -65,27 +64,6 @@ func defineBitwise[T shr.ACIRField, E constraint.Element](
 		uapi.AssertEq(outLimbs[i], op(lhsLimbs[i], rhsLimbs[i]))
 	}
 	return nil
-}
-
-// fillBitwiseWitnessTree inserts the witness indices referenced by a bitwise
-// black-box call (lhs, rhs if they are witnesses, and output) into tree.
-func fillBitwiseWitnessTree[T shr.ACIRField](
-	tree *btree.BTree,
-	index uint32,
-	lhs, rhs FunctionInput[T],
-	output shr.Witness,
-) bool {
-	if tree == nil {
-		return false
-	}
-	if lhs.IsWitness() {
-		tree.ReplaceOrInsert(*lhs.Witness + shr.Witness(index))
-	}
-	if rhs.IsWitness() {
-		tree.ReplaceOrInsert(*rhs.Witness + shr.Witness(index))
-	}
-	tree.ReplaceOrInsert(output + shr.Witness(index))
-	return true
 }
 
 var twoTo64 = new(big.Int).Lsh(big.NewInt(1), 64)

@@ -12,7 +12,6 @@ import (
 	"github.com/consensys/gnark/std/math/bits"
 	"github.com/consensys/gnark/std/math/emulated"
 	"github.com/consensys/gnark/std/signature/ecdsa"
-	"github.com/google/btree"
 )
 
 type ECDSASECP256K1[T shr.ACIRField, E constraint.Element] struct {
@@ -151,37 +150,6 @@ func (a *ECDSASECP256K1[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(witnesses[a.Output], result)))
 	return nil
-}
-
-func (a *ECDSASECP256K1[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-
-	for _, input := range a.PublicKeyX {
-		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
-		}
-	}
-	for _, input := range a.PublicKeyY {
-		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
-		}
-	}
-	for _, input := range a.HashedMessage {
-		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
-		}
-	}
-	for _, input := range a.Signature {
-		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
-		}
-	}
-
-	tree.ReplaceOrInsert(a.Output + shr.Witness(index))
-
-	return true
 }
 
 // ACIR has signature variables as big endian bytes
