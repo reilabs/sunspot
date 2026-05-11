@@ -8,7 +8,6 @@ import (
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
-	"github.com/google/btree"
 )
 
 type MultiScalarMul[T shr.ACIRField, E constraint.Element] struct {
@@ -123,23 +122,3 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	return nil
 }
 
-func (a *MultiScalarMul[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-	for _, point := range a.Points {
-		if point.IsWitness() {
-			tree.ReplaceOrInsert(*point.Witness + shr.Witness(index))
-		}
-	}
-
-	for _, scalar := range a.Scalars {
-		if scalar.IsWitness() {
-			tree.ReplaceOrInsert(*scalar.Witness + shr.Witness(index))
-		}
-	}
-	for _, output := range a.Outputs {
-		tree.ReplaceOrInsert(output + shr.Witness(index))
-	}
-	return true
-}

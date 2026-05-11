@@ -10,7 +10,6 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
 	"github.com/consensys/gnark/std/permutation/keccakf"
-	"github.com/google/btree"
 )
 
 type Keccakf1600[T shr.ACIRField, E constraint.Element] struct {
@@ -81,17 +80,3 @@ func (a *Keccakf1600[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Wi
 	return nil
 }
 
-func (a *Keccakf1600[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-	for _, input := range a.Inputs {
-		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
-		}
-	}
-	for _, output := range a.Outputs {
-		tree.ReplaceOrInsert(output + shr.Witness(index))
-	}
-	return true
-}

@@ -9,7 +9,6 @@ import (
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
-	"github.com/google/btree"
 )
 
 type And[T shr.ACIRField, E constraint.Element] struct {
@@ -51,6 +50,3 @@ func (a *And[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]fr
 	return defineBitwise(api, uapi, witnesses, a.Lhs, a.Rhs, a.Output, int(a.nBits), uapi.And)
 }
 
-func (a *And[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	return fillBitwiseWitnessTree(tree, index, a.Lhs, a.Rhs, a.Output)
-}

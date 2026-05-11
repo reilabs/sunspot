@@ -9,7 +9,6 @@ import (
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
 	"github.com/consensys/gnark/std/permutation/sha2"
-	"github.com/google/btree"
 )
 
 type SHA256Compression[T shr.ACIRField, E constraint.Element] struct {
@@ -96,22 +95,3 @@ func (a *SHA256Compression[T, E]) Define(api frontend.Builder[E], witnesses map[
 	return nil
 }
 
-func (a *SHA256Compression[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-	for _, input := range a.Inputs {
-		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
-		}
-	}
-	for _, input := range a.HashValues {
-		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
-		}
-	}
-	for _, output := range a.Outputs {
-		tree.ReplaceOrInsert(output + shr.Witness(index))
-	}
-	return true
-}

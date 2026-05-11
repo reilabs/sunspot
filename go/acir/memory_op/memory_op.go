@@ -12,7 +12,6 @@ import (
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/lookup/logderivlookup"
-	"github.com/google/btree"
 )
 
 type MemoryOp[T shr.ACIRField, E constraint.Element] struct {
@@ -56,10 +55,6 @@ func (m *MemoryOp[T, E]) Equals(other ops.Opcode[E]) bool {
 
 }
 
-func (*MemoryOp[T, E]) CollectConstantsAsWitnesses(start uint32, tree *btree.BTree) bool {
-	return tree != nil
-}
-
 func (o *MemoryOp[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 
 	table := o.Memory[o.BlockID]
@@ -90,11 +85,6 @@ func (o *MemoryOp[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witne
 	return nil
 }
 
-func (o *MemoryOp[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	return (o.Index.FillWitnessTree(tree, index) &&
-		o.Operation.FillWitnessTree(tree, index) &&
-		o.Value.FillWitnessTree(tree, index))
-}
 
 func (o MemoryOp[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap := make(map[string]interface{})

@@ -10,14 +10,12 @@ import (
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
-	"github.com/google/btree"
 )
 
 type BlackBoxFunction[E constraint.Element] interface {
 	UnmarshalReader(r io.Reader) error
 	Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error
 	Equals(other BlackBoxFunction[E]) bool
-	FillWitnessTree(tree *btree.BTree, index uint32) bool
 }
 
 // Struct that implements the Opcode interface
@@ -36,10 +34,6 @@ func (b BlackBoxFuncCall[T, E]) Equals(other opcodes.Opcode[E]) bool {
 		return false
 	}
 	return b.function.Equals(bbf.function)
-}
-
-func (b BlackBoxFuncCall[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	return b.function.FillWitnessTree(tree, index)
 }
 
 func (b BlackBoxFuncCall[T, E]) MarshalJSON() ([]byte, error) {

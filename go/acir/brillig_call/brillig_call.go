@@ -10,7 +10,6 @@ import (
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
-	"github.com/google/btree"
 )
 
 type BrilligCall[T shr.ACIRField, E constraint.Element] struct {
@@ -77,6 +76,3 @@ func (o *BrilligCall[T, E]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(stringMap)
 }
 
-func (o *BrilligCall[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	return tree != nil
-}

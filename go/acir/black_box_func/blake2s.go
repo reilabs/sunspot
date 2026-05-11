@@ -9,7 +9,6 @@ import (
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/math/uints"
-	"github.com/google/btree"
 )
 
 type Blake2s[T shr.ACIRField, E constraint.Element] struct {
@@ -56,20 +55,6 @@ func (a *Blake2s[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	return true
 }
 
-func (a *Blake2s[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-	for _, input := range a.Inputs {
-		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
-		}
-	}
-	for _, output := range a.Outputs {
-		tree.ReplaceOrInsert(output + shr.Witness(index))
-	}
-	return true
-}
 
 func (a *Blake2s[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.New[uints.U32](api)

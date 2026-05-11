@@ -7,7 +7,6 @@ import (
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
-	"github.com/google/btree"
 )
 
 type EmbeddedCurveAdd[T shr.ACIRField, E constraint.Element] struct {
@@ -88,24 +87,3 @@ func (a *EmbeddedCurveAdd[T, E]) Define(api frontend.Builder[E], witnesses map[s
 	return nil
 }
 
-func (a *EmbeddedCurveAdd[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-	for _, input := range a.Input1 {
-		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
-		}
-	}
-
-	for _, input := range a.Input2 {
-		if input.IsWitness() {
-			tree.ReplaceOrInsert(*input.Witness + shr.Witness(index))
-		}
-	}
-
-	for _, output := range a.Outputs {
-		tree.ReplaceOrInsert(output + shr.Witness(index))
-	}
-	return true
-}

@@ -10,7 +10,6 @@ import (
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/lookup/logderivlookup"
-	"github.com/google/btree"
 )
 
 type MemoryInit[T shr.ACIRField, E constraint.Element] struct {
@@ -90,15 +89,6 @@ func (m *MemoryInit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Wit
 	return nil
 }
 
-func (m *MemoryInit[T, E]) FillWitnessTree(tree *btree.BTree, index uint32) bool {
-	if tree == nil {
-		return false
-	}
-	for _, entry := range m.Init {
-		tree.ReplaceOrInsert(entry + shr.Witness(index))
-	}
-	return true
-}
 
 func (m *MemoryInit[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap := make(map[string]interface{})

@@ -8,7 +8,6 @@ import (
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
-	"github.com/google/btree"
 )
 
 // The Circuit resolver is a function type that takes a circuit id and returns a reference to the circuit
@@ -52,15 +51,18 @@ func (p *Program[T, E]) Define(
 	return nil
 }
 
-// GetWitnesses returns all the used witness indices in the programme
-// and the starting index for the witness referenced by the outermost (main) circuit
-func (p *Program[T, E]) GetWitnesses() (*btree.BTree, uint32, error) {
-	witnessTree := btree.New(2)
-	outerCircuitWitnessIndex, err := p.Functions[0].FillWitnessTree(witnessTree, makeResolver(*p), uint32(0))
+// WitnessLayout walks the call tree to determine the dense slot count and the
+// global slot at which the main circuit's local witnesses begin. The witness
+// space is laid out in postorder: each circuit reserves CurrentWitnessIndex+1
+// contiguous slots, with all transitively-called subcircuits placed before
+// the caller.
+func (p *Program[T, E]) WitnessLayout() (totalSlots, mainStart uint32, err error) {
+	mainStart, err = p.Functions[0].countSubcircuitSlots(makeResolver(*p), 0)
 	if err != nil {
-		return nil, outerCircuitWitnessIndex, err
+		return 0, 0, err
 	}
-	return witnessTree, outerCircuitWitnessIndex, nil
+	totalSlots = mainStart + p.Functions[0].CurrentWitnessIndex + 1
+	return totalSlots, mainStart, nil
 }
 
 // Resolver takes a progamme and an index and returns the circuit
