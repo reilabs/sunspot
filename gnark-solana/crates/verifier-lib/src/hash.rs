@@ -21,12 +21,12 @@ impl WrappedHashToField {
     }
 
     /// Append bytes to the internal buffer.
-    pub fn write(&mut self, data: &[u8]) {
+    pub(crate) fn write(&mut self, data: &[u8]) {
         self.to_hash.extend_from_slice(data);
     }
 
     /// Hash accumulated bytes to a field element (returning its byte representation).
-    pub fn sum(&mut self, mut b: Vec<u8>) -> Vec<u8> {
+    pub(crate) fn sum(&mut self, mut b: Vec<u8>) -> Vec<u8> {
         let res = hash_to_field(&self.to_hash, &self.domain, 1)
             .expect("Unable to get elements from hashing");
 
@@ -43,7 +43,7 @@ impl WrappedHashToField {
     }
 
     /// Reset internal state (clears accumulated bytes)
-    pub fn reset(&mut self) {
+    pub(crate) fn reset(&mut self) {
         self.to_hash.clear();
     }
 }

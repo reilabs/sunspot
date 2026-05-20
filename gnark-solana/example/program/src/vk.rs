@@ -1,5 +1,5 @@
 // === Auto-generated verifying key constant ===
-use gnark_verifier_solana::vk::GnarkVerifyingkey;
+use gnark_verifier_solana::GnarkVerifyingkey;
 #[rustfmt::skip]
 pub const VK: GnarkVerifyingkey<'static> = GnarkVerifyingkey {
     nr_pubinputs: 1,

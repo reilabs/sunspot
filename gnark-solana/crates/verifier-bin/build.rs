@@ -1,5 +1,5 @@
 // build.rs
-use gnark_verifier_solana::vk::generate_key_file;
+use gnark_verifier_solana::generate_key_file;
 use std::env;
 use std::path::Path;
 

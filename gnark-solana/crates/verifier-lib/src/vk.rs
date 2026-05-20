@@ -41,7 +41,7 @@ pub fn generate_key_file(source_file: &str, target_file: &str) -> io::Result<()>
 }
 
 /// Parses a gnark generated verification key into the local Gnark type
-pub(crate) fn parse_vk<'a, R: Read>(mut reader: R) -> io::Result<GnarkVerifyingkey<'a>> {
+pub fn parse_vk<'a, R: Read>(mut reader: R) -> io::Result<GnarkVerifyingkey<'a>> {
     let mut vk_alpha_g1 = [0u8; 64];
     reader.read_exact(&mut vk_alpha_g1)?;
     let mut vk_beta_g1 = [0u8; 64];
@@ -156,7 +156,7 @@ fn write_vk_const_file<P: AsRef<Path>>(vk: &GnarkVerifyingkey, target_file: P) -
 
     // Add a clear separator
     writeln!(f, "// === Auto-generated verifying key constant ===")?;
-    writeln!(f, "use gnark_verifier_solana::vk::GnarkVerifyingkey;")?;
+    writeln!(f, "use gnark_verifier_solana::GnarkVerifyingkey;")?;
     // Helper function to format byte arrays as hex
     fn fmt_byte_array(bytes: &[u8]) -> String {
         let mut s = String::from("[");

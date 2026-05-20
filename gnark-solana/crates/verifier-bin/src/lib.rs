@@ -4,7 +4,7 @@
 mod generated_vk;
 mod tests;
 
-use gnark_verifier_solana::{proof::GnarkProof, verifier::GnarkVerifier, witness::GnarkWitness};
+use gnark_verifier_solana::{GnarkProof, GnarkVerifier, GnarkWitness};
 use solana_program::{
     account_info::AccountInfo,
     entrypoint::{entrypoint, ProgramResult},
