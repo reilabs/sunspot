@@ -6,7 +6,6 @@ import (
 	"math/big"
 	shr "sunspot/go/acir/shared"
 
-
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/consensys/gnark/std/algebra/emulated/sw_emulated"
@@ -123,6 +122,15 @@ func (a *ECDSASECP256R1[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 		Y: *primeField.NewElement(qYValue),
 	}
 
+	// PK on-curve validation
+	cr, err := sw_emulated.New[emulated.P256Fp, emulated.P256Fr](api, sw_emulated.GetP256Params())
+	if err != nil {
+		return err
+	}
+	cr.AssertIsOnCurve(&sw_emulated.AffinePoint[emulated.P256Fp]{X: Q.X, Y: Q.Y})
+	isIdentity := api.And(primeField.IsZero(&Q.X), primeField.IsZero(&Q.Y))
+	api.AssertIsEqual(isIdentity, frontend.Variable(0))
+
 	sig := ecdsa.Signature[emulated.P256Fr]{
 		R: *scalarField.NewElement(rValue),
 		S: *scalarField.NewElement(sValue),
@@ -146,4 +154,3 @@ func (a *ECDSASECP256R1[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(witnesses[a.Output], result)))
 	return nil
 }
-

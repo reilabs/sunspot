@@ -127,6 +127,15 @@ func (a *ECDSASECP256K1[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 		Y: *primeField.NewElement(qYValue),
 	}
 
+	// PK on-curve validation
+	cr, err := sw_emulated.New[emulated.Secp256k1Fp, emulated.Secp256k1Fr](api, sw_emulated.GetSecp256k1Params())
+	if err != nil {
+		return err
+	}
+	cr.AssertIsOnCurve(&sw_emulated.AffinePoint[emulated.Secp256k1Fp]{X: Q.X, Y: Q.Y})
+	isIdentity := api.And(primeField.IsZero(&Q.X), primeField.IsZero(&Q.Y))
+	api.AssertIsEqual(isIdentity, frontend.Variable(0))
+
 	sig := ecdsa.Signature[emulated.Secp256k1Fr]{
 		R: *scalarField.NewElement(rValue),
 		S: *scalarField.NewElement(sValue),
