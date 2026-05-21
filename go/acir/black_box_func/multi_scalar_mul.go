@@ -8,6 +8,7 @@ import (
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark/std/algebra/algopts"
 )
 
 type MultiScalarMul[T shr.ACIRField, E constraint.Element] struct {
@@ -113,7 +114,7 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	output := maskedEmbeddedPoint(api, pred,
 		witnesses[a.Outputs[0]], witnesses[a.Outputs[1]], witnesses[a.Outputs[2]])
 
-	constrained_output := grumpkin.MultiScalarMul(api, points, scalars)
+	constrained_output := grumpkin.MultiScalarMul(api, points, scalars, algopts.WithCompleteArithmetic())
 
 	// To assert the two points are the same (and ignore if predicate is zero), we have to split into
 	// its X and Y coordinates

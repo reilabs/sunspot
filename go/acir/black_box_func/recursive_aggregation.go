@@ -151,11 +151,10 @@ func (a *RecursiveAggregation[T, E]) AggregateGroth16(api frontend.Builder[E], w
 	// TODO Find a way to make this dependent on the predicate input
 	// ATM we attempt to verify all proofs and don't check the predicate
 
-	v.AssertProof(vk, proof, witness)
+	v.AssertProof(vk, proof, witness, groth16.WithSubgroupCheck())
 
 	return nil
 }
-
 
 func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses map[shr.Witness]frontend.Variable, kLen int) (groth16.VerifyingKey[sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl], error) {
 	vk := groth16.VerifyingKey[sw_bn254.G1Affine, sw_bn254.G2Affine, sw_bn254.GTEl]{}
@@ -275,6 +274,7 @@ func newProof[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnes
 			return proof, err
 		}
 		commitments[i].G1El = commitment
+		idx += 2
 	}
 	proof.Commitments = commitments
 	return proof, nil
