@@ -55,7 +55,6 @@ func (a *Blake2s[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	return true
 }
 
-
 func (a *Blake2s[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.New[uints.U32](api)
 	if err != nil {
@@ -80,7 +79,7 @@ func (a *Blake2s[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witnes
 		return err
 	}
 
-	for i := range 4 {
+	for i := range 8 {
 		output_word := make([]uints.U8, 4)
 		for j := range 4 {
 			output_word[j] = bytes_api.ValueOf(witnesses[a.Outputs[4*i+j]])
@@ -109,8 +108,7 @@ func Blake2Permute(api frontend.API, uapi *uints.BinaryField[uints.U32], data []
 	if err != nil {
 		return nil, fmt.Errorf("error in the final F function in blake 2: %s", err)
 	}
-	return h[0:4], nil
-
+	return h[0:8], nil
 }
 
 func F(api frontend.API, uapi *uints.BinaryField[uints.U32], h [8]uints.U32, m []uints.U32, t uints.U64, f bool) ([8]uints.U32, error) {
