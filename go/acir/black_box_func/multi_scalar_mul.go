@@ -114,6 +114,11 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	output := maskedEmbeddedPoint(api, pred,
 		witnesses[a.Outputs[0]], witnesses[a.Outputs[1]], witnesses[a.Outputs[2]])
 
+	for i := range points {
+		points[i].AssertIsOnCurve(api)
+	}
+	output.AssertIsOnCurve(api)
+
 	constrained_output := grumpkin.MultiScalarMul(api, points, scalars, algopts.WithCompleteArithmetic())
 
 	// To assert the two points are the same (and ignore if predicate is zero), we have to split into
@@ -122,4 +127,3 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.Y, output.Y)))
 	return nil
 }
-
