@@ -16,6 +16,11 @@ var twoTo128 = new(big.Int).Lsh(big.NewInt(1), 128)
 // scalar modulus — the upper bound for a scalar's high 128-bit limb.
 var grumpkinScalarModulusHighLimb = new(big.Int).Rsh(ecc.GRUMPKIN.ScalarField(), 128)
 
+var grumpkinScalarModulusLowLimbMax = new(big.Int).Sub(
+	new(big.Int).Mod(ecc.GRUMPKIN.ScalarField(), twoTo128),
+	big.NewInt(1),
+)
+
 // ScalarFromLimbs recomposes a scalar from its (lo, hi) 128-bit limb
 // FunctionInputs into lo + hi * 2^128.
 func ScalarFromLimbs[T shr.ACIRField, E constraint.Element](
@@ -32,6 +37,10 @@ func ScalarFromLimbs[T shr.ACIRField, E constraint.Element](
 		return nil, err
 	}
 	api.AssertIsLessOrEqual(scalarHi, grumpkinScalarModulusHighLimb)
+
+	// Assert point is less than scalar field modulus
+	hiAtMax := api.IsZero(api.Sub(scalarHi, grumpkinScalarModulusHighLimb))
+	api.AssertIsLessOrEqual(api.Mul(hiAtMax, scalarLo), grumpkinScalarModulusLowLimbMax)
 	return api.Add(scalarLo, api.Mul(scalarHi, twoTo128)), nil
 }
 
