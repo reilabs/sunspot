@@ -79,6 +79,10 @@ func (a *EmbeddedCurveAdd[T, E]) Define(api frontend.Builder[E], witnesses map[s
 	output := maskedEmbeddedPoint(api, pred,
 		witnesses[a.Outputs[0]], witnesses[a.Outputs[1]], witnesses[a.Outputs[2]])
 
+	x.AssertIsOnCurve(api)
+	y.AssertIsOnCurve(api)
+	output.AssertIsOnCurve(api)
+
 	constrained_output := x.AddUnified(api, y)
 	// Assert that the addition is correct, ignoring if the predicate is zero
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.X, output.X)))
@@ -86,4 +90,3 @@ func (a *EmbeddedCurveAdd[T, E]) Define(api frontend.Builder[E], witnesses map[s
 
 	return nil
 }
-

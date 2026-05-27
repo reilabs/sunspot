@@ -19,6 +19,16 @@ type G1Affine struct {
 	X, Y frontend.Variable
 }
 
+func (p *G1Affine) AssertIsOnCurve(api frontend.API) {
+	// In case the p is infinity (0,0)
+	selector := api.And(api.IsZero(p.X), api.IsZero(p.Y))
+
+	// Y²=X³-17
+	diff := api.Sub(api.Mul(p.Y, p.Y), api.Mul(p.X, p.X, p.X))
+	expected := api.Select(selector, 0, big.NewInt(-17))
+	api.AssertIsEqual(diff, expected)
+}
+
 // Neg outputs -p
 func (p *G1Affine) Neg(api frontend.API, p1 G1Affine) *G1Affine {
 	p.X = p1.X
