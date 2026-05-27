@@ -96,7 +96,9 @@ func (a *Blake3[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness
 	}
 	hasher := NewHasher()
 
-	hasher.Update(api, *uapi, *uapi64, data)
+	if err := hasher.Update(api, *uapi, *uapi64, data); err != nil {
+		return err
+	}
 	zeroByte := uints.NewU8(0)
 	output := make([]uints.U8, 32)
 
@@ -104,7 +106,9 @@ func (a *Blake3[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness
 		output[i] = zeroByte
 	}
 
-	hasher.Finalize(api, *uapi, output)
+	if err := hasher.Finalize(api, *uapi, output); err != nil {
+		return err
+	}
 
 	for i := range 32 {
 		bytesApi.AssertIsEqual(bytesApi.ValueOf(witnesses[a.Outputs[i]]), output[i])
@@ -329,7 +333,9 @@ func (h *Hasher) Update(api frontend.API, uapi uints.BinaryField[uints.U32], uap
 				return err
 			}
 			totalChunks := h.chunkState.chunkCounter + 1
-			h.addChunkChainingValue(api, uapi, [8]uints.U32(chunkCV), totalChunks)
+			if err := h.addChunkChainingValue(api, uapi, [8]uints.U32(chunkCV), totalChunks); err != nil {
+				return err
+			}
 			h.chunkState = newChunkState(h.keyWords, totalChunks, h.flags)
 		}
 		want := CHUNK_LEN - h.chunkState.Len()
@@ -338,7 +344,9 @@ func (h *Hasher) Update(api frontend.API, uapi uints.BinaryField[uints.U32], uap
 		if take > len(input) {
 			take = len(input)
 		}
-		h.chunkState.update(api, uapi, input[:take])
+		if err := h.chunkState.update(api, uapi, input[:take]); err != nil {
+			return err
+		}
 		input = input[take:]
 	}
 	return nil
@@ -353,7 +361,9 @@ func (h *Hasher) Finalize(api frontend.API, uapi uints.BinaryField[uints.U32], o
 		}
 		output = parentOutput(uapi, h.cvStack[i], [8]uints.U32(chainingValue), h.keyWords, h.flags)
 	}
-	output.RootOutputBytes(api, uapi, out)
+	if err := output.RootOutputBytes(api, uapi, out); err != nil {
+		return err
+	}
 	return nil
 }
 
