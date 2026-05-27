@@ -192,12 +192,19 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 	}
 	g2Delta.P.Y = *g2.Neg(&g2Delta.P.Y)
 	vk.G2.DeltaNeg = g2Delta
+
+	e.AssertIsOnG1(&alpha)
+	e.AssertIsOnG2(&g2Beta)
+	e.AssertIsOnG2(&g2Gamma)
+	e.AssertIsOnG2(&g2Delta)
+
 	k := make([]sw_bn254.G1Affine, kLen)
 	for i := range k {
 		k[i], err = newG1(api, vars[14+i*2:14+i*2+2], witnesses)
 		if err != nil {
 			return vk, err
 		}
+		e.AssertIsOnG1(&k[i])
 	}
 	vk.G1.K = k
 
@@ -213,6 +220,8 @@ func newVK[T shr.ACIRField](api frontend.API, vars []FunctionInput[T], witnesses
 		if err != nil {
 			return vk, err
 		}
+		e.AssertIsOnG2(&g)
+		e.AssertIsOnG2(&gSigmaNeg)
 		commitments[i].G = g
 		commitments[i].GSigmaNeg = gSigmaNeg
 		idx += 8
