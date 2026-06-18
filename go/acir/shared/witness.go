@@ -1,20 +1,24 @@
 package shared
 
 import (
-	"encoding/binary"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 
 	"github.com/google/btree"
 )
 
 type Witness uint32
 
-func (w *Witness) UnmarshalReader(r io.Reader) error {
-	var witness uint32
-	if err := binary.Read(r, binary.LittleEndian, &witness); err != nil {
+// On the wire a Witness is a single-field tuple struct that serde
+// flattens to its inner u32. Witnesses encode positionally as plain
+// MessagePack uint values. We also notify the Reader's witness tracker
+// so Circuit can size its witness vector without an encoded count.
+func (w *Witness) UnmarshalReader(r *msgpackutil.Reader) error {
+	v, err := r.ReadU32()
+	if err != nil {
 		return err
 	}
-	*w = Witness(witness)
+	*w = Witness(v)
+	r.ObserveWitness(v)
 	return nil
 }
 

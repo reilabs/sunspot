@@ -1,11 +1,8 @@
 package memory_op
 
 import (
-	"encoding/binary"
 	"encoding/json"
-	"fmt"
-	"io"
-	exp "sunspot/go/acir/expression"
+	"sunspot/go/acir/msgpackutil"
 	ops "sunspot/go/acir/opcodes"
 	shr "sunspot/go/acir/shared"
 
@@ -15,79 +12,81 @@ import (
 )
 
 type MemoryOp[T shr.ACIRField, E constraint.Element] struct {
-	BlockID   uint32
-	Memory    map[uint32]*logderivlookup.Table
-	Operation exp.Expression[T, E] // operation can be read (0) or write (1)
-	Index     exp.Expression[T, E] // witness value of expression is the operation index
-	Value     exp.Expression[T, E] // witness value of expression is the operation value
+	BlockID uint32
+	Memory  map[uint32]*logderivlookup.Table
+	IsWrite bool
+	Index   shr.Witness
+	Value   shr.Witness
 }
 
-func (m *MemoryOp[T, E]) UnmarshalReader(r io.Reader) error {
-	if err := binary.Read(r, binary.LittleEndian, &m.BlockID); err != nil {
-		return err
-	}
-
-	if err := m.Operation.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	if err := m.Index.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	if err := m.Value.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	return nil
+// MemoryOp's payload (after the outer Opcode dispatch): block_id and op
+// (MemOp). The inner MemOp has fields operation (bool, serde-renamed "read"),
+// index (Witness), and value (Witness).
+func (m *MemoryOp[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "MemoryOp", []msgpackutil.Field{
+		{Name: "block_id", Decode: func(r *msgpackutil.Reader) error {
+			v, err := r.ReadUint()
+			if err != nil {
+				return err
+			}
+			m.BlockID = uint32(v)
+			return nil
+		}},
+		{Name: "op", Decode: func(r *msgpackutil.Reader) error {
+			return msgpackutil.ReadStruct(r, "MemOp", []msgpackutil.Field{
+				{Name: "read", Decode: func(r *msgpackutil.Reader) error {
+					v, err := r.ReadBool()
+					if err != nil {
+						return err
+					}
+					m.IsWrite = v
+					return nil
+				}},
+				{Name: "index", Decode: m.Index.UnmarshalReader},
+				{Name: "value", Decode: m.Value.UnmarshalReader},
+			})
+		}},
+	})
 }
 
 func (m *MemoryOp[T, E]) Equals(other ops.Opcode[E]) bool {
-	mem_op, ok := other.(*MemoryOp[T, E])
+	o, ok := other.(*MemoryOp[T, E])
 	if !ok {
 		return false
 	}
-	if m.BlockID != mem_op.BlockID {
-		return false
-	}
-
-	return m.Operation.Equals(&mem_op.Operation) && m.Index.Equals(&mem_op.Index) && m.Value.Equals(&mem_op.Value)
-
+	return m.BlockID == o.BlockID &&
+		m.IsWrite == o.IsWrite &&
+		m.Index == o.Index &&
+		m.Value == o.Value
 }
 
 func (o *MemoryOp[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
-
 	table := o.Memory[o.BlockID]
-	switch o.Operation.Constant.ToBigInt().Uint64() { // a bit convoluted but we need a primitve type for switch to work
-	case 0:
-		api.AssertIsEqual((*table).Lookup(o.Index.Calculate(api, witnesses))[0], o.Value.Calculate(api, witnesses))
+	indexVar := witnesses[o.Index]
+	valueVar := witnesses[o.Value]
 
-	case 1:
-		insertion_index := o.Index.Calculate(api, witnesses)
+	if o.IsWrite {
 		newTable := logderivlookup.New(api)
-
 		// dummy insertion to find the length of the table
-		table_length := (*table).Insert(0)
-
-		for i := 0; i < table_length; i++ {
-			is_writable := api.IsZero(api.Sub(insertion_index, frontend.Variable(i)))
-			updated := api.Select(is_writable, o.Value.Calculate(api, witnesses), (*table).Lookup(i)[0])
+		tableLen := (*table).Insert(0)
+		for i := 0; i < tableLen; i++ {
+			isWritable := api.IsZero(api.Sub(indexVar, frontend.Variable(i)))
+			updated := api.Select(isWritable, valueVar, (*table).Lookup(i)[0])
 			newTable.Insert(updated)
 		}
-
 		o.Memory[o.BlockID] = &newTable
 		return nil
-
-	default:
-		return fmt.Errorf("unknown memory operation: %d", o.Operation.Constant.ToBigInt().Uint64())
+	} else {
+		api.AssertIsEqual((*table).Lookup(indexVar)[0], valueVar)
+		return nil
 	}
 
-	return nil
 }
-
 
 func (o MemoryOp[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap := make(map[string]interface{})
 	stringMap["memory_op"] = o
 	return json.Marshal(stringMap)
 }
+
+func (*MemoryOp[T, E]) SerdeName() string { return "MemoryOp" }

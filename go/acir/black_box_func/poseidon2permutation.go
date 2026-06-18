@@ -1,8 +1,7 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	"sunspot/go/poseidon2"
 
@@ -15,29 +14,11 @@ type Poseidon2Permutation[T shr.ACIRField, E constraint.Element] struct {
 	Outputs []shr.Witness
 }
 
-func (a *Poseidon2Permutation[T, E]) UnmarshalReader(r io.Reader) error {
-	var NumInputs uint64
-	if err := binary.Read(r, binary.LittleEndian, &NumInputs); err != nil {
-		return err
-	}
-	a.Inputs = make([]FunctionInput[T], NumInputs)
-	for i := uint64(0); i < NumInputs; i++ {
-		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	var NumOutputs uint64
-	if err := binary.Read(r, binary.LittleEndian, &NumOutputs); err != nil {
-		return err
-	}
-
-	a.Outputs = make([]shr.Witness, NumOutputs)
-	if err := binary.Read(r, binary.LittleEndian, &a.Outputs); err != nil {
-		return err
-	}
-
-	return nil
+func (a *Poseidon2Permutation[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Poseidon2Permutation", []msgpackutil.Field{
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Inputs) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Outputs) }},
+	})
 }
 
 func (a *Poseidon2Permutation[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -80,3 +61,4 @@ func (a *Poseidon2Permutation[T, E]) Define(api frontend.Builder[E], witnesses m
 	return nil
 }
 
+func (*Poseidon2Permutation[T, E]) SerdeName() string { return "Poseidon2Permutation" }

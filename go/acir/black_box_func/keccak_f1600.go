@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -17,18 +16,11 @@ type Keccakf1600[T shr.ACIRField, E constraint.Element] struct {
 	Outputs [25]shr.Witness
 }
 
-func (a *Keccakf1600[T, E]) UnmarshalReader(r io.Reader) error {
-	for i := 0; i < 25; i++ {
-		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	if err := binary.Read(r, binary.LittleEndian, &a.Outputs); err != nil {
-		return err
-	}
-
-	return nil
+func (a *Keccakf1600[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Keccakf1600", []msgpackutil.Field{
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Inputs[:]) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Outputs[:]) }},
+	})
 }
 
 func (a *Keccakf1600[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -80,3 +72,4 @@ func (a *Keccakf1600[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Wi
 	return nil
 }
 
+func (*Keccakf1600[T, E]) SerdeName() string { return "Keccakf1600" }

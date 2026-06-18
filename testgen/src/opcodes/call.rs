@@ -1,12 +1,12 @@
 use std::{io::Write, vec};
 
+use crate::encode;
 use acir::{
     FieldElement,
     circuit::{Opcode, opcodes::AcirFunctionId},
     native_types::{Expression, Witness},
 };
 use tracing::trace;
-
 fn generate_call_test_empty(path: &str) {
     let file_name = format!("{path}/call_empty.bin");
 
@@ -21,14 +21,12 @@ fn generate_call_test_empty(path: &str) {
         id: AcirFunctionId(0),
         inputs: vec![],
         outputs: vec![],
-        predicate: None,
+        predicate: Expression::default(),
     };
 
     // Placeholder for actual data
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&call_opcode, config).expect("Failed to encode data");
+
+    let data = encode(&call_opcode);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -54,14 +52,12 @@ fn generate_call_test_with_inputs(path: &str) {
         id: AcirFunctionId(1),
         inputs: vec![Witness(0), Witness(1), Witness(2), Witness(3), Witness(4)],
         outputs: vec![],
-        predicate: None,
+        predicate: Expression::default(),
     };
 
     // Placeholder for actual data
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&call_opcode, config).expect("Failed to encode data");
+
+    let data = encode(&call_opcode);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -87,14 +83,12 @@ fn generate_call_test_with_outputs(path: &str) {
         id: AcirFunctionId(2),
         inputs: vec![],
         outputs: vec![Witness(0), Witness(1)],
-        predicate: None,
+        predicate: Expression::default(),
     };
 
     // Placeholder for actual data
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&call_opcode, config).expect("Failed to encode data");
+
+    let data = encode(&call_opcode);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -120,18 +114,16 @@ fn generate_call_test_with_predicate(path: &str) {
         id: AcirFunctionId(3),
         inputs: vec![],
         outputs: vec![],
-        predicate: Some(Expression {
+        predicate: Expression {
             mul_terms: vec![],
             linear_combinations: vec![],
             q_c: FieldElement::from(1u32),
-        }),
+        },
     };
 
     // Placeholder for actual data
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&call_opcode, config).expect("Failed to encode data");
+
+    let data = encode(&call_opcode);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -157,18 +149,16 @@ fn generate_call_test_with_inputs_and_outputs(path: &str) {
         id: AcirFunctionId(4),
         inputs: vec![Witness(0), Witness(1)],
         outputs: vec![Witness(2), Witness(3)],
-        predicate: Some(Expression {
+        predicate: Expression {
             mul_terms: vec![],
             linear_combinations: vec![],
             q_c: FieldElement::from(1u32),
-        }),
+        },
     };
 
     // Placeholder for actual data
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&call_opcode, config).expect("Failed to encode data");
+
+    let data = encode(&call_opcode);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 

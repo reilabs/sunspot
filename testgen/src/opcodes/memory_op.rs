@@ -1,15 +1,15 @@
 use std::io::Write;
 
+use crate::encode;
 use acir::{
     FieldElement,
     circuit::{
         Opcode,
-        opcodes::{BlockId, MemOp},
+        opcodes::{BlockId, MemOp, MemOpKind},
     },
-    native_types::Expression,
+    native_types::Witness,
 };
 use tracing::trace;
-
 fn generate_memory_op_test_without_predicate(path: &str) {
     let file_name = format!("{path}/memory_op_without_predicate.bin");
 
@@ -22,31 +22,15 @@ fn generate_memory_op_test_without_predicate(path: &str) {
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     let memory_op = Opcode::<FieldElement>::MemoryOp {
         block_id: BlockId(0),
-        op: MemOp::<FieldElement> {
-            operation: Expression::<FieldElement> {
-                mul_terms: vec![],
-                linear_combinations: vec![],
-                q_c: FieldElement::from(1u32),
-            },
-            index: Expression::<FieldElement> {
-                mul_terms: vec![],
-                linear_combinations: vec![],
-                q_c: FieldElement::from(2u32),
-            },
-            value: Expression::<FieldElement> {
-                mul_terms: vec![],
-                linear_combinations: vec![],
-                q_c: FieldElement::from(3u32),
-            },
+        op: MemOp {
+            operation: MemOpKind::Read,
+            index: Witness(2),
+            value: Witness(3),
         },
     };
     // Placeholder for actual data
 
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&memory_op, config)
-        .expect("Failed to encode data into bytes");
+    let data = encode(&memory_op);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -70,31 +54,15 @@ fn generate_memory_op_test_with_predicate(path: &str) {
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     let memory_op = Opcode::<FieldElement>::MemoryOp {
         block_id: BlockId(1),
-        op: MemOp::<FieldElement> {
-            operation: Expression::<FieldElement> {
-                mul_terms: vec![],
-                linear_combinations: vec![],
-                q_c: FieldElement::from(4u32),
-            },
-            index: Expression::<FieldElement> {
-                mul_terms: vec![],
-                linear_combinations: vec![],
-                q_c: FieldElement::from(5u32),
-            },
-            value: Expression::<FieldElement> {
-                mul_terms: vec![],
-                linear_combinations: vec![],
-                q_c: FieldElement::from(6u32),
-            },
+        op: MemOp {
+            operation: MemOpKind::Write,
+            index: Witness(5),
+            value: Witness(6),
         },
     };
     // Placeholder for actual data
 
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&memory_op, config)
-        .expect("Failed to encode data into bytes");
+    let data = encode(&memory_op);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 

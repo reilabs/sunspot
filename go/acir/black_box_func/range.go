@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -16,14 +15,18 @@ type Range[T shr.ACIRField, E constraint.Element] struct {
 	nBits uint32
 }
 
-func (a *Range[T, E]) UnmarshalReader(r io.Reader) error {
-	if err := a.Input.UnmarshalReader(r); err != nil {
-		return err
-	}
-	if err := binary.Read(r, binary.LittleEndian, &a.nBits); err != nil {
-		return err
-	}
-	return nil
+func (a *Range[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Range", []msgpackutil.Field{
+		{Name: "input", Decode: a.Input.UnmarshalReader},
+		{Name: "num_bits", Decode: func(r *msgpackutil.Reader) error {
+			n, err := r.ReadU32()
+			if err != nil {
+				return err
+			}
+			a.nBits = n
+			return nil
+		}},
+	})
 }
 
 func (a Range[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -42,3 +45,4 @@ func (a Range[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]f
 	return nil
 }
 
+func (*Range[T, E]) SerdeName() string { return "RANGE" }

@@ -1,11 +1,11 @@
 use std::io::Write;
 
+use crate::encode;
 use acir::{
     FieldElement,
     native_types::{Expression, Witness},
 };
 use tracing::trace;
-
 fn generate_expression_test_empty(path: &str) {
     let file_name = format!("{path}/expression_empty.bin");
 
@@ -23,10 +23,8 @@ fn generate_expression_test_empty(path: &str) {
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     // Serialize the expression to bytes
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&expression, config).expect("Failed to encode data");
+
+    let data = encode(&expression);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -59,10 +57,8 @@ fn generate_expression_test_linear_combinations(path: &str) {
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     // Serialize the expression to bytes
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&expression, config).expect("Failed to encode data");
+
+    let data = encode(&expression);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -95,10 +91,8 @@ fn generate_expression_test_mul_terms(path: &str) {
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     // Serialize the expression to bytes
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&expression, config).expect("Failed to encode data");
+
+    let data = encode(&expression);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -135,10 +129,8 @@ fn generate_expression_test_mul_terms_with_linear_combinations(path: &str) {
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     // Serialize the expression to bytes
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&expression, config).expect("Failed to encode data");
+
+    let data = encode(&expression);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 

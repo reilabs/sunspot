@@ -1,16 +1,14 @@
 package acir
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
-	ap "sunspot/go/acir/assertion_payload"
 	bbf "sunspot/go/acir/black_box_func"
 	"sunspot/go/acir/brillig_call"
 	"sunspot/go/acir/call"
 	exp "sunspot/go/acir/expression"
 	"sunspot/go/acir/memory_init"
 	mem_op "sunspot/go/acir/memory_op"
+	"sunspot/go/acir/msgpackutil"
 	ops "sunspot/go/acir/opcodes"
 	shr "sunspot/go/acir/shared"
 
@@ -22,109 +20,87 @@ import (
 
 type Circuit[T shr.ACIRField, E constraint.Element] struct {
 	CircuitName         string
-	CurrentWitnessIndex uint32                                           `json:"current_witness_index"`
-	Opcodes             []ops.Opcode[E]                                  `json:"opcodes"`            // Opcodes in the circuit
-	PrivateParameters   btree.BTree                                      `json:"private_parameters"` // Witnesses
-	PublicParameters    btree.BTree                                      `json:"public_parameters"`  // Witnesses
-	ReturnValues        btree.BTree                                      `json:"return_values"`      // Witnesses
-	AssertMessages      map[ops.OpcodeLocation]ap.AssertionPayload[T, E] `json:"assert_messages"`    // Assert messages for the circuit
+	CurrentWitnessIndex uint32          `json:"current_witness_index"`
+	Opcodes             []ops.Opcode[E] `json:"opcodes"`            // Opcodes in the circuit
+	PrivateParameters   btree.BTree     `json:"private_parameters"` // Witnesses
+	PublicParameters    btree.BTree     `json:"public_parameters"`  // Witnesses
+	ReturnValues        btree.BTree     `json:"return_values"`      // Witnesses
 	MemoryBlocks        map[uint32]*logderivlookup.Table
 }
 
-func (c *Circuit[T, E]) UnmarshalReader(r io.Reader) error {
-	var length uint64
-	if err := binary.Read(r, binary.LittleEndian, &length); err != nil {
+func (c *Circuit[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	c.PrivateParameters = *btree.New(2)
+	c.PublicParameters = *btree.New(2)
+	c.ReturnValues = *btree.New(2)
+
+	// Reset the per-decode witness high-water mark so populateCurrentWitnessIndex
+	// reads only what this circuit references (witness indices are local).
+	r.ResetWitnessTracker()
+
+	err := msgpackutil.ReadStruct(r, "Circuit", []msgpackutil.Field{
+		{Name: "function_name", Decode: func(r *msgpackutil.Reader) error {
+			s, err := r.ReadString()
+			if err != nil {
+				return err
+			}
+			c.CircuitName = s
+			return nil
+		}},
+		{Name: "opcodes", Decode: c.readOpcodes},
+		{Name: "private_parameters", Decode: func(r *msgpackutil.Reader) error { return readWitnessSet(r, &c.PrivateParameters) }},
+		{Name: "public_parameters", Decode: func(r *msgpackutil.Reader) error { return readWitnessSet(r, &c.PublicParameters) }},
+		{Name: "return_values", Decode: func(r *msgpackutil.Reader) error { return readWitnessSet(r, &c.ReturnValues) }},
+		{Name: "assert_messages", Decode: msgpackutil.SkipField},
+	})
+	if err != nil {
 		return err
 	}
 
-	data := make([]byte, length)
-	if _, err := io.ReadFull(r, data); err != nil {
+	if maxW, ok := r.MaxWitness(); ok {
+		c.CurrentWitnessIndex = maxW
+	}
+	return nil
+}
+
+func (c *Circuit[T, E]) readOpcodes(r *msgpackutil.Reader) error {
+	n, err := r.ReadArrayLen()
+	if err != nil {
 		return err
 	}
-
-	c.CircuitName = string(data)
-	if err := binary.Read(r, binary.LittleEndian, &c.CurrentWitnessIndex); err != nil {
-		return err
-	}
-
-	var numOpcodes uint64
-	if err := binary.Read(r, binary.LittleEndian, &numOpcodes); err != nil {
-		return err
-	}
-
-	c.Opcodes = make([]ops.Opcode[E], numOpcodes)
-	for i := uint64(0); i < numOpcodes; i++ {
-		op, err := NewOpcode[T, E](r)
-		if err != nil {
-			return fmt.Errorf("failed to create opcode: %w", err)
-		}
-		if err := op.UnmarshalReader(r); err != nil {
-			return fmt.Errorf("failed to unmarshal opcode at index %d: %w", i, err)
+	c.Opcodes = make([]ops.Opcode[E], n)
+	for i := 0; i < n; i++ {
+		var op ops.Opcode[E]
+		if err := msgpackutil.ReadDispatchedEnum(r, "Opcode", []ops.Opcode[E]{
+			&exp.Expression[T, E]{},
+			&bbf.BlackBoxFuncCall[T, E]{},
+			&mem_op.MemoryOp[T, E]{},
+			&memory_init.MemoryInit[T, E]{},
+			&brillig_call.BrilligCall[T, E]{},
+			&call.Call[T, E]{},
+		}, func(v ops.Opcode[E]) { op = v }); err != nil {
+			return fmt.Errorf("opcode %d: %w", i, err)
 		}
 		c.Opcodes[i] = op
 	}
+	return nil
+}
 
-	var numPrivateParameters uint64
-	if err := binary.Read(r, binary.LittleEndian, &numPrivateParameters); err != nil {
+// readWitnessSet decodes a BTreeSet<Witness>, which serializes as a fixarray
+// of witnesses. PublicInputs is a single-field tuple struct wrapping such a
+// set; with EncodingStrategy::Array tuple structs are transparent on the
+// wire, so the same decoder handles both.
+func readWitnessSet(r *msgpackutil.Reader, dst *btree.BTree) error {
+	n, err := r.ReadArrayLen()
+	if err != nil {
 		return err
 	}
-	c.PrivateParameters = *btree.New(2)
-	for i := uint64(0); i < numPrivateParameters; i++ {
-		var witness shr.Witness
-		if err := witness.UnmarshalReader(r); err != nil {
+	for i := 0; i < n; i++ {
+		var w shr.Witness
+		if err := w.UnmarshalReader(r); err != nil {
 			return err
 		}
-		c.PrivateParameters.ReplaceOrInsert(witness)
+		dst.ReplaceOrInsert(w)
 	}
-
-	var numPublicParameters uint64
-	if err := binary.Read(r, binary.LittleEndian, &numPublicParameters); err != nil {
-		return err
-	}
-	c.PublicParameters = *btree.New(2)
-	for i := uint64(0); i < numPublicParameters; i++ {
-		var witness shr.Witness
-		if err := witness.UnmarshalReader(r); err != nil {
-			return err
-		}
-		c.PublicParameters.ReplaceOrInsert(witness)
-	}
-
-	var numReturnValues uint64
-	if err := binary.Read(r, binary.LittleEndian, &numReturnValues); err != nil {
-		return err
-	}
-	c.ReturnValues = *btree.New(2)
-	for i := uint64(0); i < numReturnValues; i++ {
-		var witness shr.Witness
-		if err := witness.UnmarshalReader(r); err != nil {
-			return err
-		}
-		c.ReturnValues.ReplaceOrInsert(witness)
-	}
-
-	var numAssertMessages uint64
-	if err := binary.Read(r, binary.LittleEndian, &numAssertMessages); err != nil {
-		if err == io.EOF {
-			c.AssertMessages = make(map[ops.OpcodeLocation]ap.AssertionPayload[T, E])
-			return nil
-		}
-		return err
-	}
-
-	c.AssertMessages = make(map[ops.OpcodeLocation]ap.AssertionPayload[T, E], numAssertMessages)
-	for i := uint64(0); i < numAssertMessages; i++ {
-		var opcodeLocation ops.OpcodeLocation
-		if err := opcodeLocation.UnmarshalReader(r); err != nil {
-			return err
-		}
-		var payload ap.AssertionPayload[T, E]
-		if err := payload.UnmarshalReader(r); err != nil {
-			return err
-		}
-		c.AssertMessages[opcodeLocation] = payload
-	}
-
 	return nil
 }
 
@@ -317,31 +293,4 @@ func (c *Circuit[T, E]) countSubcircuitSlots(resolve CircuitResolver[T, E], inde
 		index = subOwnStart + subCircuit.CurrentWitnessIndex + 1
 	}
 	return index, nil
-}
-
-func NewOpcode[T shr.ACIRField, E constraint.Element](r io.Reader) (ops.Opcode[E], error) {
-	var kind uint32
-	if err := binary.Read(r, binary.LittleEndian, &kind); err != nil {
-		return nil, err
-	}
-	switch kind {
-	case 0:
-		return &exp.Expression[T, E]{}, nil
-	case 1:
-		bbf, err := bbf.NewBlackBoxFunction[T, E](r)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get opcode, error with black box:  %v", err)
-		}
-		return bbf, nil
-	case 2:
-		return &mem_op.MemoryOp[T, E]{}, nil
-	case 3:
-		return &memory_init.MemoryInit[T, E]{}, nil
-	case 4:
-		return &brillig_call.BrilligCall[T, E]{}, nil
-	case 5:
-		return &call.Call[T, E]{}, nil
-	default:
-		return nil, fmt.Errorf("unknown opcode kind: %d", kind)
-	}
 }

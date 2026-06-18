@@ -1,6 +1,6 @@
-use std::io::Write;
-
+use crate::encode;
 use acir::{FieldElement, circuit::opcodes::FunctionInput, native_types::Witness};
+use std::io::Write;
 use tracing::trace;
 
 fn generate_function_input_test_constant(path: &str) {
@@ -15,11 +15,7 @@ fn generate_function_input_test_constant(path: &str) {
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     let function_input = FunctionInput::<FieldElement>::Constant(FieldElement::from(1234u64));
 
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data =
-        bincode::serde::encode_to_vec(function_input, config).expect("Failed to encode data");
+    let data = encode(&function_input);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -43,11 +39,7 @@ fn generate_function_input_test_witness(path: &str) {
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     let function_input = FunctionInput::<FieldElement>::Witness(Witness(1234));
 
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data =
-        bincode::serde::encode_to_vec(function_input, config).expect("Failed to encode data");
+    let data = encode(&function_input);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 

@@ -1,8 +1,7 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -17,24 +16,12 @@ type SHA256Compression[T shr.ACIRField, E constraint.Element] struct {
 	Outputs    [8]shr.Witness
 }
 
-func (a *SHA256Compression[T, E]) UnmarshalReader(r io.Reader) error {
-	for i := 0; i < 16; i++ {
-		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	for i := 0; i < 8; i++ {
-		if err := a.HashValues[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	if err := binary.Read(r, binary.LittleEndian, &a.Outputs); err != nil {
-		return err
-	}
-
-	return nil
+func (a *SHA256Compression[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Sha256Compression", []msgpackutil.Field{
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Inputs[:]) }},
+		{Name: "hash_values", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.HashValues[:]) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Outputs[:]) }},
+	})
 }
 
 func (a *SHA256Compression[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -95,3 +82,4 @@ func (a *SHA256Compression[T, E]) Define(api frontend.Builder[E], witnesses map[
 	return nil
 }
 
+func (*SHA256Compression[T, E]) SerdeName() string { return "Sha256Compression" }

@@ -1,7 +1,7 @@
 package opcodes
 
 import (
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -9,7 +9,8 @@ import (
 )
 
 type Opcode[E constraint.Element] interface {
-	UnmarshalReader(r io.Reader) error
+	msgpackutil.EnumVariant
+	UnmarshalReader(r *msgpackutil.Reader) error
 	Equals(other Opcode[E]) bool
 	Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error
 	MarshalJSON() ([]byte, error)

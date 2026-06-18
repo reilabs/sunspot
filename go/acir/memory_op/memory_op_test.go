@@ -1,9 +1,8 @@
 package memory_op
 
 import (
-	"math/big"
 	"os"
-	exp "sunspot/go/acir/expression"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	"sunspot/go/bn254"
 	"testing"
@@ -18,42 +17,27 @@ func TestMemoryOpWithoutPredicate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
+	defer file.Close()
 
-	kind := shr.ParseThrough32bits(t, file)
-	if kind != 2 {
-		t.Fatal("Failed: mem op code should be 2")
+	r := msgpackutil.NewReader(file)
+	if tag := shr.ConsumeEnumTag(t, r); tag != 2 {
+		t.Fatalf("expected Opcode variant 2 (MemoryOp), got %d", tag)
 	}
 
 	var opcode MemoryOp[T, E]
-
-	if err := opcode.UnmarshalReader(file); err != nil {
+	if err := opcode.UnmarshalReader(r); err != nil {
 		t.Fatalf("Failed to unmarshal memory operation: %v", err)
 	}
 
 	expectedOpcode := MemoryOp[T, E]{
 		BlockID: 0,
-		Operation: exp.Expression[T, E]{
-			MulTerms:           []exp.MulTerm[*bn254.BN254Field]{},
-			LinearCombinations: []exp.LinearCombination[*bn254.BN254Field]{},
-			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(1)},
-		},
-		Index: exp.Expression[T, E]{
-			MulTerms:           []exp.MulTerm[T]{},
-			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(2)},
-		},
-		Value: exp.Expression[T, E]{
-			MulTerms:           []exp.MulTerm[T]{},
-			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(3)},
-		},
+		IsWrite: false,
+		Index:   shr.Witness(2),
+		Value:   shr.Witness(3),
 	}
-
 	if !opcode.Equals(&expectedOpcode) {
-		t.Errorf("Expected opcode to be %v, got %v", expectedOpcode, opcode)
+		t.Errorf("Expected opcode to be %+v, got %+v", expectedOpcode, opcode)
 	}
-
-	defer file.Close()
 }
 
 func TestMemoryOpWithPredicate(t *testing.T) {
@@ -63,39 +47,25 @@ func TestMemoryOpWithPredicate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
+	defer file.Close()
 
-	kind := shr.ParseThrough32bits(t, file)
-	if kind != 2 {
-		t.Fatal("Failed: mem op code should be 2")
+	r := msgpackutil.NewReader(file)
+	if tag := shr.ConsumeEnumTag(t, r); tag != 2 {
+		t.Fatalf("expected Opcode variant 2 (MemoryOp), got %d", tag)
 	}
 
 	var opcode MemoryOp[T, E]
-	if err := opcode.UnmarshalReader(file); err != nil {
+	if err := opcode.UnmarshalReader(r); err != nil {
 		t.Fatalf("Failed to unmarshal memory operation: %v", err)
 	}
 
 	expectedOpcode := MemoryOp[T, E]{
 		BlockID: 1,
-		Operation: exp.Expression[T, E]{
-			MulTerms:           []exp.MulTerm[T]{},
-			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(4)},
-		},
-		Index: exp.Expression[T, E]{
-			MulTerms:           []exp.MulTerm[T]{},
-			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(5)},
-		},
-		Value: exp.Expression[T, E]{
-			MulTerms:           []exp.MulTerm[T]{},
-			LinearCombinations: []exp.LinearCombination[T]{},
-			Constant:           &bn254.BN254Field{Value: *new(big.Int).SetUint64(6)},
-		},
+		IsWrite: true,
+		Index:   shr.Witness(5),
+		Value:   shr.Witness(6),
 	}
-
 	if !opcode.Equals(&expectedOpcode) {
-		t.Errorf("Expected opcode to be %v, got %v", expectedOpcode, opcode)
+		t.Errorf("Expected opcode to be %+v, got %+v", expectedOpcode, opcode)
 	}
-
-	defer file.Close()
 }

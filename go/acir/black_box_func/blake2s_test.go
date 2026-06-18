@@ -2,6 +2,7 @@ package blackboxfunc
 
 import (
 	"os"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	"sunspot/go/bn254"
 	"testing"
@@ -9,79 +10,55 @@ import (
 	"github.com/consensys/gnark/constraint"
 )
 
+func loadBlake2s(t *testing.T, path string) BlackBoxFuncCall[*bn254.BN254Field, constraint.U64] {
+	t.Helper()
+	file, err := os.Open(path)
+	if err != nil {
+		t.Fatalf("Failed to open %s: %v", path, err)
+	}
+	t.Cleanup(func() { file.Close() })
+	var b BlackBoxFuncCall[*bn254.BN254Field, constraint.U64]
+	if err := b.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
+		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
+	}
+	return b
+}
+
 func TestBlake2sUnmarshalReaderEmpty(t *testing.T) {
 	type T = *bn254.BN254Field
 	type E = constraint.U64
-	file, err := os.Open("../../binaries/black_box_func/blake2s/blake2s_test_empty.bin")
-	if err != nil {
-		t.Fatalf("Failed to open file: %v", err)
-	}
+	bbf := loadBlake2s(t, "../../binaries/black_box_func/blake2s/blake2s_test_empty.bin")
 
-	kind := shr.ParseThrough32bits(t, file)
-	if kind != 4 {
-		t.Fatalf("The kind of error code should have been 4, was %d", kind)
-	}
-	blackBoxFuncCall := BlackBoxFuncCall[T, E]{function: &Blake2s[T, E]{}}
-	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
-		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
-	}
-
-	expectedFunctionCall := &Blake2s[T, E]{
+	expected := BlackBoxFuncCall[T, E]{function: &Blake2s[T, E]{
 		Inputs:  []FunctionInput[T]{},
 		Outputs: [32]shr.Witness{},
-	}
-
+	}}
 	for i := 0; i < 32; i++ {
-		expectedFunctionCall.Outputs[i] = shr.Witness(0)
+		expected.function.(*Blake2s[T, E]).Outputs[i] = shr.Witness(0)
 	}
-
-	if !blackBoxFuncCall.Equals(BlackBoxFuncCall[T, E]{function: expectedFunctionCall}) {
-		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expectedFunctionCall, blackBoxFuncCall)
+	if !bbf.Equals(&expected) {
+		t.Errorf("Expected BlackBoxFuncCall to be %+v, got %+v", expected, bbf)
 	}
-
-	defer file.Close()
 }
 
 func TestBlake2sUnmarshalReaderWithInputs(t *testing.T) {
 	type T = *bn254.BN254Field
 	type E = constraint.U64
-	file, err := os.Open("../../binaries/black_box_func/blake2s/blake2s_test_with_inputs.bin")
-	if err != nil {
-		t.Fatalf("Failed to open file: %v", err)
-	}
-
-	kind := shr.ParseThrough32bits(t, file)
-	if kind != 4 {
-		t.Fatalf("The kind of error code should have been 4, was %d", kind)
-	}
-	blackBoxFuncCall := BlackBoxFuncCall[T, E]{function: &Blake2s[T, E]{}}
-	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
-		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
-	}
+	bbf := loadBlake2s(t, "../../binaries/black_box_func/blake2s/blake2s_test_with_inputs.bin")
 
 	expectedWitness1 := shr.Witness(1234)
 	expectedWitness2 := shr.Witness(5678)
-	expectedFunctionCall := &Blake2s[T, E]{
+	expected := BlackBoxFuncCall[T, E]{function: &Blake2s[T, E]{
 		Inputs: []FunctionInput[T]{
-			{
-				FunctionInputKind: ACIRFunctionInputKindWitness,
-				Witness:           &expectedWitness1,
-			},
-			{
-				FunctionInputKind: ACIRFunctionInputKindWitness,
-				Witness:           &expectedWitness2,
-			},
+			{Witness: &expectedWitness1},
+			{Witness: &expectedWitness2},
 		},
 		Outputs: [32]shr.Witness{},
-	}
-
+	}}
 	for i := 0; i < 32; i++ {
-		expectedFunctionCall.Outputs[i] = shr.Witness(1234)
+		expected.function.(*Blake2s[T, E]).Outputs[i] = shr.Witness(1234)
 	}
-
-	if !blackBoxFuncCall.Equals(BlackBoxFuncCall[T, E]{function: expectedFunctionCall}) {
-		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expectedFunctionCall, blackBoxFuncCall)
+	if !bbf.Equals(&expected) {
+		t.Errorf("Expected BlackBoxFuncCall to be %+v, got %+v", expected, bbf)
 	}
-
-	defer file.Close()
 }

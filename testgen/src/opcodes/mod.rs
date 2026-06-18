@@ -3,7 +3,6 @@ use tracing::trace;
 mod call;
 mod memory_init;
 mod memory_op;
-mod opcode_location;
 
 pub fn generate_tests(directory: &str) {
     let directory = format!("{directory}/opcodes/");
@@ -11,7 +10,6 @@ pub fn generate_tests(directory: &str) {
     std::fs::create_dir_all(&directory).expect("Failed to create directory");
 
     call::generate_tests(&directory);
-    opcode_location::generate_tests(&directory);
     memory_op::generate_tests(&directory);
     memory_init::generate_tests(&directory);
 

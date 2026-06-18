@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -29,24 +28,11 @@ type Blake3[T shr.ACIRField, E constraint.Element] struct {
 	Outputs [32]shr.Witness
 }
 
-func (a *Blake3[T, E]) UnmarshalReader(r io.Reader) error {
-	NumInputs := uint64(0)
-	if err := binary.Read(r, binary.LittleEndian, &NumInputs); err != nil {
-		return err
-	}
-
-	a.Inputs = make([]FunctionInput[T], NumInputs)
-	for i := uint64(0); i < NumInputs; i++ {
-		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	if err := binary.Read(r, binary.LittleEndian, &a.Outputs); err != nil {
-		return err
-	}
-
-	return nil
+func (a *Blake3[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Blake3", []msgpackutil.Field{
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Inputs) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Outputs[:]) }},
+	})
 }
 
 func (a *Blake3[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -115,7 +101,6 @@ func (a *Blake3[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness
 	}
 	return nil
 }
-
 
 func blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]uints.U32, m [16]uints.U32, t uints.U64, len, flags uints.U32) ([8]uints.U32, error) {
 	var v [16]uints.U32
@@ -380,3 +365,5 @@ func padTo16Words(data []uints.U32) [16]uints.U32 {
 	}
 	return padded
 }
+
+func (*Blake3[T, E]) SerdeName() string { return "Blake3" }

@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -24,54 +23,22 @@ type RecursiveAggregation[T shr.ACIRField, E constraint.Element] struct {
 	predicate       FunctionInput[T]
 }
 
-func (a *RecursiveAggregation[T, E]) UnmarshalReader(r io.Reader) error {
-	var VerificationKeyCount uint64
-	if err := binary.Read(r, binary.LittleEndian, &VerificationKeyCount); err != nil {
-		return err
-	}
-	a.VerificationKey = make([]FunctionInput[T], VerificationKeyCount)
-	for i := uint64(0); i < VerificationKeyCount; i++ {
-		if err := a.VerificationKey[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	var ProofCount uint64
-	if err := binary.Read(r, binary.LittleEndian, &ProofCount); err != nil {
-		return err
-	}
-	a.Proof = make([]FunctionInput[T], ProofCount)
-	for i := uint64(0); i < ProofCount; i++ {
-		if err := a.Proof[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	var PublicInputsCount uint64
-	if err := binary.Read(r, binary.LittleEndian, &PublicInputsCount); err != nil {
-		return err
-	}
-
-	a.PublicInputs = make([]FunctionInput[T], PublicInputsCount)
-	for i := uint64(0); i < PublicInputsCount; i++ {
-		if err := a.PublicInputs[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	if err := a.KeyHash.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	if err := binary.Read(r, binary.LittleEndian, &a.ProofType); err != nil {
-		return err
-	}
-
-	if err := a.predicate.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	return nil
+func (a *RecursiveAggregation[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "RecursiveAggregation", []msgpackutil.Field{
+		{Name: "verification_key", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.VerificationKey) }},
+		{Name: "proof", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Proof) }},
+		{Name: "public_inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.PublicInputs) }},
+		{Name: "key_hash", Decode: a.KeyHash.UnmarshalReader},
+		{Name: "proof_type", Decode: func(r *msgpackutil.Reader) error {
+			n, err := r.ReadU32()
+			if err != nil {
+				return err
+			}
+			a.ProofType = n
+			return nil
+		}},
+		{Name: "predicate", Decode: a.predicate.UnmarshalReader},
+	})
 }
 
 func (a *RecursiveAggregation[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -371,3 +338,5 @@ func VariableTo64BitLimbs[T shr.ACIRField](
 	}
 	return out, nil
 }
+
+func (*RecursiveAggregation[T, E]) SerdeName() string { return "RecursiveAggregation" }

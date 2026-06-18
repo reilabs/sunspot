@@ -1,10 +1,10 @@
-use std::io::Write;
-
+use crate::encode;
 use acir::{
     FieldElement,
     circuit::opcodes::{BlackBoxFuncCall, FunctionInput},
     native_types::Witness,
 };
+use std::io::Write;
 use tracing::trace;
 
 fn generate_and_test(path: &str) {
@@ -26,12 +26,7 @@ fn generate_and_test(path: &str) {
         output: Witness(3456),
     };
 
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-
-    let data =
-        bincode::serde::encode_to_vec(&and_function_call, config).expect("Failed to encode data");
+    let data = encode(&and_function_call);
 
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");

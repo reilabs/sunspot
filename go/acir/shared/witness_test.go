@@ -2,6 +2,7 @@ package shared
 
 import (
 	"os"
+	"sunspot/go/acir/msgpackutil"
 	"testing"
 )
 
@@ -12,7 +13,7 @@ func TestWitnessZero(t *testing.T) {
 	}
 
 	witness := Witness(0)
-	err = witness.UnmarshalReader(file)
+	err = witness.UnmarshalReader(msgpackutil.NewReader(file))
 	if err != nil {
 		t.Fatalf("Failed to unmarshal witness: %v", err)
 	}
@@ -30,7 +31,7 @@ func TestWitness1234(t *testing.T) {
 	}
 
 	witness := Witness(0)
-	err = witness.UnmarshalReader(file)
+	err = witness.UnmarshalReader(msgpackutil.NewReader(file))
 	if err != nil {
 		t.Fatalf("Failed to unmarshal witness: %v", err)
 	}

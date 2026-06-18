@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
-	"io"
 	"math/big"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -22,38 +21,15 @@ type ECDSASECP256R1[T shr.ACIRField, E constraint.Element] struct {
 	Output        shr.Witness
 }
 
-func (a *ECDSASECP256R1[T, E]) UnmarshalReader(r io.Reader) error {
-	for i := 0; i < 32; i++ {
-		if err := a.PublicKeyX[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	for i := 0; i < 32; i++ {
-		if err := a.PublicKeyY[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	for i := 0; i < 64; i++ {
-		if err := a.Signature[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	for i := 0; i < 32; i++ {
-		if err := a.HashedMessage[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-	if err := a.predicate.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	if err := binary.Read(r, binary.LittleEndian, &a.Output); err != nil {
-		return err
-	}
-	return nil
+func (a *ECDSASECP256R1[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "EcdsaSecp256r1", []msgpackutil.Field{
+		{Name: "public_key_x", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.PublicKeyX[:]) }},
+		{Name: "public_key_y", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.PublicKeyY[:]) }},
+		{Name: "signature", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Signature[:]) }},
+		{Name: "hashed_message", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.HashedMessage[:]) }},
+		{Name: "predicate", Decode: a.predicate.UnmarshalReader},
+		{Name: "output", Decode: a.Output.UnmarshalReader},
+	})
 }
 
 func (a *ECDSASECP256R1[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -154,3 +130,5 @@ func (a *ECDSASECP256R1[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(witnesses[a.Output], result)))
 	return nil
 }
+
+func (*ECDSASECP256R1[T, E]) SerdeName() string { return "EcdsaSecp256r1" }

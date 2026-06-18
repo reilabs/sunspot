@@ -44,40 +44,20 @@ func ScalarFromLimbs[T shr.ACIRField, E constraint.Element](
 	return api.Add(scalarLo, api.Mul(scalarHi, twoTo128)), nil
 }
 
-// maskedEmbeddedPoint constrains isInf to a boolean (gated by pred) and returns
-// a grumpkin point whose coordinates are masked to (0, 0) when isInf is set.
-func maskedEmbeddedPoint[E constraint.Element](
-	api frontend.Builder[E],
-	pred, x, y, isInf frontend.Variable,
-) grumpkin.G1Affine {
-	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, isInf, api.Sub(frontend.Variable(1), isInf)))
-	notInf := api.Sub(frontend.Variable(1), isInf)
-	return grumpkin.G1Affine{
-		X: api.Mul(notInf, x),
-		Y: api.Mul(notInf, y),
-	}
-}
-
-// EmbeddedPointFromInputs resolves an (x, y, is_infinite) triple of
-// FunctionInputs into a grumpkin point whose coordinates are masked to (0, 0)
-// when is_infinite is set.
-func EmbeddedPointFromInputs[T shr.ACIRField, E constraint.Element](
-	api frontend.Builder[E],
+// EmbeddedPointFromInputs resolves an (x, y) pair of FunctionInputs into a
+// grumpkin point.
+func EmbeddedPointFromInputs[T shr.ACIRField](
+	x FunctionInput[T],
+	y FunctionInput[T],
 	witnesses map[shr.Witness]frontend.Variable,
-	pred frontend.Variable,
-	in [3]FunctionInput[T],
 ) (grumpkin.G1Affine, error) {
-	x, err := in[0].ToVariable(witnesses)
+	xVar, err := x.ToVariable(witnesses)
 	if err != nil {
 		return grumpkin.G1Affine{}, err
 	}
-	y, err := in[1].ToVariable(witnesses)
+	yVar, err := y.ToVariable(witnesses)
 	if err != nil {
 		return grumpkin.G1Affine{}, err
 	}
-	isInf, err := in[2].ToVariable(witnesses)
-	if err != nil {
-		return grumpkin.G1Affine{}, err
-	}
-	return maskedEmbeddedPoint(api, pred, x, y, isInf), nil
+	return grumpkin.G1Affine{X: xVar, Y: yVar}, nil
 }

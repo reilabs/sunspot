@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -18,23 +17,23 @@ type Xor[T shr.ACIRField, E constraint.Element] struct {
 	nBits  uint32
 }
 
-func (a *Xor[T, E]) UnmarshalReader(r io.Reader) error {
-	if err := a.Lhs.UnmarshalReader(r); err != nil {
-		return err
-	}
-	if err := a.Rhs.UnmarshalReader(r); err != nil {
-		return err
-	}
-	if err := binary.Read(r, binary.LittleEndian, &a.nBits); err != nil {
-		return err
-	}
-	if a.nBits > 128 {
-		panic(fmt.Sprintf("XOR: nBits=%d exceeds supported maximum of 128", a.nBits))
-	}
-	if err := a.Output.UnmarshalReader(r); err != nil {
-		return err
-	}
-	return nil
+func (a *Xor[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Xor", []msgpackutil.Field{
+		{Name: "lhs", Decode: a.Lhs.UnmarshalReader},
+		{Name: "rhs", Decode: a.Rhs.UnmarshalReader},
+		{Name: "num_bits", Decode: func(r *msgpackutil.Reader) error {
+			n, err := r.ReadU32()
+			if err != nil {
+				return err
+			}
+			if n > 128 {
+				return fmt.Errorf("XOR: num_bits=%d exceeds supported maximum of 128", n)
+			}
+			a.nBits = n
+			return nil
+		}},
+		{Name: "output", Decode: a.Output.UnmarshalReader},
+	})
 }
 
 func (a *Xor[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -54,3 +53,4 @@ func (a *Xor[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]fr
 	return defineBitwise(api, uapi, witnesses, a.Lhs, a.Rhs, a.Output, int(a.nBits), uapi.Xor)
 }
 
+func (*Xor[T, E]) SerdeName() string { return "XOR" }

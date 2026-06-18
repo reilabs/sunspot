@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -16,23 +15,11 @@ type Blake2s[T shr.ACIRField, E constraint.Element] struct {
 	Outputs [32]shr.Witness
 }
 
-func (a *Blake2s[T, E]) UnmarshalReader(r io.Reader) error {
-	NumInputs := uint64(0)
-	if err := binary.Read(r, binary.LittleEndian, &NumInputs); err != nil {
-		return err
-	}
-
-	a.Inputs = make([]FunctionInput[T], NumInputs)
-	for i := uint64(0); i < NumInputs; i++ {
-		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-	if err := binary.Read(r, binary.LittleEndian, &a.Outputs); err != nil {
-		return err
-	}
-
-	return nil
+func (a *Blake2s[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Blake2s", []msgpackutil.Field{
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Inputs) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Outputs[:]) }},
+	})
 }
 
 func (a *Blake2s[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -262,3 +249,5 @@ func getByte(data []uints.U8, idx int) uints.U8 {
 	}
 	return data[idx]
 }
+
+func (*Blake2s[T, E]) SerdeName() string { return "Blake2s" }

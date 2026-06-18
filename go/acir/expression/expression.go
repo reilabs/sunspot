@@ -1,9 +1,8 @@
 package expression
 
 import (
-	"encoding/binary"
 	"encoding/json"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	"sunspot/go/acir/opcodes"
 	shr "sunspot/go/acir/shared"
 
@@ -25,45 +24,13 @@ func (e *Expression[T, E]) Define(
 	return nil
 }
 
-func (e *Expression[T, E]) UnmarshalReader(r io.Reader) error {
-	e.Constant = shr.MakeNonNil(e.Constant) // Ensure Constant is non-nil
-
-	// Read the number of MulTerms
-	var numMulTerms uint64
-	if err := binary.Read(r, binary.LittleEndian, &numMulTerms); err != nil {
-		return err
-	}
-
-	// Initialize the MulTerms slice with the read size
-	e.MulTerms = make([]MulTerm[T], numMulTerms)
-	// Unmarshal each MulTerm
-	for i := uint64(0); i < numMulTerms; i++ {
-		if err := e.MulTerms[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	// Read the number of LinearCombinations
-	var numLinearCombinations uint64
-	if err := binary.Read(r, binary.LittleEndian, &numLinearCombinations); err != nil {
-		return err
-	}
-	// Initialize the LinearCombinations slice with the read size
-	e.LinearCombinations = make([]LinearCombination[T], numLinearCombinations)
-
-	// Unmarshal each LinearCombination
-	for i := uint64(0); i < numLinearCombinations; i++ {
-		if err := e.LinearCombinations[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	// Unmarshal the Constant value
-	if err := e.Constant.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	return nil
+func (e *Expression[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	e.Constant = shr.MakeNonNil(e.Constant)
+	return msgpackutil.ReadStruct(r, "Expression", []msgpackutil.Field{
+		{Name: "mul_terms", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &e.MulTerms) }},
+		{Name: "linear_combinations", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &e.LinearCombinations) }},
+		{Name: "q_c", Decode: e.Constant.UnmarshalReader},
+	})
 }
 
 func (e *Expression[T, E]) Equals(other opcodes.Opcode[E]) bool {
@@ -105,9 +72,10 @@ func (e *Expression[T, E]) Calculate(api frontend.API, witnesses map[shr.Witness
 	return sum
 }
 
-
 func (e *Expression[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap := make(map[string]interface{})
 	stringMap["assert_zero"] = e
 	return json.Marshal(stringMap)
 }
+
+func (*Expression[T, E]) SerdeName() string { return "AssertZero" }

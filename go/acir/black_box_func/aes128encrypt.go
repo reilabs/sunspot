@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -11,6 +10,7 @@ import (
 	"github.com/consensys/gnark/std/lookup/logderivlookup"
 	"github.com/consensys/gnark/std/math/uints"
 )
+
 
 const AES_BLOCK_SIZE = 16 // in bytes
 type AES128Encrypt[T shr.ACIRField, E constraint.Element] struct {
@@ -20,44 +20,13 @@ type AES128Encrypt[T shr.ACIRField, E constraint.Element] struct {
 	Outputs []shr.Witness
 }
 
-func (a *AES128Encrypt[T, E]) UnmarshalReader(r io.Reader) error {
-	InputsNum := uint64(0)
-	if err := binary.Read(r, binary.LittleEndian, &InputsNum); err != nil {
-		return err
-	}
-	for i := uint64(0); i < InputsNum; i++ {
-		var input FunctionInput[T]
-		if err := input.UnmarshalReader(r); err != nil {
-			return err
-		}
-		a.Inputs = append(a.Inputs, input)
-	}
-
-	for i := uint32(0); i < 16; i++ {
-		if err := a.Iv[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	for i := uint32(0); i < 16; i++ {
-		if err := a.Key[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	OutputsNum := uint64(0)
-	if err := binary.Read(r, binary.LittleEndian, &OutputsNum); err != nil {
-		return err
-	}
-	for i := uint64(0); i < OutputsNum; i++ {
-		var witness shr.Witness
-		if err := witness.UnmarshalReader(r); err != nil {
-			return err
-		}
-		a.Outputs = append(a.Outputs, witness)
-	}
-
-	return nil
+func (a *AES128Encrypt[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "AES128Encrypt", []msgpackutil.Field{
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Inputs) }},
+		{Name: "iv", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Iv[:]) }},
+		{Name: "key", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Key[:]) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Outputs) }},
+	})
 }
 
 func (a *AES128Encrypt[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -94,7 +63,6 @@ func (a *AES128Encrypt[T, E]) Equals(other BlackBoxFunction[E]) bool {
 
 	return true
 }
-
 
 func (a *AES128Encrypt[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.NewBinaryField[uints.U32](api)
@@ -392,3 +360,5 @@ func pad(input []uints.U8) []uints.U8 {
 	}
 	return v
 }
+
+func (*AES128Encrypt[T, E]) SerdeName() string { return "AES128Encrypt" }
