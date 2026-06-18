@@ -2,7 +2,6 @@ package acir
 
 import (
 	"fmt"
-	ap "sunspot/go/acir/assertion_payload"
 	bbf "sunspot/go/acir/black_box_func"
 	"sunspot/go/acir/brillig_call"
 	"sunspot/go/acir/call"
@@ -21,12 +20,11 @@ import (
 
 type Circuit[T shr.ACIRField, E constraint.Element] struct {
 	CircuitName         string
-	CurrentWitnessIndex uint32                                           `json:"current_witness_index"`
-	Opcodes             []ops.Opcode[E]                                  `json:"opcodes"`            // Opcodes in the circuit
-	PrivateParameters   btree.BTree                                      `json:"private_parameters"` // Witnesses
-	PublicParameters    btree.BTree                                      `json:"public_parameters"`  // Witnesses
-	ReturnValues        btree.BTree                                      `json:"return_values"`      // Witnesses
-	AssertMessages      map[ops.OpcodeLocation]ap.AssertionPayload[T, E] `json:"assert_messages"`    // Assert messages for the circuit
+	CurrentWitnessIndex uint32          `json:"current_witness_index"`
+	Opcodes             []ops.Opcode[E] `json:"opcodes"`            // Opcodes in the circuit
+	PrivateParameters   btree.BTree     `json:"private_parameters"` // Witnesses
+	PublicParameters    btree.BTree     `json:"public_parameters"`  // Witnesses
+	ReturnValues        btree.BTree     `json:"return_values"`      // Witnesses
 	MemoryBlocks        map[uint32]*logderivlookup.Table
 }
 
@@ -34,7 +32,6 @@ func (c *Circuit[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
 	c.PrivateParameters = *btree.New(2)
 	c.PublicParameters = *btree.New(2)
 	c.ReturnValues = *btree.New(2)
-	c.AssertMessages = make(map[ops.OpcodeLocation]ap.AssertionPayload[T, E])
 
 	// Reset the per-decode witness high-water mark so populateCurrentWitnessIndex
 	// reads only what this circuit references (witness indices are local).
@@ -81,7 +78,7 @@ func (c *Circuit[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error
 	case 4:
 		return readWitnessSet(r, &c.ReturnValues)
 	case 5:
-		return c.readAssertMessages(r)
+		return r.SkipValue()
 	default:
 		return fmt.Errorf("Circuit: unknown field %s", f)
 	}
@@ -112,34 +109,6 @@ func readWitnessSet(r *msgpackutil.Reader, dst *btree.BTree) error {
 			return err
 		}
 		dst.ReplaceOrInsert(w)
-	}
-	return nil
-}
-
-// assert_messages encodes as Vec<(OpcodeLocation, AssertionPayload)>:
-// outer fixarray of N entries, each a positional 2-tuple.
-func (c *Circuit[T, E]) readAssertMessages(r *msgpackutil.Reader) error {
-	n, err := r.ReadArrayLen()
-	if err != nil {
-		return err
-	}
-	for i := 0; i < n; i++ {
-		tn, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
-		if tn != 2 {
-			return fmt.Errorf("assert_messages[%d]: expected (location, payload) 2-tuple, got %d", i, tn)
-		}
-		var loc ops.OpcodeLocation
-		if err := loc.UnmarshalReader(r); err != nil {
-			return err
-		}
-		var payload ap.AssertionPayload[T, E]
-		if err := payload.UnmarshalReader(r); err != nil {
-			return err
-		}
-		c.AssertMessages[loc] = payload
 	}
 	return nil
 }
