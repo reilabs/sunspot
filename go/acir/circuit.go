@@ -37,7 +37,22 @@ func (c *Circuit[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
 	// reads only what this circuit references (witness indices are local).
 	r.ResetWitnessTracker()
 
-	if err := msgpackutil.ReadStruct(r, circuitSchema, c.decode); err != nil {
+	err := msgpackutil.ReadStruct(r, "Circuit", []msgpackutil.Field{
+		{Name: "function_name", Decode: func(r *msgpackutil.Reader) error {
+			s, err := r.ReadString()
+			if err != nil {
+				return err
+			}
+			c.CircuitName = s
+			return nil
+		}},
+		{Name: "opcodes", Decode: c.readOpcodes},
+		{Name: "private_parameters", Decode: func(r *msgpackutil.Reader) error { return readWitnessSet(r, &c.PrivateParameters) }},
+		{Name: "public_parameters", Decode: func(r *msgpackutil.Reader) error { return readWitnessSet(r, &c.PublicParameters) }},
+		{Name: "return_values", Decode: func(r *msgpackutil.Reader) error { return readWitnessSet(r, &c.ReturnValues) }},
+		{Name: "assert_messages", Decode: msgpackutil.SkipField},
+	})
+	if err != nil {
 		return err
 	}
 
@@ -47,52 +62,28 @@ func (c *Circuit[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
 	return nil
 }
 
-func (c *Circuit[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		s, err := r.ReadString()
-		if err != nil {
-			return err
-		}
-		c.CircuitName = s
-		return nil
-	case 1:
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
-		reg := opcodeRegistry[T, E]()
-		c.Opcodes = make([]ops.Opcode[E], n)
-		for i := 0; i < n; i++ {
-			op, err := readOpcode[T, E](r, reg)
-			if err != nil {
-				return fmt.Errorf("opcode %d: %w", i, err)
-			}
-			c.Opcodes[i] = op
-		}
-		return nil
-	case 2:
-		return readWitnessSet(r, &c.PrivateParameters)
-	case 3:
-		return readWitnessSet(r, &c.PublicParameters)
-	case 4:
-		return readWitnessSet(r, &c.ReturnValues)
-	case 5:
-		return r.SkipValue()
-	default:
-		return fmt.Errorf("Circuit: unknown field %s", f)
+func (c *Circuit[T, E]) readOpcodes(r *msgpackutil.Reader) error {
+	n, err := r.ReadArrayLen()
+	if err != nil {
+		return err
 	}
+	c.Opcodes = make([]ops.Opcode[E], n)
+	for i := 0; i < n; i++ {
+		var op ops.Opcode[E]
+		if err := msgpackutil.ReadDispatchedEnum(r, "Opcode", []ops.Opcode[E]{
+			&exp.Expression[T, E]{},
+			&bbf.BlackBoxFuncCall[T, E]{},
+			&mem_op.MemoryOp[T, E]{},
+			&memory_init.MemoryInit[T, E]{},
+			&brillig_call.BrilligCall[T, E]{},
+			&call.Call[T, E]{},
+		}, func(v ops.Opcode[E]) { op = v }); err != nil {
+			return fmt.Errorf("opcode %d: %w", i, err)
+		}
+		c.Opcodes[i] = op
+	}
+	return nil
 }
-
-// Circuit serde field schema (noir acvm-repo/acir/src/circuit/mod.rs).
-var circuitSchema = msgpackutil.NewSchema(map[string]int{
-	"function_name":      0,
-	"opcodes":            1,
-	"private_parameters": 2,
-	"public_parameters":  3,
-	"return_values":      4,
-	"assert_messages":    5,
-})
 
 // readWitnessSet decodes a BTreeSet<Witness>, which serializes as a fixarray
 // of witnesses. PublicInputs is a single-field tuple struct wrapping such a
@@ -111,35 +102,6 @@ func readWitnessSet(r *msgpackutil.Reader, dst *btree.BTree) error {
 		dst.ReplaceOrInsert(w)
 	}
 	return nil
-}
-
-// readOpcode dispatches on the Opcode enum tag, allocating the concrete
-// variant and delegating payload decoding to its UnmarshalReader.
-func readOpcode[T shr.ACIRField, E constraint.Element](r *msgpackutil.Reader, reg msgpackutil.EnumRegistry[ops.Opcode[E]]) (ops.Opcode[E], error) {
-	var op ops.Opcode[E]
-	err := msgpackutil.ReadEnum(r, reg.Schema, func(f msgpackutil.Field, r *msgpackutil.Reader) error {
-		o, err := reg.New(f.Tag)
-		if err != nil {
-			return err
-		}
-		if err := o.UnmarshalReader(r); err != nil {
-			return err
-		}
-		op = o
-		return nil
-	})
-	return op, err
-}
-
-func opcodeRegistry[T shr.ACIRField, E constraint.Element]() msgpackutil.EnumRegistry[ops.Opcode[E]] {
-	return msgpackutil.NewEnumRegistry([]ops.Opcode[E]{
-		&exp.Expression[T, E]{},
-		&bbf.BlackBoxFuncCall[T, E]{},
-		&mem_op.MemoryOp[T, E]{},
-		&memory_init.MemoryInit[T, E]{},
-		&brillig_call.BrilligCall[T, E]{},
-		&call.Call[T, E]{},
-	})
 }
 
 // Define the constraints for a circuit

@@ -15,15 +15,11 @@ type Blake2s[T shr.ACIRField, E constraint.Element] struct {
 	Outputs [32]shr.Witness
 }
 
-func (a *Blake2s[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		return msgpackutil.ReadVec(r, &a.Inputs)
-	case 1:
-		return msgpackutil.ReadArrayInto(r, a.Outputs[:])
-	default:
-		return fmt.Errorf("Blake2s: unknown field %s", f)
-	}
+func (a *Blake2s[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Blake2s", []msgpackutil.Field{
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Inputs) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Outputs[:]) }},
+	})
 }
 
 func (a *Blake2s[T, E]) Equals(other BlackBoxFunction[E]) bool {

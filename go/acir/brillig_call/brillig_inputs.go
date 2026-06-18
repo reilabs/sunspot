@@ -1,7 +1,6 @@
 package brillig_call
 
 import (
-	"fmt"
 	exp "sunspot/go/acir/expression"
 	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
@@ -16,30 +15,23 @@ type BrilligInputs[T shr.ACIRField, E constraint.Element] struct {
 }
 
 func (inputs *BrilligInputs[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadEnum(r, brilligInputsSchema, inputs.decode)
+	return msgpackutil.ReadEnum(r, "BrilligInputs", []msgpackutil.Field{
+		{Name: "Single", Decode: func(r *msgpackutil.Reader) error {
+			inputs.Single = new(exp.Expression[T, E])
+			return inputs.Single.UnmarshalReader(r)
+		}},
+		{Name: "Array", Decode: func(r *msgpackutil.Reader) error {
+			inputs.Array = new([]exp.Expression[T, E])
+			return msgpackutil.ReadVec(r, inputs.Array)
+		}},
+		{Name: "MemoryArray", Decode: func(r *msgpackutil.Reader) error {
+			v, err := r.ReadUint()
+			if err != nil {
+				return err
+			}
+			inputs.BlockID = new(uint32)
+			*inputs.BlockID = uint32(v)
+			return nil
+		}},
+	})
 }
-
-func (inputs *BrilligInputs[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		inputs.Single = new(exp.Expression[T, E])
-		return inputs.Single.UnmarshalReader(r)
-	case 1:
-		inputs.Array = new([]exp.Expression[T, E])
-		return msgpackutil.ReadVec(r, inputs.Array)
-	case 2:
-		v, err := r.ReadUint()
-		if err != nil {
-			return err
-		}
-		inputs.BlockID = new(uint32)
-		*inputs.BlockID = uint32(v)
-		return nil
-	default:
-		return fmt.Errorf("unknown BrilligInputsKind: %v", f)
-	}
-}
-
-var brilligInputsSchema = msgpackutil.NewSchema(map[string]int{
-	"Single": 0, "Array": 1, "MemoryArray": 2,
-})

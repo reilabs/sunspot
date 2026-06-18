@@ -53,56 +53,44 @@ func LoadWitnessStackFromFile[T shr.ACIRField](filePath string, modulus *big.Int
 	r := msgpackutil.NewReader(gz)
 
 	var witnesses WitnessStack[T]
-	if err := msgpackutil.ReadStruct(r, witnessStackSchema, witnesses.decode); err != nil {
+	err = msgpackutil.ReadStruct(r, "WitnessStack", []msgpackutil.Field{
+		{Name: "stack", Decode: func(r *msgpackutil.Reader) error {
+			n, err := r.ReadArrayLen()
+			if err != nil {
+				return err
+			}
+			witnesses = make(WitnessStack[T], 0, n)
+			for i := 0; i < n; i++ {
+				stackItem, err := readStackItem[T](r)
+				if err != nil {
+					return fmt.Errorf("stack item %d: %w", i, err)
+				}
+				witnesses = append(witnesses, stackItem)
+			}
+			return nil
+		}},
+	})
+	if err != nil {
 		return WitnessStack[T]{}, err
 	}
 	return witnesses, nil
 }
 
-func (witnesses *WitnessStack[T]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	if f.Tag != 0 {
-		return fmt.Errorf("WitnessStack: unknown field %s", f)
-	}
-	n, err := r.ReadArrayLen()
-	if err != nil {
-		return err
-	}
-	*witnesses = make(WitnessStack[T], 0, n)
-	for i := 0; i < n; i++ {
-		stackItem, err := readStackItem[T](r)
-		if err != nil {
-			return fmt.Errorf("stack item %d: %w", i, err)
-		}
-		*witnesses = append(*witnesses, stackItem)
-	}
-	return nil
-}
-
 func readStackItem[T shr.ACIRField](r *msgpackutil.Reader) (StackItem[T], error) {
 	var stackItem StackItem[T]
-	err := msgpackutil.ReadStruct(r, stackItemSchema, stackItem.decode)
+	err := msgpackutil.ReadStruct(r, "StackItem", []msgpackutil.Field{
+		{Name: "index", Decode: func(r *msgpackutil.Reader) error {
+			v, err := r.ReadUint()
+			if err != nil {
+				return err
+			}
+			stackItem.CircuitIndex = uint32(v)
+			return nil
+		}},
+		{Name: "witness", Decode: func(r *msgpackutil.Reader) error { return readWitnessMap(r, &stackItem.WitnessMap) }},
+	})
 	return stackItem, err
 }
-
-func (stackItem *StackItem[T]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		v, err := r.ReadUint()
-		if err != nil {
-			return err
-		}
-		stackItem.CircuitIndex = uint32(v)
-		return nil
-	case 1:
-		return readWitnessMap(r, &stackItem.WitnessMap)
-	default:
-		return fmt.Errorf("StackItem: unknown field %s", f)
-	}
-}
-
-// Schemas for witness-stack types (noir acvm-repo/acir/src/native_types/witness_stack.rs).
-var witnessStackSchema = msgpackutil.NewSchema(map[string]int{"stack": 0})
-var stackItemSchema = msgpackutil.NewSchema(map[string]int{"index": 0, "witness": 1})
 
 // WitnessMap is a single-field tuple struct wrapping BTreeMap<Witness, F>,
 // which serializes as a msgpack `fixmap` of int-keyed entries.

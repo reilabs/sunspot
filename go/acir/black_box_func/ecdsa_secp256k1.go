@@ -1,7 +1,6 @@
 package blackboxfunc
 
 import (
-	"fmt"
 	"math/big"
 	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
@@ -23,23 +22,15 @@ type ECDSASECP256K1[T shr.ACIRField, E constraint.Element] struct {
 	Output        shr.Witness
 }
 
-func (a *ECDSASECP256K1[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		return msgpackutil.ReadArrayInto(r, a.PublicKeyX[:])
-	case 1:
-		return msgpackutil.ReadArrayInto(r, a.PublicKeyY[:])
-	case 2:
-		return msgpackutil.ReadArrayInto(r, a.Signature[:])
-	case 3:
-		return msgpackutil.ReadArrayInto(r, a.HashedMessage[:])
-	case 4:
-		return a.predicate.UnmarshalReader(r)
-	case 5:
-		return a.Output.UnmarshalReader(r)
-	default:
-		return fmt.Errorf("ECDSASECP256K1: unknown field %s", f)
-	}
+func (a *ECDSASECP256K1[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "EcdsaSecp256k1", []msgpackutil.Field{
+		{Name: "public_key_x", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.PublicKeyX[:]) }},
+		{Name: "public_key_y", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.PublicKeyY[:]) }},
+		{Name: "signature", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Signature[:]) }},
+		{Name: "hashed_message", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.HashedMessage[:]) }},
+		{Name: "predicate", Decode: a.predicate.UnmarshalReader},
+		{Name: "output", Decode: a.Output.UnmarshalReader},
+	})
 }
 
 func (a *ECDSASECP256K1[T, E]) Equals(other BlackBoxFunction[E]) bool {

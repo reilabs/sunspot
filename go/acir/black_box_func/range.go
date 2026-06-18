@@ -15,20 +15,18 @@ type Range[T shr.ACIRField, E constraint.Element] struct {
 	nBits uint32
 }
 
-func (a *Range[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		return a.Input.UnmarshalReader(r)
-	case 1:
-		n, err := r.ReadU32()
-		if err != nil {
-			return err
-		}
-		a.nBits = n
-		return nil
-	default:
-		return fmt.Errorf("Range: unknown field %s", f)
-	}
+func (a *Range[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Range", []msgpackutil.Field{
+		{Name: "input", Decode: a.Input.UnmarshalReader},
+		{Name: "num_bits", Decode: func(r *msgpackutil.Reader) error {
+			n, err := r.ReadU32()
+			if err != nil {
+				return err
+			}
+			a.nBits = n
+			return nil
+		}},
+	})
 }
 
 func (a Range[T, E]) Equals(other BlackBoxFunction[E]) bool {

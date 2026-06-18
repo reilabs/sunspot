@@ -1,7 +1,6 @@
 package blackboxfunc
 
 import (
-	"fmt"
 	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	grumpkin "sunspot/go/sw-grumpkin"
@@ -17,29 +16,13 @@ type EmbeddedCurveAdd[T shr.ACIRField, E constraint.Element] struct {
 	Outputs   [2]shr.Witness
 }
 
-func (a *EmbeddedCurveAdd[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		return msgpackutil.ReadArrayInto(r, a.Input1[:])
-	case 1:
-		return msgpackutil.ReadArrayInto(r, a.Input2[:])
-	case 2:
-		return a.predicate.UnmarshalReader(r)
-	case 3:
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
-		if n != 2 {
-			return fmt.Errorf("EmbeddedCurveAdd.outputs: expected 2-tuple, got %d", n)
-		}
-		if err := a.Outputs[0].UnmarshalReader(r); err != nil {
-			return err
-		}
-		return a.Outputs[1].UnmarshalReader(r)
-	default:
-		return fmt.Errorf("EmbeddedCurveAdd: unknown field %s", f)
-	}
+func (a *EmbeddedCurveAdd[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "EmbeddedCurveAdd", []msgpackutil.Field{
+		{Name: "input1", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Input1[:]) }},
+		{Name: "input2", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Input2[:]) }},
+		{Name: "predicate", Decode: a.predicate.UnmarshalReader},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Outputs[:]) }},
+	})
 }
 
 func (a *EmbeddedCurveAdd[T, E]) Equals(other BlackBoxFunction[E]) bool {

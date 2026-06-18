@@ -17,27 +17,23 @@ type Xor[T shr.ACIRField, E constraint.Element] struct {
 	nBits  uint32
 }
 
-func (a *Xor[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		return a.Lhs.UnmarshalReader(r)
-	case 1:
-		return a.Rhs.UnmarshalReader(r)
-	case 2:
-		n, err := r.ReadU32()
-		if err != nil {
-			return err
-		}
-		if n > 128 {
-			return fmt.Errorf("XOR: num_bits=%d exceeds supported maximum of 128", n)
-		}
-		a.nBits = n
-		return nil
-	case 3:
-		return a.Output.UnmarshalReader(r)
-	default:
-		return fmt.Errorf("Xor: unknown field %s", f)
-	}
+func (a *Xor[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Xor", []msgpackutil.Field{
+		{Name: "lhs", Decode: a.Lhs.UnmarshalReader},
+		{Name: "rhs", Decode: a.Rhs.UnmarshalReader},
+		{Name: "num_bits", Decode: func(r *msgpackutil.Reader) error {
+			n, err := r.ReadU32()
+			if err != nil {
+				return err
+			}
+			if n > 128 {
+				return fmt.Errorf("XOR: num_bits=%d exceeds supported maximum of 128", n)
+			}
+			a.nBits = n
+			return nil
+		}},
+		{Name: "output", Decode: a.Output.UnmarshalReader},
+	})
 }
 
 func (a *Xor[T, E]) Equals(other BlackBoxFunction[E]) bool {

@@ -2,7 +2,6 @@ package call
 
 import (
 	"encoding/json"
-	"fmt"
 	exp "sunspot/go/acir/expression"
 	"sunspot/go/acir/msgpackutil"
 	ops "sunspot/go/acir/opcodes"
@@ -20,32 +19,20 @@ type Call[T shr.ACIRField, E constraint.Element] struct {
 }
 
 func (c *Call[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadStruct(r, callSchema, c.decode)
+	return msgpackutil.ReadStruct(r, "Call", []msgpackutil.Field{
+		{Name: "id", Decode: func(r *msgpackutil.Reader) error {
+			v, err := r.ReadUint()
+			if err != nil {
+				return err
+			}
+			c.ID = uint32(v)
+			return nil
+		}},
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &c.Inputs) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &c.Outputs) }},
+		{Name: "predicate", Decode: c.Predicate.UnmarshalReader},
+	})
 }
-
-func (c *Call[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		v, err := r.ReadUint()
-		if err != nil {
-			return err
-		}
-		c.ID = uint32(v)
-		return nil
-	case 1:
-		return msgpackutil.ReadVec(r, &c.Inputs)
-	case 2:
-		return msgpackutil.ReadVec(r, &c.Outputs)
-	case 3:
-		return c.Predicate.UnmarshalReader(r)
-	default:
-		return fmt.Errorf("Call: unknown field %s", f)
-	}
-}
-
-var callSchema = msgpackutil.NewSchema(map[string]int{
-	"id": 0, "inputs": 1, "outputs": 2, "predicate": 3,
-})
 func (c *Call[T, E]) Equals(other ops.Opcode[E]) bool {
 	value, ok := other.(*Call[T, E])
 	if !ok || c.ID != value.ID {

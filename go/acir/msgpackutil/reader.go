@@ -31,6 +31,62 @@ func NewReader(r io.Reader) *Reader {
 	return &Reader{r: bufio.NewReader(r)}
 }
 
+// ConsumeFormatByte reads and validates the noir
+// `acir::serialization::Format` envelope byte preceding the msgpack payload:
+// 2=Msgpack, 3=MsgpackCompact, 4=MsgpackTagged.
+func ConsumeFormatByte(r io.Reader) error {
+	var b [1]byte
+	if _, err := io.ReadFull(r, b[:]); err != nil {
+		return fmt.Errorf("read format byte: %w", err)
+	}
+	switch b[0] {
+	case 2, 3, 4:
+		return nil
+	default:
+		return fmt.Errorf("unsupported ACIR serialization format byte 0x%02x", b[0])
+	}
+}
+
+// ReadVec decodes a fixarray of T into a freshly allocated slice stored
+// through *out. T must have a pointer-receiver UnmarshalReader method.
+func ReadVec[T any, PT interface {
+	*T
+	Unmarshaler
+}](r *Reader, out *[]T) error {
+	n, err := r.ReadArrayLen()
+	if err != nil {
+		return err
+	}
+	*out = make([]T, n)
+	for i := range *out {
+		if err := PT(&(*out)[i]).UnmarshalReader(r); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ReadArrayInto decodes a fixarray of T into a caller-provided fixed-size
+// slice. Errors if the wire length doesn't match len(out).
+func ReadArrayInto[T any, PT interface {
+	*T
+	Unmarshaler
+}](r *Reader, out []T) error {
+	n, err := r.ReadArrayLen()
+	if err != nil {
+		return err
+	}
+	if n != len(out) {
+		return fmt.Errorf("expected fixed-size array of %d, got %d", len(out), n)
+	}
+	for i := range out {
+		if err := PT(&out[i]).UnmarshalReader(r); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Peek returns the next type marker byte without consuming it.
 func (r *Reader) Peek() (byte, error) {
 	b, err := r.r.Peek(1)
@@ -164,88 +220,6 @@ func (r *Reader) ReadU32() (uint32, error) {
 		return 0, fmt.Errorf("u32 field overflow: %d", v)
 	}
 	return uint32(v), nil
-}
-
-// ReadInt decodes a signed integer in any encoding.
-func (r *Reader) ReadInt() (int64, error) {
-	b, err := r.readByte()
-	if err != nil {
-		return 0, err
-	}
-	switch {
-	case b <= markerPosFixintMax:
-		return int64(b), nil
-	case b >= markerNegFixintLow:
-		return int64(int8(b)), nil
-	case b == markerUint8:
-		v, err := r.readByte()
-		return int64(v), err
-	case b == markerUint16:
-		buf, err := r.readN(2)
-		if err != nil {
-			return 0, err
-		}
-		return int64(binary.BigEndian.Uint16(buf)), nil
-	case b == markerUint32:
-		buf, err := r.readN(4)
-		if err != nil {
-			return 0, err
-		}
-		return int64(binary.BigEndian.Uint32(buf)), nil
-	case b == markerUint64:
-		buf, err := r.readN(8)
-		if err != nil {
-			return 0, err
-		}
-		return int64(binary.BigEndian.Uint64(buf)), nil
-	case b == markerInt8:
-		v, err := r.readByte()
-		return int64(int8(v)), err
-	case b == markerInt16:
-		buf, err := r.readN(2)
-		if err != nil {
-			return 0, err
-		}
-		return int64(int16(binary.BigEndian.Uint16(buf))), nil
-	case b == markerInt32:
-		buf, err := r.readN(4)
-		if err != nil {
-			return 0, err
-		}
-		return int64(int32(binary.BigEndian.Uint32(buf))), nil
-	case b == markerInt64:
-		buf, err := r.readN(8)
-		if err != nil {
-			return 0, err
-		}
-		return int64(binary.BigEndian.Uint64(buf)), nil
-	default:
-		return 0, fmt.Errorf("msgpack: expected int, got 0x%02x", b)
-	}
-}
-
-// ReadFloat64 decodes a float (accepts float32 or float64).
-func (r *Reader) ReadFloat64() (float64, error) {
-	b, err := r.readByte()
-	if err != nil {
-		return 0, err
-	}
-	switch b {
-	case markerFloat32:
-		buf, err := r.readN(4)
-		if err != nil {
-			return 0, err
-		}
-		return float64(math.Float32frombits(binary.BigEndian.Uint32(buf))), nil
-	case markerFloat64:
-		buf, err := r.readN(8)
-		if err != nil {
-			return 0, err
-		}
-		return math.Float64frombits(binary.BigEndian.Uint64(buf)), nil
-	default:
-		return 0, fmt.Errorf("msgpack: expected float, got 0x%02x", b)
-	}
 }
 
 // ReadString decodes a string (any width).
@@ -415,19 +389,23 @@ func (r *Reader) SkipValue() error {
 	case b == markerBin8, b == markerBin16, b == markerBin32:
 		_, err = r.ReadBytes()
 		return err
-	case b == markerFloat32, b == markerFloat64:
-		_, err = r.ReadFloat64()
-		return err
-	case b == markerUint8, b == markerUint16, b == markerUint32, b == markerUint64:
-		_, err = r.ReadUint()
-		return err
-	case b == markerInt8, b == markerInt16, b == markerInt32, b == markerInt64:
-		_, err = r.ReadInt()
-		return err
+	case b == markerUint8, b == markerInt8:
+		return r.skipBytes(1 + 1)
+	case b == markerUint16, b == markerInt16:
+		return r.skipBytes(1 + 2)
+	case b == markerUint32, b == markerInt32, b == markerFloat32:
+		return r.skipBytes(1 + 4)
+	case b == markerUint64, b == markerInt64, b == markerFloat64:
+		return r.skipBytes(1 + 8)
 	case b == markerStr8, b == markerStr16, b == markerStr32:
 		_, err = r.ReadString()
 		return err
 	default:
 		return fmt.Errorf("msgpack: SkipValue: unsupported marker 0x%02x", b)
 	}
+}
+
+func (r *Reader) skipBytes(n int) error {
+	_, err := r.readN(n)
+	return err
 }

@@ -28,15 +28,11 @@ type Blake3[T shr.ACIRField, E constraint.Element] struct {
 	Outputs [32]shr.Witness
 }
 
-func (a *Blake3[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		return msgpackutil.ReadVec(r, &a.Inputs)
-	case 1:
-		return msgpackutil.ReadArrayInto(r, a.Outputs[:])
-	default:
-		return fmt.Errorf("Blake3: unknown field %s", f)
-	}
+func (a *Blake3[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Blake3", []msgpackutil.Field{
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Inputs) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Outputs[:]) }},
+	})
 }
 
 func (a *Blake3[T, E]) Equals(other BlackBoxFunction[E]) bool {

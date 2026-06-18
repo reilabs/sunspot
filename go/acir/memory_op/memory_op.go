@@ -2,7 +2,6 @@ package memory_op
 
 import (
 	"encoding/json"
-	"fmt"
 	"sunspot/go/acir/msgpackutil"
 	ops "sunspot/go/acir/opcodes"
 	shr "sunspot/go/acir/shared"
@@ -20,52 +19,35 @@ type MemoryOp[T shr.ACIRField, E constraint.Element] struct {
 	Value   shr.Witness
 }
 
-// On the wire MemoryOp's payload (after the outer Opcode dispatch) is a
-// 2-tagged-field struct: 0=block_id, 1=op (MemOp). The inner MemOp has
-// three tagged fields: 0=operation (bool), 1=index (Witness), 2=value
-// (Witness). With EncodingStrategy::Array both are positional fixarrays.
+// MemoryOp's payload (after the outer Opcode dispatch): block_id and op
+// (MemOp). The inner MemOp has fields operation (bool, serde-renamed "read"),
+// index (Witness), and value (Witness).
 func (m *MemoryOp[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadStruct(r, memoryOpOuterSchema, m.decode)
-}
-
-func (m *MemoryOp[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		v, err := r.ReadUint()
-		if err != nil {
-			return err
-		}
-		m.BlockID = uint32(v)
-		return nil
-	case 1:
-		return msgpackutil.ReadStruct(r, memOpInnerSchema, func(fld msgpackutil.Field, r *msgpackutil.Reader) error {
-			switch fld.Tag {
-			case 0:
-				var err error
-				m.IsWrite, err = r.ReadBool()
+	return msgpackutil.ReadStruct(r, "MemoryOp", []msgpackutil.Field{
+		{Name: "block_id", Decode: func(r *msgpackutil.Reader) error {
+			v, err := r.ReadUint()
+			if err != nil {
 				return err
-			case 1:
-				return m.Index.UnmarshalReader(r)
-			case 2:
-				return m.Value.UnmarshalReader(r)
-			default:
-				return fmt.Errorf("MemOp: unknown field %s", fld)
 			}
-		})
-	default:
-		return fmt.Errorf("MemoryOp: unknown field %s", f)
-	}
+			m.BlockID = uint32(v)
+			return nil
+		}},
+		{Name: "op", Decode: func(r *msgpackutil.Reader) error {
+			return msgpackutil.ReadStruct(r, "MemOp", []msgpackutil.Field{
+				{Name: "read", Decode: func(r *msgpackutil.Reader) error {
+					v, err := r.ReadBool()
+					if err != nil {
+						return err
+					}
+					m.IsWrite = v
+					return nil
+				}},
+				{Name: "index", Decode: m.Index.UnmarshalReader},
+				{Name: "value", Decode: m.Value.UnmarshalReader},
+			})
+		}},
+	})
 }
-
-// MemoryOp opcode payload: 0=block_id, 1=op (MemOp).
-var memoryOpOuterSchema = msgpackutil.NewSchema(map[string]int{
-	"block_id": 0, "op": 1,
-})
-
-// MemOp inner struct: 0=operation (serde renamed "read"), 1=index, 2=value.
-var memOpInnerSchema = msgpackutil.NewSchema(map[string]int{
-	"read": 0, "index": 1, "value": 2,
-})
 
 func (m *MemoryOp[T, E]) Equals(other ops.Opcode[E]) bool {
 	o, ok := other.(*MemoryOp[T, E])

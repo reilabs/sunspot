@@ -11,6 +11,7 @@ import (
 	"github.com/consensys/gnark/std/math/uints"
 )
 
+
 const AES_BLOCK_SIZE = 16 // in bytes
 type AES128Encrypt[T shr.ACIRField, E constraint.Element] struct {
 	Inputs  []FunctionInput[T]
@@ -19,19 +20,13 @@ type AES128Encrypt[T shr.ACIRField, E constraint.Element] struct {
 	Outputs []shr.Witness
 }
 
-func (a *AES128Encrypt[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		return msgpackutil.ReadVec(r, &a.Inputs)
-	case 1:
-		return msgpackutil.ReadArrayInto(r, a.Iv[:])
-	case 2:
-		return msgpackutil.ReadArrayInto(r, a.Key[:])
-	case 3:
-		return msgpackutil.ReadVec(r, &a.Outputs)
-	default:
-		return fmt.Errorf("AES128Encrypt: unknown field %s", f)
-	}
+func (a *AES128Encrypt[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "AES128Encrypt", []msgpackutil.Field{
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Inputs) }},
+		{Name: "iv", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Iv[:]) }},
+		{Name: "key", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadArrayInto(r, a.Key[:]) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Outputs) }},
+	})
 }
 
 func (a *AES128Encrypt[T, E]) Equals(other BlackBoxFunction[E]) bool {

@@ -23,28 +23,22 @@ type RecursiveAggregation[T shr.ACIRField, E constraint.Element] struct {
 	predicate       FunctionInput[T]
 }
 
-func (a *RecursiveAggregation[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		return msgpackutil.ReadVec(r, &a.VerificationKey)
-	case 1:
-		return msgpackutil.ReadVec(r, &a.Proof)
-	case 2:
-		return msgpackutil.ReadVec(r, &a.PublicInputs)
-	case 3:
-		return a.KeyHash.UnmarshalReader(r)
-	case 4:
-		n, err := r.ReadU32()
-		if err != nil {
-			return err
-		}
-		a.ProofType = n
-		return nil
-	case 5:
-		return a.predicate.UnmarshalReader(r)
-	default:
-		return fmt.Errorf("RecursiveAggregation: unknown field %s", f)
-	}
+func (a *RecursiveAggregation[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "RecursiveAggregation", []msgpackutil.Field{
+		{Name: "verification_key", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.VerificationKey) }},
+		{Name: "proof", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Proof) }},
+		{Name: "public_inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.PublicInputs) }},
+		{Name: "key_hash", Decode: a.KeyHash.UnmarshalReader},
+		{Name: "proof_type", Decode: func(r *msgpackutil.Reader) error {
+			n, err := r.ReadU32()
+			if err != nil {
+				return err
+			}
+			a.ProofType = n
+			return nil
+		}},
+		{Name: "predicate", Decode: a.predicate.UnmarshalReader},
+	})
 }
 
 func (a *RecursiveAggregation[T, E]) Equals(other BlackBoxFunction[E]) bool {

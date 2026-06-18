@@ -1,7 +1,6 @@
 package brillig_call
 
 import (
-	"fmt"
 	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 )
@@ -11,24 +10,16 @@ type BrilligOutputs struct {
 	Array  *[]shr.Witness
 }
 
-// BrilligOutputs: 0 = Simple(Witness), 1 = Array(Vec<Witness>).
+// BrilligOutputs: Simple(Witness) or Array(Vec<Witness>).
 func (b *BrilligOutputs) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadEnum(r, brilligOutputsSchema, b.decode)
+	return msgpackutil.ReadEnum(r, "BrilligOutputs", []msgpackutil.Field{
+		{Name: "Simple", Decode: func(r *msgpackutil.Reader) error {
+			b.Single = new(shr.Witness)
+			return b.Single.UnmarshalReader(r)
+		}},
+		{Name: "Array", Decode: func(r *msgpackutil.Reader) error {
+			b.Array = new([]shr.Witness)
+			return msgpackutil.ReadVec(r, b.Array)
+		}},
+	})
 }
-
-func (b *BrilligOutputs) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		b.Single = new(shr.Witness)
-		return b.Single.UnmarshalReader(r)
-	case 1:
-		b.Array = new([]shr.Witness)
-		return msgpackutil.ReadVec(r, b.Array)
-	default:
-		return fmt.Errorf("unknown BrilligOutputsKind: %v", f)
-	}
-}
-
-var brilligOutputsSchema = msgpackutil.NewSchema(map[string]int{
-	"Simple": 0, "Array": 1,
-})

@@ -1,7 +1,6 @@
 package blackboxfunc
 
 import (
-	"fmt"
 	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	"sunspot/go/poseidon2"
@@ -15,15 +14,11 @@ type Poseidon2Permutation[T shr.ACIRField, E constraint.Element] struct {
 	Outputs []shr.Witness
 }
 
-func (a *Poseidon2Permutation[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		return msgpackutil.ReadVec(r, &a.Inputs)
-	case 1:
-		return msgpackutil.ReadVec(r, &a.Outputs)
-	default:
-		return fmt.Errorf("Poseidon2Permutation: unknown field %s", f)
-	}
+func (a *Poseidon2Permutation[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, "Poseidon2Permutation", []msgpackutil.Field{
+		{Name: "inputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Inputs) }},
+		{Name: "outputs", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &a.Outputs) }},
+	})
 }
 
 func (a *Poseidon2Permutation[T, E]) Equals(other BlackBoxFunction[E]) bool {

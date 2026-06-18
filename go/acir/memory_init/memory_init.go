@@ -2,7 +2,6 @@ package memory_init
 
 import (
 	"encoding/json"
-	"fmt"
 	"sunspot/go/acir/msgpackutil"
 	ops "sunspot/go/acir/opcodes"
 	shr "sunspot/go/acir/shared"
@@ -18,34 +17,22 @@ type MemoryInit[T shr.ACIRField, E constraint.Element] struct {
 	Init    []shr.Witness
 }
 
-// On the wire MemoryInit's payload is a 3-tagged-field struct: 0=block_id (BlockId, transparent u32),
-// 1=init (Vec<Witness>), 2=block_type (enum). We ignore block_type in this backend
+// MemoryInit's payload: block_id (BlockId, transparent u32),
+// init (Vec<Witness>), block_type (enum). We ignore block_type in this backend.
 func (m *MemoryInit[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadStruct(r, memoryInitSchema, m.decode)
+	return msgpackutil.ReadStruct(r, "MemoryInit", []msgpackutil.Field{
+		{Name: "block_id", Decode: func(r *msgpackutil.Reader) error {
+			v, err := r.ReadU32()
+			if err != nil {
+				return err
+			}
+			m.BlockID = v
+			return nil
+		}},
+		{Name: "init", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &m.Init) }},
+		{Name: "block_type", Decode: msgpackutil.SkipField},
+	})
 }
-
-func (m *MemoryInit[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		v, err := r.ReadU32()
-		if err != nil {
-			return err
-		}
-		m.BlockID = v
-		return nil
-	case 1:
-		return msgpackutil.ReadVec(r, &m.Init)
-	case 2:
-		// tag 2 encodes the blocktype, which for this backend is irrelevant
-		return r.SkipValue()
-	default:
-		return fmt.Errorf("MemoryInit: unknown field %s", f)
-	}
-}
-
-var memoryInitSchema = msgpackutil.NewSchema(map[string]int{
-	"block_id": 0, "init": 1, "block_type": 2,
-})
 
 func (m *MemoryInit[T, E]) Equals(other ops.Opcode[E]) bool {
 	value, ok := other.(*MemoryInit[T, E])

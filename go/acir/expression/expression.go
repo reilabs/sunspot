@@ -2,7 +2,6 @@ package expression
 
 import (
 	"encoding/json"
-	"fmt"
 	"sunspot/go/acir/msgpackutil"
 	"sunspot/go/acir/opcodes"
 	shr "sunspot/go/acir/shared"
@@ -27,27 +26,12 @@ func (e *Expression[T, E]) Define(
 
 func (e *Expression[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
 	e.Constant = shr.MakeNonNil(e.Constant)
-	return msgpackutil.ReadStruct(r, expressionSchema, e.decode)
+	return msgpackutil.ReadStruct(r, "Expression", []msgpackutil.Field{
+		{Name: "mul_terms", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &e.MulTerms) }},
+		{Name: "linear_combinations", Decode: func(r *msgpackutil.Reader) error { return msgpackutil.ReadVec(r, &e.LinearCombinations) }},
+		{Name: "q_c", Decode: e.Constant.UnmarshalReader},
+	})
 }
-
-func (e *Expression[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
-	switch f.Tag {
-	case 0:
-		return msgpackutil.ReadVec(r, &e.MulTerms)
-	case 1:
-		return msgpackutil.ReadVec(r, &e.LinearCombinations)
-	case 2:
-		return e.Constant.UnmarshalReader(r)
-	default:
-		return fmt.Errorf("Expression: unknown field %s", f)
-	}
-}
-
-var expressionSchema = msgpackutil.NewSchema(map[string]int{
-	"mul_terms":           0,
-	"linear_combinations": 1,
-	"q_c":                 2,
-})
 
 func (e *Expression[T, E]) Equals(other opcodes.Opcode[E]) bool {
 	value, ok := other.(*Expression[T, E])
