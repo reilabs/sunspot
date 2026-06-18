@@ -1,7 +1,8 @@
 package expression
 
 import (
-	"io"
+	"fmt"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
@@ -12,18 +13,21 @@ type LinearCombination[T shr.ACIRField] struct {
 	Witness shr.Witness `json:"witness"` // Witness for the linear combination
 }
 
-func (lc *LinearCombination[T]) UnmarshalReader(r io.Reader) error {
-	lc.Term = shr.MakeNonNil(lc.Term) // Ensure Term is non-nil
-
+// On the wire each linear_combination is a serde tuple `(F, Witness)` —
+// a 2-element fixarray.
+func (lc *LinearCombination[T]) UnmarshalReader(r *msgpackutil.Reader) error {
+	n, err := r.ReadArrayLen()
+	if err != nil {
+		return err
+	}
+	if n != 2 {
+		return fmt.Errorf("linear_combination: expected 2-tuple, got %d elements", n)
+	}
+	lc.Term = shr.MakeNonNil(lc.Term)
 	if err := lc.Term.UnmarshalReader(r); err != nil {
 		return err
 	}
-
-	if err := lc.Witness.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	return nil
+	return lc.Witness.UnmarshalReader(r)
 }
 
 func (lc *LinearCombination[T]) Equals(other *LinearCombination[T]) bool {
@@ -47,4 +51,3 @@ func (lc *LinearCombination[T]) Calculate(api frontend.API, witnesses map[shr.Wi
 	}
 	return api.Mul(left, lc.Term.ToFrontendVariable())
 }
-

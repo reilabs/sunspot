@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -17,18 +16,15 @@ type Keccakf1600[T shr.ACIRField, E constraint.Element] struct {
 	Outputs [25]shr.Witness
 }
 
-func (a *Keccakf1600[T, E]) UnmarshalReader(r io.Reader) error {
-	for i := 0; i < 25; i++ {
-		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
-			return err
-		}
+func (a *Keccakf1600[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		return readFunctionInputArray(r, a.Inputs[:])
+	case 1:
+		return shr.ReadWitnessArray(r, a.Outputs[:])
+	default:
+		return fmt.Errorf("Keccakf1600: unknown field tag %d", tag)
 	}
-
-	if err := binary.Read(r, binary.LittleEndian, &a.Outputs); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (a *Keccakf1600[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -79,4 +75,3 @@ func (a *Keccakf1600[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Wi
 	}
 	return nil
 }
-

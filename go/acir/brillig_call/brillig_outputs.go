@@ -1,51 +1,41 @@
 package brillig_call
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 )
 
 type BrilligOutputs struct {
-	Kind   BrilligOutputsKind
 	Single *shr.Witness
 	Array  *[]shr.Witness
 }
 
-type BrilligOutputsKind uint32
+// BrilligOutputs: 0 = Simple(Witness), 1 = Array(Vec<Witness>).
+func (b *BrilligOutputs) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadEnum(r, b.decode)
+}
 
-const (
-	ACIRBrilligOutputsKindSimple BrilligOutputsKind = iota
-	ACIRBrilligOutputsKindArray
-)
-
-func (b *BrilligOutputs) UnmarshalReader(r io.Reader) error {
-	if err := binary.Read(r, binary.LittleEndian, &b.Kind); err != nil {
-		return err
-	}
-
-	switch b.Kind {
-	case ACIRBrilligOutputsKindSimple:
+func (b *BrilligOutputs) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
 		b.Single = new(shr.Witness)
-		if err := b.Single.UnmarshalReader(r); err != nil {
-			return err
-		}
-	case ACIRBrilligOutputsKindArray:
-		var numOutputs uint64
-		if err := binary.Read(r, binary.LittleEndian, &numOutputs); err != nil {
+		return b.Single.UnmarshalReader(r)
+	case 1:
+
+		n, err := r.ReadArrayLen()
+		if err != nil {
 			return err
 		}
 		b.Array = new([]shr.Witness)
-		*b.Array = make([]shr.Witness, numOutputs)
-		for i := uint64(0); i < numOutputs; i++ {
+		*b.Array = make([]shr.Witness, n)
+		for i := 0; i < n; i++ {
 			if err := (*b.Array)[i].UnmarshalReader(r); err != nil {
 				return err
 			}
 		}
+		return nil
 	default:
-		return fmt.Errorf("unknown BrilligOutputsKind: %d", b.Kind)
+		return fmt.Errorf("unknown BrilligOutputsKind: %d", tag)
 	}
-
-	return nil
 }

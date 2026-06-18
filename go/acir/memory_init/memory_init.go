@@ -1,9 +1,9 @@
 package memory_init
 
 import (
-	"encoding/binary"
 	"encoding/json"
-	"io"
+	"fmt"
+	"sunspot/go/acir/msgpackutil"
 	ops "sunspot/go/acir/opcodes"
 	shr "sunspot/go/acir/shared"
 
@@ -13,53 +13,39 @@ import (
 )
 
 type MemoryInit[T shr.ACIRField, E constraint.Element] struct {
-	BlockID   uint32
-	Table     *logderivlookup.Table
-	Init      []shr.Witness
-	BlockType BlockKind
-	CallData  *uint32
+	BlockID uint32
+	Table   *logderivlookup.Table
+	Init    []shr.Witness
 }
 
-type BlockKind uint32
+// On the wire MemoryInit's payload is a 3-tagged-field struct: 0=block_id (BlockId, transparent u32),
+// 1=init (Vec<Witness>), 2=block_type (enum). We ignore block_type in this backend
+func (m *MemoryInit[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, m.decode)
+}
 
-const (
-	ACIRMemoryBlockMemory BlockKind = iota
-	ACIRMemoryBlockCallData
-	ACIRMemoryBlockReturnData
-)
-
-func (m *MemoryInit[T, E]) UnmarshalReader(r io.Reader) error {
-	if err := binary.Read(r, binary.LittleEndian, &m.BlockID); err != nil {
-		return err
-	}
-
-	var NumWitnesses uint64
-	if err := binary.Read(r, binary.LittleEndian, &NumWitnesses); err != nil {
-		return err
-	}
-	m.Init = make([]shr.Witness, NumWitnesses)
-	for i := uint64(0); i < NumWitnesses; i++ {
-		if err := m.Init[i].UnmarshalReader(r); err != nil {
+func (m *MemoryInit[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		v, err := r.ReadU32()
+		if err != nil {
 			return err
 		}
+		m.BlockID = v
+		return nil
+	case 1:
+		return shr.ReadWitnessVec(r, &m.Init)
+	case 2:
+		// tag 2 encodes the blocktype, which for this backend is irrelevant
+		return r.SkipValue()
+	default:
+		return fmt.Errorf("memory_init: unknown field tag %d", tag)
 	}
-
-	if err := binary.Read(r, binary.LittleEndian, &m.BlockType); err != nil {
-		return err
-	}
-	if m.BlockType == ACIRMemoryBlockCallData {
-		m.CallData = new(uint32)
-		if err := binary.Read(r, binary.LittleEndian, m.CallData); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (m *MemoryInit[T, E]) Equals(other ops.Opcode[E]) bool {
 	value, ok := other.(*MemoryInit[T, E])
-	if !ok || m.BlockID != value.BlockID || m.BlockType != value.BlockType {
+	if !ok || m.BlockID != value.BlockID {
 		return false
 	}
 
@@ -72,13 +58,6 @@ func (m *MemoryInit[T, E]) Equals(other ops.Opcode[E]) bool {
 		}
 	}
 
-	if (m.CallData == nil && value.CallData != nil) || (m.CallData != nil && value.CallData == nil) {
-		return false
-	}
-	if m.CallData != nil && value.CallData != nil && *m.CallData != *value.CallData {
-		return false
-	}
-
 	return true
 }
 
@@ -88,7 +67,6 @@ func (m *MemoryInit[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Wit
 	}
 	return nil
 }
-
 
 func (m *MemoryInit[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap := make(map[string]interface{})

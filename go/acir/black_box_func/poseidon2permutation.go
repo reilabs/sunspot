@@ -1,8 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
-	"io"
+	"fmt"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	"sunspot/go/poseidon2"
 
@@ -15,29 +15,15 @@ type Poseidon2Permutation[T shr.ACIRField, E constraint.Element] struct {
 	Outputs []shr.Witness
 }
 
-func (a *Poseidon2Permutation[T, E]) UnmarshalReader(r io.Reader) error {
-	var NumInputs uint64
-	if err := binary.Read(r, binary.LittleEndian, &NumInputs); err != nil {
-		return err
+func (a *Poseidon2Permutation[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		return readFunctionInputVec(r, &a.Inputs)
+	case 1:
+		return shr.ReadWitnessVec(r, &a.Outputs)
+	default:
+		return fmt.Errorf("Poseidon2Permutation: unknown field tag %d", tag)
 	}
-	a.Inputs = make([]FunctionInput[T], NumInputs)
-	for i := uint64(0); i < NumInputs; i++ {
-		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	var NumOutputs uint64
-	if err := binary.Read(r, binary.LittleEndian, &NumOutputs); err != nil {
-		return err
-	}
-
-	a.Outputs = make([]shr.Witness, NumOutputs)
-	if err := binary.Read(r, binary.LittleEndian, &a.Outputs); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (a *Poseidon2Permutation[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -79,4 +65,3 @@ func (a *Poseidon2Permutation[T, E]) Define(api frontend.Builder[E], witnesses m
 	}
 	return nil
 }
-

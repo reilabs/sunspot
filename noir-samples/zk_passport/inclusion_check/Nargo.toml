@@ -4,5 +4,5 @@ type = "bin"
 authors = [""]
 
 [dependencies]
-inclusion_check = { tag="main", git = "https://github.com/reilabs/zk_passport_circuits", directory = "src/noir/lib/inclusion-check/country" }
-utils = { tag="main", git = "https://github.com/reilabs/zk_passport_circuits", directory = "src/noir/lib/utils" }
+inclusion_check = { tag="main", git = "https://github.com/zkpassport/circuits", directory = "src/noir/lib/inclusion-check/country" }
+utils = { tag="main", git = "https://github.com/zkpassport/circuits", directory = "src/noir/lib/utils" }

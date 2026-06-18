@@ -1,10 +1,9 @@
 package assertion_payload
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
 	exp "sunspot/go/acir/expression"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -12,38 +11,29 @@ import (
 
 // Expression or memory is the basic type used in assertion payloads
 type ExpressionOrMemory[T shr.ACIRField, E constraint.Element] struct {
-	Kind       ExpressionOrMemoryKind
 	Expression *exp.Expression[T, E]
 	BlockId    *uint32
 }
 
-type ExpressionOrMemoryKind uint32
+// ExpressionOrMemory: 0=Expression(Expression<F>), 1=Memory(BlockId).
+func (e *ExpressionOrMemory[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadEnum(r, e.decode)
+}
 
-const (
-	ACIRExpressionOrMemoryKindExpression ExpressionOrMemoryKind = iota
-	ACIRExpressionOrMemoryKindMemory
-)
-
-func (e *ExpressionOrMemory[T, E]) UnmarshalReader(r io.Reader) error {
-	if err := binary.Read(r, binary.LittleEndian, &e.Kind); err != nil {
-		return err
-	}
-
-	switch e.Kind {
-	case ACIRExpressionOrMemoryKindExpression:
+func (e *ExpressionOrMemory[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
 		e.Expression = new(exp.Expression[T, E])
-		if err := e.Expression.UnmarshalReader(r); err != nil {
-			return err
-		}
-	case ACIRExpressionOrMemoryKindMemory:
-		var blockID uint32
-		if err := binary.Read(r, binary.LittleEndian, &blockID); err != nil {
+		return e.Expression.UnmarshalReader(r)
+	case 1:
+		v, err := r.ReadUint()
+		if err != nil {
 			return err
 		}
 		e.BlockId = new(uint32)
-		*e.BlockId = blockID
+		*e.BlockId = uint32(v)
+		return nil
 	default:
-		return fmt.Errorf("unknown ExpressionOrMemoryKind: %d", e.Kind)
+		return fmt.Errorf("unknown ExpressionOrMemoryKind: %d", tag)
 	}
-	return nil
 }

@@ -1,63 +1,60 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
-	"io"
+	"fmt"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
+	grumpkin "sunspot/go/sw-grumpkin"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 )
 
 type EmbeddedCurveAdd[T shr.ACIRField, E constraint.Element] struct {
-	Input1    [3]FunctionInput[T]
-	Input2    [3]FunctionInput[T]
+	Input1    [2]FunctionInput[T]
+	Input2    [2]FunctionInput[T]
 	predicate FunctionInput[T]
-	Outputs   [3]shr.Witness
+	Outputs   [2]shr.Witness
 }
 
-func (a *EmbeddedCurveAdd[T, E]) UnmarshalReader(r io.Reader) error {
-	for i := 0; i < 3; i++ {
-		if err := a.Input1[i].UnmarshalReader(r); err != nil {
+func (a *EmbeddedCurveAdd[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		return readFunctionInputArray(r, a.Input1[:])
+	case 1:
+		return readFunctionInputArray(r, a.Input2[:])
+	case 2:
+		return a.predicate.UnmarshalReader(r)
+	case 3:
+		n, err := r.ReadArrayLen()
+		if err != nil {
 			return err
 		}
-	}
-
-	for i := 0; i < 3; i++ {
-		if err := a.Input2[i].UnmarshalReader(r); err != nil {
+		if n != 2 {
+			return fmt.Errorf("EmbeddedCurveAdd.outputs: expected 2-tuple, got %d", n)
+		}
+		if err := a.Outputs[0].UnmarshalReader(r); err != nil {
 			return err
 		}
+		return a.Outputs[1].UnmarshalReader(r)
+	default:
+		return fmt.Errorf("EmbeddedCurveAdd: unknown field tag %d", tag)
 	}
-
-	if err := a.predicate.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	if err := binary.Read(r, binary.LittleEndian, &a.Outputs); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (a *EmbeddedCurveAdd[T, E]) Equals(other BlackBoxFunction[E]) bool {
 	value, ok := other.(*EmbeddedCurveAdd[T, E])
-	if !ok || len(a.Input1) != len(value.Input1) || len(a.Input2) != len(value.Input2) {
+	if !ok {
 		return false
 	}
-
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 2; i++ {
 		if !a.Input1[i].Equals(&value.Input1[i]) || !a.Input2[i].Equals(&value.Input2[i]) {
 			return false
 		}
-	}
-
-	for i := 0; i < 3; i++ {
 		if a.Outputs[i] != value.Outputs[i] {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -67,26 +64,26 @@ func (a *EmbeddedCurveAdd[T, E]) Define(api frontend.Builder[E], witnesses map[s
 		return err
 	}
 
-	x, err := EmbeddedPointFromInputs(api, witnesses, pred, a.Input1)
+	point1, err := EmbeddedPointFromInputs(a.Input1[0], a.Input1[1], witnesses)
 	if err != nil {
 		return err
 	}
-	y, err := EmbeddedPointFromInputs(api, witnesses, pred, a.Input2)
+	point2, err := EmbeddedPointFromInputs(a.Input2[0], a.Input2[1], witnesses)
 	if err != nil {
 		return err
 	}
 
-	output := maskedEmbeddedPoint(api, pred,
-		witnesses[a.Outputs[0]], witnesses[a.Outputs[1]], witnesses[a.Outputs[2]])
+	output := grumpkin.G1Affine{
+		X: witnesses[a.Outputs[0]],
+		Y: witnesses[a.Outputs[1]],
+	}
 
-	x.AssertIsOnCurve(api)
-	y.AssertIsOnCurve(api)
+	point1.AssertIsOnCurve(api)
+	point2.AssertIsOnCurve(api)
 	output.AssertIsOnCurve(api)
 
-	constrained_output := x.AddUnified(api, y)
-	// Assert that the addition is correct, ignoring if the predicate is zero
+	constrained_output := point1.AddUnified(api, point2)
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.X, output.X)))
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.Y, output.Y)))
-
 	return nil
 }

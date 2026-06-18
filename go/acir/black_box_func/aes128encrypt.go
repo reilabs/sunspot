@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -20,44 +19,19 @@ type AES128Encrypt[T shr.ACIRField, E constraint.Element] struct {
 	Outputs []shr.Witness
 }
 
-func (a *AES128Encrypt[T, E]) UnmarshalReader(r io.Reader) error {
-	InputsNum := uint64(0)
-	if err := binary.Read(r, binary.LittleEndian, &InputsNum); err != nil {
-		return err
+func (a *AES128Encrypt[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		return readFunctionInputVec(r, &a.Inputs)
+	case 1:
+		return readFunctionInputArray(r, a.Iv[:])
+	case 2:
+		return readFunctionInputArray(r, a.Key[:])
+	case 3:
+		return shr.ReadWitnessVec(r, &a.Outputs)
+	default:
+		return fmt.Errorf("aes128encrypt: unknown field tag %d", tag)
 	}
-	for i := uint64(0); i < InputsNum; i++ {
-		var input FunctionInput[T]
-		if err := input.UnmarshalReader(r); err != nil {
-			return err
-		}
-		a.Inputs = append(a.Inputs, input)
-	}
-
-	for i := uint32(0); i < 16; i++ {
-		if err := a.Iv[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	for i := uint32(0); i < 16; i++ {
-		if err := a.Key[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	OutputsNum := uint64(0)
-	if err := binary.Read(r, binary.LittleEndian, &OutputsNum); err != nil {
-		return err
-	}
-	for i := uint64(0); i < OutputsNum; i++ {
-		var witness shr.Witness
-		if err := witness.UnmarshalReader(r); err != nil {
-			return err
-		}
-		a.Outputs = append(a.Outputs, witness)
-	}
-
-	return nil
 }
 
 func (a *AES128Encrypt[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -94,7 +68,6 @@ func (a *AES128Encrypt[T, E]) Equals(other BlackBoxFunction[E]) bool {
 
 	return true
 }
-
 
 func (a *AES128Encrypt[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
 	uapi, err := uints.NewBinaryField[uints.U32](api)

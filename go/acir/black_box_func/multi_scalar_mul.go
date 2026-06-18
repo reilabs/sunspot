@@ -1,8 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
-	"io"
+	"fmt"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	grumpkin "sunspot/go/sw-grumpkin"
 
@@ -15,45 +15,32 @@ type MultiScalarMul[T shr.ACIRField, E constraint.Element] struct {
 	Points    []FunctionInput[T]
 	Scalars   []FunctionInput[T]
 	predicate FunctionInput[T]
-	Outputs   [3]shr.Witness
+	Outputs   [2]shr.Witness
 }
 
-func (a *MultiScalarMul[T, E]) UnmarshalReader(r io.Reader) error {
-
-	var numPoints uint64
-	if err := binary.Read(r, binary.LittleEndian, &numPoints); err != nil {
-		return err
-	}
-
-	a.Points = make([]FunctionInput[T], numPoints)
-	for i := uint64(0); i < numPoints; i++ {
-		if err := a.Points[i].UnmarshalReader(r); err != nil {
+func (a *MultiScalarMul[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		return readFunctionInputVec(r, &a.Points)
+	case 1:
+		return readFunctionInputVec(r, &a.Scalars)
+	case 2:
+		return a.predicate.UnmarshalReader(r)
+	case 3:
+		n, err := r.ReadArrayLen()
+		if err != nil {
 			return err
 		}
-	}
-
-	var numScalars uint64
-	if err := binary.Read(r, binary.LittleEndian, &numScalars); err != nil {
-		return err
-	}
-
-	a.Scalars = make([]FunctionInput[T], numScalars)
-	for i := uint64(0); i < numScalars; i++ {
-		if err := a.Scalars[i].UnmarshalReader(r); err != nil {
+		if n != 2 {
+			return fmt.Errorf("MultiScalarMul.outputs: expected 2-tuple, got %d", n)
+		}
+		if err := a.Outputs[0].UnmarshalReader(r); err != nil {
 			return err
 		}
+		return a.Outputs[1].UnmarshalReader(r)
+	default:
+		return fmt.Errorf("MultiScalarMul: unknown field tag %d", tag)
 	}
-	if err := a.predicate.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	for i := 0; i < 3; i++ {
-		if err := a.Outputs[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (a *MultiScalarMul[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -75,7 +62,7 @@ func (a *MultiScalarMul[T, E]) Equals(other BlackBoxFunction[E]) bool {
 		}
 	}
 
-	for i := 0; i < 3; i++ {
+	for i := range a.Outputs {
 		if a.Outputs[i] != value.Outputs[i] {
 			return false
 		}
@@ -85,8 +72,7 @@ func (a *MultiScalarMul[T, E]) Equals(other BlackBoxFunction[E]) bool {
 }
 
 func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error {
-	points := make([]*grumpkin.G1Affine, len(a.Points)/3)
-
+	points := make([]*grumpkin.G1Affine, len(a.Points)/2)
 	scalars := make([]interface{}, len(a.Scalars)/2)
 
 	pred, err := a.predicate.ToVariable(witnesses)
@@ -94,13 +80,12 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 		return err
 	}
 
-	for i := 0; i < len(a.Points); i += 3 {
-		point, err := EmbeddedPointFromInputs(api, witnesses, pred,
-			[3]FunctionInput[T]{a.Points[i], a.Points[i+1], a.Points[i+2]})
+	for i := 0; i < len(a.Points); i += 2 {
+		point, err := EmbeddedPointFromInputs(a.Points[i], a.Points[i+1], witnesses)
 		if err != nil {
 			return err
 		}
-		points[i/3] = &point
+		points[i/2] = &point
 	}
 
 	for i := 0; i < len(a.Scalars); i += 2 {
@@ -111,8 +96,10 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 		scalars[i/2] = scalar
 	}
 
-	output := maskedEmbeddedPoint(api, pred,
-		witnesses[a.Outputs[0]], witnesses[a.Outputs[1]], witnesses[a.Outputs[2]])
+	output := grumpkin.G1Affine{
+		X: witnesses[a.Outputs[0]],
+		Y: witnesses[a.Outputs[1]],
+	}
 
 	for i := range points {
 		points[i].AssertIsOnCurve(api)
@@ -121,8 +108,8 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 
 	constrained_output := grumpkin.MultiScalarMul(api, points, scalars, algopts.WithCompleteArithmetic())
 
-	// To assert the two points are the same (and ignore if predicate is zero), we have to split into
-	// its X and Y coordinates
+	// Predicate-gated equality on each coordinate: when pred=0 the
+	// constraint is trivially satisfied.
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.X, output.X)))
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.Y, output.Y)))
 	return nil

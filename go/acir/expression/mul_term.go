@@ -1,7 +1,8 @@
 package expression
 
 import (
-	"io"
+	"fmt"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
@@ -13,22 +14,24 @@ type MulTerm[T shr.ACIRField] struct {
 	WitnessRight shr.Witness `json:"witness_right"` // Right witness for multiplication
 }
 
-func (mt *MulTerm[T]) UnmarshalReader(r io.Reader) error {
-	mt.Term = shr.MakeNonNil(mt.Term) // Ensure Term is non-nil
-
+// On the wire each mul_term is a serde tuple `(F, Witness, Witness)` —
+// always a 3-element fixarray, no tagged-map shape.
+func (mt *MulTerm[T]) UnmarshalReader(r *msgpackutil.Reader) error {
+	n, err := r.ReadArrayLen()
+	if err != nil {
+		return err
+	}
+	if n != 3 {
+		return fmt.Errorf("mul_term: expected 3-tuple, got %d elements", n)
+	}
+	mt.Term = shr.MakeNonNil(mt.Term)
 	if err := mt.Term.UnmarshalReader(r); err != nil {
 		return err
 	}
-
 	if err := mt.WitnessLeft.UnmarshalReader(r); err != nil {
 		return err
 	}
-
-	if err := mt.WitnessRight.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	return nil
+	return mt.WitnessRight.UnmarshalReader(r)
 }
 
 func (mt *MulTerm[T]) Equals(other *MulTerm[T]) bool {
@@ -61,4 +64,3 @@ func (Mt *MulTerm[T]) Calculate(api frontend.API, witnesses map[shr.Witness]fron
 
 	return api.Mul(left, right, Mt.Term.ToFrontendVariable())
 }
-

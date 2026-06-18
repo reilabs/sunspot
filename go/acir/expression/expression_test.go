@@ -3,6 +3,7 @@ package expression
 import (
 	"math/big"
 	"os"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	"sunspot/go/bn254"
 	"testing"
@@ -26,7 +27,7 @@ func TestExpressionUnmarshalReaderEmpty(t *testing.T) {
 	}
 
 	var expr Expression[T, E]
-	if err := expr.UnmarshalReader(file); err != nil {
+	if err := expr.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal expression: %v", err)
 	}
 
@@ -52,7 +53,7 @@ func TestExpressionUnmarshalReaderWithLinearCombinations(t *testing.T) {
 	}
 
 	var expr Expression[T, E]
-	if err := expr.UnmarshalReader(file); err != nil {
+	if err := expr.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal expression: %v", err)
 	}
 
@@ -82,7 +83,7 @@ func TestExpressionUnmarshalReaderWithMulTerms(t *testing.T) {
 	}
 
 	var expr Expression[T, E]
-	if err := expr.UnmarshalReader(file); err != nil {
+	if err := expr.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal expression: %v", err)
 	}
 
@@ -112,7 +113,7 @@ func TestExpressionUnmarshalReaderMulTermsWithLinearCombinations(t *testing.T) {
 	}
 
 	var expr Expression[T, E]
-	if err := expr.UnmarshalReader(file); err != nil {
+	if err := expr.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal expression: %v", err)
 	}
 

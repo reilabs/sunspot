@@ -10,8 +10,8 @@ import (
 	"math/big"
 	"os"
 	"strconv"
-	expression "sunspot/go/acir/expression"
 	hdr "sunspot/go/acir/header"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark-crypto/ecc"
@@ -21,15 +21,19 @@ import (
 	"github.com/consensys/gnark/frontend/schema"
 )
 
+// SerializationFormatMsgpackTagged is the leading byte the noir
+// `acir::serialization::Format` enum emits for the tagged MessagePack
+// wire format used since beta.22.
+const SerializationFormatMsgpackTagged byte = 4
+
 // Struct representation of an ACIR programme
 type ACIR[T shr.ACIRField, E constraint.Element] struct {
-	NoirVersion     string                      `json:"noir_version"`
-	Hash            uint64                      `json:"hash"`
-	ABI             hdr.ACIRABI                 `json:"abi"`
-	Program         Program[T, E]               `json:"program"`
-	DebugSymbols    string                      `json:"debug_symbols"`
-	FileMap         map[string]hdr.ACIRFileData `json:"file_map"`
-	ExpressionWidth expression.ExpressionWidth  `json:"expression_width"`
+	NoirVersion  string                      `json:"noir_version"`
+	Hash         uint64                      `json:"hash"`
+	ABI          hdr.ACIRABI                 `json:"abi"`
+	Program      Program[T, E]               `json:"program"`
+	DebugSymbols string                      `json:"debug_symbols"`
+	FileMap      map[string]hdr.ACIRFileData `json:"file_map"`
 }
 
 // Loads ACIR from disk and creates representation in memory
@@ -86,12 +90,10 @@ func (a *ACIR[T, E]) UnmarshalJSON(data []byte) error {
 	}
 
 	if bytecode, ok := raw["bytecode"].(string); ok {
-		// Decoding bytecode from hex string
 		reader, err := decodeProgramBytecode(bytecode)
 		if err != nil {
 			return fmt.Errorf("error decoding bytecode: %v", err)
 		}
-
 		if err := a.Program.UnmarshalReader(reader); err != nil {
 			return fmt.Errorf("error unmarshalling program bytecode: %v", err)
 		}
@@ -122,32 +124,30 @@ func (a *ACIR[T, E]) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("missing or invalid file_map field in ACIR")
 	}
 
-	// 2. Now you can treat the value as bytes
-	if ewVal, ok := raw["expression_width"]; ok {
-		data, err := json.Marshal(ewVal)
-		if err != nil {
-			return fmt.Errorf("error marshalling expression_width: %w", err)
-		}
-
-		if err := json.Unmarshal(data, &a.ExpressionWidth); err != nil {
-			return fmt.Errorf("error unmarshalling ACIR ABI (expression_width): %w", err)
-		}
-	}
-
 	return nil
 }
 
-func decodeProgramBytecode(bytecode string) (reader io.Reader, err error) {
+func decodeProgramBytecode(bytecode string) (*msgpackutil.Reader, error) {
 	data, err := base64.StdEncoding.DecodeString(bytecode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode bytecode: %w", err)
 	}
-	// Decompress the bytecode using gzip
-	reader, err = gzip.NewReader(bytes.NewReader(data))
+	gz, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
 	}
-	return reader, err
+	defer gz.Close()
+	raw, err := io.ReadAll(gz)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read gzipped bytecode: %w", err)
+	}
+	if len(raw) == 0 {
+		return nil, fmt.Errorf("decompressed bytecode is empty")
+	}
+	if raw[0] != SerializationFormatMsgpackTagged {
+		return nil, fmt.Errorf("unsupported ACIR serialization format: only msgpack-tagged is supported")
+	}
+	return msgpackutil.NewReader(bytes.NewReader(raw[1:])), nil
 }
 
 func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {

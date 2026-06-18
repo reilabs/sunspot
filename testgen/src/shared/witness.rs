@@ -3,6 +3,8 @@ use std::io::Write;
 use acir::native_types::Witness;
 use tracing::trace;
 
+use crate::encode;
+
 fn generate_zero_witness_test(path: &str) {
     // Check if file exists - if it does, recreate a new one
     let file_path = format!("{path}/witness_zero.bin");
@@ -15,11 +17,8 @@ fn generate_zero_witness_test(path: &str) {
 
     // Write the zero witness to the file
     let witness = Witness::new(0);
-    let config = bincode::config::standard()
-        .with_little_endian()
-        .with_fixed_int_encoding();
-    let data = bincode::serde::encode_to_vec(witness, config)
-        .expect("msg: Failed to serialize witness");
+
+    let data = encode(&witness);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -41,11 +40,8 @@ fn generate_witness_test_0x1234(path: &str) {
 
     // Write the witness to the file
     let witness = Witness::new(0x1234);
-    let config = bincode::config::standard()
-        .with_little_endian()
-        .with_fixed_int_encoding();
-    let data = bincode::serde::encode_to_vec(witness, config)
-        .expect("msg: Failed to serialize witness");
+
+    let data = encode(&witness);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -67,11 +63,8 @@ fn generate_witness_test_0x12345678(path: &str) {
 
     // Write the witness to the file
     let witness = Witness::new(0x12345678);
-    let config = bincode::config::standard()
-        .with_little_endian()
-        .with_fixed_int_encoding();
-    let data = bincode::serde::encode_to_vec(witness, config)
-        .expect("msg: Failed to serialize witness");
+
+    let data = encode(&witness);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 

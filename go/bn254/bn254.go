@@ -2,10 +2,8 @@
 package bn254
 
 import (
-	"encoding/binary"
-	"fmt"
-	"io"
 	"math/big"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
@@ -29,19 +27,12 @@ func One() *BN254Field {
 	}
 }
 
-func (b *BN254Field) UnmarshalReader(r io.Reader) error {
-	// Implement the unmarshalling logic here
-
-	var bn254len uint64
-	if err := binary.Read(r, binary.LittleEndian, &bn254len); err != nil {
+func (b *BN254Field) UnmarshalReader(r *msgpackutil.Reader) error {
+	bytes, err := r.ReadBytes()
+	if err != nil {
 		return err
 	}
-
-	bn254Bytes := make([]byte, bn254len)
-	if _, err := io.ReadFull(r, bn254Bytes); err != nil {
-		return fmt.Errorf("failed to read BN254 field bytes: %w", err)
-	}
-	b.Value.SetBytes(bn254Bytes)
+	b.Value.SetBytes(bytes)
 	return nil
 }
 

@@ -1,10 +1,10 @@
-use std::io::Write;
-
+use crate::encode;
 use acir::{
     FieldElement,
     circuit::opcodes::{BlackBoxFuncCall, FunctionInput},
     native_types::Witness,
 };
+use std::io::Write;
 use tracing::trace;
 
 fn generate_blake3_test_empty(path: &str) {
@@ -23,12 +23,7 @@ fn generate_blake3_test_empty(path: &str) {
         outputs: Box::new([Witness(0); 32]),
     };
 
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-
-    let data = bincode::serde::encode_to_vec(&blake3_function_call, config)
-        .expect("Failed to encode data");
+    let data = encode(&blake3_function_call);
 
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
@@ -60,12 +55,7 @@ fn generate_blake3_test_with_inputs(path: &str) {
         outputs: Box::new([Witness(1234); 32]),
     };
 
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-
-    let data = bincode::serde::encode_to_vec(&blake3_function_call, config)
-        .expect("Failed to encode data");
+    let data = encode(&blake3_function_call);
 
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");

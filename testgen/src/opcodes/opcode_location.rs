@@ -1,8 +1,8 @@
 use std::{io::Write, path};
 
+use crate::encode;
 use acir::circuit::OpcodeLocation;
 use tracing::trace;
-
 fn generate_test_opcode_location_acir(path: &str) {
     let file_name = format!("{path}/opcode_location_acir.bin");
 
@@ -16,11 +16,8 @@ fn generate_test_opcode_location_acir(path: &str) {
     let opcode_location = OpcodeLocation::Acir(1234);
 
     // Placeholder for actual data
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data =
-        bincode::serde::encode_to_vec(opcode_location, config).expect("Failed to encode data");
+
+    let data = encode(&opcode_location);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -48,11 +45,8 @@ fn generate_test_opcode_location_brillig(path: &str) {
     };
 
     // Placeholder for actual data
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data =
-        bincode::serde::encode_to_vec(opcode_location, config).expect("Failed to encode data");
+
+    let data = encode(&opcode_location);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 

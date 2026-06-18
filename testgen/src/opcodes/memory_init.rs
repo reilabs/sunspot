@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use crate::encode;
 use acir::{
     FieldElement,
     circuit::{
@@ -9,7 +10,6 @@ use acir::{
     native_types::Witness,
 };
 use tracing::trace;
-
 fn generate_memory_init_memory_block_test(path: &str) {
     let file_name = format!("{path}/memory_init_memory_block.bin");
 
@@ -27,11 +27,8 @@ fn generate_memory_init_memory_block_test(path: &str) {
     };
 
     // Placeholder for actual data
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data =
-        bincode::serde::encode_to_vec(&memory_init_opcode, config).expect("Failed to encode data");
+
+    let data = encode(&memory_init_opcode);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -60,11 +57,8 @@ fn generate_memory_init_calldata_test(path: &str) {
     };
 
     // Placeholder for actual data
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data =
-        bincode::serde::encode_to_vec(&memory_init_opcode, config).expect("Failed to encode data");
+
+    let data = encode(&memory_init_opcode);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -93,11 +87,8 @@ fn generat_memory_init_return_data_test(path: &str) {
     };
 
     // Placeholder for actual data
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data =
-        bincode::serde::encode_to_vec(&memory_init_opcode, config).expect("Failed to encode data");
+
+    let data = encode(&memory_init_opcode);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 

@@ -1,8 +1,8 @@
 package memory_init
 
 import (
-	"encoding/binary"
 	"os"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	"sunspot/go/bn254"
 	"testing"
@@ -10,89 +10,54 @@ import (
 	"github.com/consensys/gnark/constraint"
 )
 
-func TestMemoryInitUnmarshalReaderBlockTest(t *testing.T) {
-	type T = *bn254.BN254Field
-	type E = constraint.U64
-	file, err := os.Open("../../binaries/opcodes/memory_init/memory_init_memory_block.bin")
+func loadMemoryInit(t *testing.T, path string) MemoryInit[*bn254.BN254Field, constraint.U64] {
+	t.Helper()
+	file, err := os.Open(path)
 	if err != nil {
-		t.Fatalf("Failed to open file: %v", err)
+		t.Fatalf("Failed to open %s: %v", path, err)
 	}
-	// read the encoded call type before reading the actual content
-	shr.ParseThrough32bits(t, file)
-	var opcode MemoryInit[T, E]
-	if err := opcode.UnmarshalReader(file); err != nil {
+	t.Cleanup(func() { file.Close() })
+
+	r := msgpackutil.NewReader(file)
+	if tag := shr.ConsumeEnumTag(t, r); tag != 3 {
+		t.Fatalf("expected Opcode variant 3 (MemoryInit), got %d", tag)
+	}
+	var opcode MemoryInit[*bn254.BN254Field, constraint.U64]
+	if err := opcode.UnmarshalReader(r); err != nil {
 		t.Fatalf("Failed to unmarshal memory init: %v", err)
 	}
+	return opcode
+}
 
-	expectedOpcode := MemoryInit[T, E]{
-		BlockType: ACIRMemoryBlockMemory,
-		BlockID:   0,
-		Init:      []shr.Witness{},
+func TestMemoryInitUnmarshalReaderBlockTest(t *testing.T) {
+	opcode := loadMemoryInit(t, "../../binaries/opcodes/memory_init/memory_init_memory_block.bin")
+	expected := MemoryInit[*bn254.BN254Field, constraint.U64]{
+		BlockID: 0,
+		Init:    []shr.Witness{},
 	}
-
-	if !opcode.Equals(&expectedOpcode) {
-		t.Errorf("Expected opcode to be %v, got %v", expectedOpcode, opcode)
+	if !opcode.Equals(&expected) {
+		t.Errorf("Expected opcode to be %+v, got %+v", expected, opcode)
 	}
-
-	defer file.Close()
 }
 
 func TestMemoryInitUnmarshalReaderCallDataTest(t *testing.T) {
-	type T = *bn254.BN254Field
-	type E = constraint.U64
-	file, err := os.Open("../../binaries/opcodes/memory_init/memory_init_calldata.bin")
-	if err != nil {
-		t.Fatalf("Failed to open file: %v", err)
+	opcode := loadMemoryInit(t, "../../binaries/opcodes/memory_init/memory_init_calldata.bin")
+	expected := MemoryInit[*bn254.BN254Field, constraint.U64]{
+		BlockID: 1,
+		Init:    []shr.Witness{0, 1, 2},
 	}
-	// read the encoded call type before reading the actual content
-	shr.ParseThrough32bits(t, file)
-	var opcode MemoryInit[T, E]
-	if err := opcode.UnmarshalReader(file); err != nil {
-		t.Fatalf("Failed to unmarshal memory init: %v", err)
+	if !opcode.Equals(&expected) {
+		t.Errorf("Expected opcode to be %+v, got %+v", expected, opcode)
 	}
-
-	expectedOpcode := MemoryInit[T, E]{
-		BlockType: ACIRMemoryBlockCallData,
-		BlockID:   1,
-		Init:      []shr.Witness{0, 1, 2},
-		CallData:  new(uint32),
-	}
-	*expectedOpcode.CallData = 1234
-
-	if !opcode.Equals(&expectedOpcode) {
-		t.Errorf("Expected opcode to be %v, got %v", expectedOpcode, opcode)
-	}
-
-	defer file.Close()
 }
 
 func TestMemoryInitUnmarshalReaderReturnDataTest(t *testing.T) {
-	type T = *bn254.BN254Field
-	type E = constraint.U64
-	file, err := os.Open("../../binaries/opcodes/memory_init/memory_init_return_data.bin")
-	if err != nil {
-		t.Fatalf("Failed to open file: %v", err)
+	opcode := loadMemoryInit(t, "../../binaries/opcodes/memory_init/memory_init_return_data.bin")
+	expected := MemoryInit[*bn254.BN254Field, constraint.U64]{
+		BlockID: 2,
+		Init:    []shr.Witness{0, 1, 2},
 	}
-	// read the encoded call type before reading the actual content
-	var kind uint32
-	if err := binary.Read(file, binary.LittleEndian, &kind); err != nil {
-		t.Fatal("was not able to read type")
+	if !opcode.Equals(&expected) {
+		t.Errorf("Expected opcode to be %+v, got %+v", expected, opcode)
 	}
-	var opcode MemoryInit[T, E]
-	if err := opcode.UnmarshalReader(file); err != nil {
-		t.Fatalf("Failed to unmarshal memory init: %v", err)
-	}
-
-	expectedOpcode := MemoryInit[T, E]{
-		BlockType: ACIRMemoryBlockReturnData,
-		BlockID:   2,
-		Init:      []shr.Witness{0, 1, 2},
-		CallData:  nil,
-	}
-
-	if !opcode.Equals(&expectedOpcode) {
-		t.Errorf("Expected opcode to be %v, got %v", expectedOpcode, opcode)
-	}
-
-	defer file.Close()
 }

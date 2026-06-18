@@ -2,6 +2,7 @@ package opcodes
 
 import (
 	"os"
+	"sunspot/go/acir/msgpackutil"
 	"testing"
 )
 
@@ -12,12 +13,11 @@ func TestOpcodeLocationUnmarshalReaderACIR(t *testing.T) {
 	}
 
 	var opcode OpcodeLocation
-	if err := opcode.UnmarshalReader(file); err != nil {
+	if err := opcode.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal opcode location: %v", err)
 	}
 
 	expectedOpcode := OpcodeLocation{
-		Kind:        ACIROpcodeLocationKindACIR,
 		ACIRAddress: new(uint64),
 	}
 
@@ -37,12 +37,11 @@ func TestOpcodeLocationUnmarshalReaderBrillig(t *testing.T) {
 	}
 
 	var opcode OpcodeLocation
-	if err := opcode.UnmarshalReader(file); err != nil {
+	if err := opcode.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal opcode location: %v", err)
 	}
 
 	expectedOpcode := OpcodeLocation{
-		Kind:         ACIROpcodeLocationKindBrillig,
 		ACIRIndex:    new(uint64),
 		BrilligIndex: new(uint64),
 	}

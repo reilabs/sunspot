@@ -3,6 +3,7 @@ package blackboxfunc
 import (
 	"math/big"
 	"os"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	"sunspot/go/bn254"
 	"testing"
@@ -15,15 +16,14 @@ func TestFunctionInputUnmarshalReaderConstant(t *testing.T) {
 	}
 
 	var input FunctionInput[*bn254.BN254Field]
-	if err := input.UnmarshalReader(file); err != nil {
+	if err := input.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal FunctionInput: %v", err)
 	}
 
 	expectedField := &bn254.BN254Field{Value: *big.NewInt(1234)}
 	expected := FunctionInput[*bn254.BN254Field]{
-		FunctionInputKind: ACIRFunctionInputKindConstant,
-		ConstantInput:     &expectedField,
-		Witness:           nil,
+		ConstantInput: &expectedField,
+		Witness:       nil,
 	}
 
 	if !input.Equals(&expected) {
@@ -40,15 +40,14 @@ func TestFunctionInputUnmarshalReaderWitness(t *testing.T) {
 	}
 
 	var input FunctionInput[*bn254.BN254Field]
-	if err := input.UnmarshalReader(file); err != nil {
+	if err := input.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal FunctionInput: %v", err)
 	}
 
 	expectedWitness := shr.Witness(1234)
 	expected := FunctionInput[*bn254.BN254Field]{
-		FunctionInputKind: ACIRFunctionInputKindWitness,
-		ConstantInput:     nil,
-		Witness:           &expectedWitness,
+		ConstantInput: nil,
+		Witness:       &expectedWitness,
 	}
 
 	if !input.Equals(&expected) {

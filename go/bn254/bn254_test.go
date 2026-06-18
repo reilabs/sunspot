@@ -2,6 +2,7 @@ package bn254
 
 import (
 	"os"
+	"sunspot/go/acir/msgpackutil"
 	"testing"
 )
 
@@ -12,7 +13,7 @@ func TestBN254FieldUnmarshalReaderZero(t *testing.T) {
 	}
 
 	var field BN254Field
-	if err := field.UnmarshalReader(file); err != nil {
+	if err := field.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal BN254Field from zero file: %v", err)
 	}
 
@@ -26,7 +27,7 @@ func TestBN254FieldUnmarshalReader1234(t *testing.T) {
 	}
 
 	var field BN254Field
-	if err := field.UnmarshalReader(file); err != nil {
+	if err := field.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal BN254Field from 1234 file: %v", err)
 	}
 

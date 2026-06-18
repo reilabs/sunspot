@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -16,14 +15,20 @@ type Range[T shr.ACIRField, E constraint.Element] struct {
 	nBits uint32
 }
 
-func (a *Range[T, E]) UnmarshalReader(r io.Reader) error {
-	if err := a.Input.UnmarshalReader(r); err != nil {
-		return err
+func (a *Range[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		return a.Input.UnmarshalReader(r)
+	case 1:
+		n, err := r.ReadU32()
+		if err != nil {
+			return err
+		}
+		a.nBits = n
+		return nil
+	default:
+		return fmt.Errorf("RANGE: unknown field tag %d", tag)
 	}
-	if err := binary.Read(r, binary.LittleEndian, &a.nBits); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (a Range[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -41,4 +46,3 @@ func (a Range[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]f
 	rangechecker.Check(input, int(a.nBits))
 	return nil
 }
-

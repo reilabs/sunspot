@@ -1,6 +1,6 @@
-use std::io::Write;
-
+use crate::encode;
 use acir::acir_field;
+use std::io::Write;
 use tracing::trace;
 
 fn generate_zero_field(path: &str) {
@@ -14,10 +14,8 @@ fn generate_zero_field(path: &str) {
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     let zero_field = acir_field::FieldElement::from(0u64);
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(zero_field, config).expect("Failed to encode data");
+
+    let data = encode(&zero_field);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -40,10 +38,8 @@ fn generate_1234_field(path: &str) {
     // Create a new file
     let mut file = std::fs::File::create(&file_name).expect("Failed to create file");
     let field_value = acir_field::FieldElement::from(1234u64);
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(field_value, config).expect("Failed to encode data");
+
+    let data = encode(&field_value);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 

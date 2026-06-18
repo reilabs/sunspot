@@ -1,9 +1,9 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
-	"io"
+	"fmt"
 	"math/big"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -23,39 +23,23 @@ type ECDSASECP256K1[T shr.ACIRField, E constraint.Element] struct {
 	Output        shr.Witness
 }
 
-func (a *ECDSASECP256K1[T, E]) UnmarshalReader(r io.Reader) error {
-	for i := 0; i < 32; i++ {
-		if err := a.PublicKeyX[i].UnmarshalReader(r); err != nil {
-			return err
-		}
+func (a *ECDSASECP256K1[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		return readFunctionInputArray(r, a.PublicKeyX[:])
+	case 1:
+		return readFunctionInputArray(r, a.PublicKeyY[:])
+	case 2:
+		return readFunctionInputArray(r, a.Signature[:])
+	case 3:
+		return readFunctionInputArray(r, a.HashedMessage[:])
+	case 4:
+		return a.predicate.UnmarshalReader(r)
+	case 5:
+		return a.Output.UnmarshalReader(r)
+	default:
+		return fmt.Errorf("EcdsaSecp256k1: unknown field tag %d", tag)
 	}
-
-	for i := 0; i < 32; i++ {
-		if err := a.PublicKeyY[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	for i := 0; i < 64; i++ {
-		if err := a.Signature[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	for i := 0; i < 32; i++ {
-		if err := a.HashedMessage[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	if err := a.predicate.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	if err := binary.Read(r, binary.LittleEndian, &a.Output); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (a *ECDSASECP256K1[T, E]) Equals(other BlackBoxFunction[E]) bool {

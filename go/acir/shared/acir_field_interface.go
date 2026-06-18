@@ -1,9 +1,9 @@
 package shared
 
 import (
-	"io"
 	"math/big"
 	"reflect"
+	"sunspot/go/acir/msgpackutil"
 
 	"github.com/consensys/gnark/frontend"
 )
@@ -28,7 +28,7 @@ func MakeNonNil[T any](v T) T {
 }
 
 type ACIRField interface {
-	UnmarshalReader(r io.Reader) error
+	UnmarshalReader(r *msgpackutil.Reader) error
 	Equals(other ACIRField) bool
 	ToFrontendVariable() frontend.Variable
 	String() string

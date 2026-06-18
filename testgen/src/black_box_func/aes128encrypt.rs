@@ -1,10 +1,10 @@
-use std::io::Write;
-
+use crate::encode;
 use acir::{
     FieldElement,
     circuit::opcodes::{BlackBoxFuncCall, FunctionInput},
     native_types::Witness,
 };
+use std::io::Write;
 use tracing::trace;
 
 fn generate_aes128encrypt_test_empty(path: &str) {
@@ -23,11 +23,8 @@ fn generate_aes128encrypt_test_empty(path: &str) {
         key: Box::new([FunctionInput::<FieldElement>::Witness(Witness(5678)); 16]),
         outputs: vec![],
     };
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&aes128encrypt_function_call, config)
-        .expect("Failed to encode data");
+
+    let data = encode(&aes128encrypt_function_call);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 
@@ -58,11 +55,8 @@ fn generate_aes128encrypt_test_with_inputs_and_outputs(path: &str) {
         key: Box::new([FunctionInput::<FieldElement>::Witness(Witness(4567)); 16]),
         outputs: vec![Witness(1234), Witness(2345), Witness(3456)],
     };
-    let config = bincode::config::standard()
-        .with_fixed_int_encoding()
-        .with_little_endian();
-    let data = bincode::serde::encode_to_vec(&aes128encrypt_function_call, config)
-        .expect("Failed to encode data");
+
+    let data = encode(&aes128encrypt_function_call);
     file.write_all(data.as_slice())
         .expect("Failed to write data to file");
 

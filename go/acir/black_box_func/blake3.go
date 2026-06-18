@@ -1,9 +1,8 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -29,24 +28,15 @@ type Blake3[T shr.ACIRField, E constraint.Element] struct {
 	Outputs [32]shr.Witness
 }
 
-func (a *Blake3[T, E]) UnmarshalReader(r io.Reader) error {
-	NumInputs := uint64(0)
-	if err := binary.Read(r, binary.LittleEndian, &NumInputs); err != nil {
-		return err
+func (a *Blake3[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		return readFunctionInputVec(r, &a.Inputs)
+	case 1:
+		return shr.ReadWitnessArray(r, a.Outputs[:])
+	default:
+		return fmt.Errorf("Blake3: unknown field tag %d", tag)
 	}
-
-	a.Inputs = make([]FunctionInput[T], NumInputs)
-	for i := uint64(0); i < NumInputs; i++ {
-		if err := a.Inputs[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	if err := binary.Read(r, binary.LittleEndian, &a.Outputs); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (a *Blake3[T, E]) Equals(other BlackBoxFunction[E]) bool {
@@ -115,7 +105,6 @@ func (a *Blake3[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness
 	}
 	return nil
 }
-
 
 func blake3Compress(api frontend.API, uapi uints.BinaryField[uints.U32], h [8]uints.U32, m [16]uints.U32, t uints.U64, len, flags uints.U32) ([8]uints.U32, error) {
 	var v [16]uints.U32

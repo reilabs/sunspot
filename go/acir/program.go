@@ -1,9 +1,8 @@
 package acir
 
 import (
-	"encoding/binary"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
@@ -19,22 +18,28 @@ type Program[T shr.ACIRField, E constraint.Element] struct {
 	Functions []Circuit[T, E] `json:"functions"`
 }
 
-func (p *Program[T, E]) UnmarshalReader(r io.Reader) error {
-	var funcCount uint64
-	if err := binary.Read(r, binary.LittleEndian, &funcCount); err != nil {
-		return err
-	}
-	p.Functions = make([]Circuit[T, E], funcCount)
-	for i := uint64(0); i < funcCount; i++ {
-		if err := p.Functions[i].UnmarshalReader(r); err != nil {
+func (p *Program[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadStruct(r, p.decode)
+}
+
+func (p *Program[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		n, err := r.ReadArrayLen()
+		if err != nil {
 			return err
 		}
+		p.Functions = make([]Circuit[T, E], n)
+		for i := 0; i < n; i++ {
+			if err := p.Functions[i].UnmarshalReader(r); err != nil {
+				return fmt.Errorf("function %d: %w", i, err)
+			}
+		}
+		return nil
+	default:
+		// Skip all other values i.e. skip unconstrained functions
+		return r.SkipValue()
 	}
-
-	// Parsing ends here, we ignore brillig as it plays no part in the
-	// final constraint system
-
-	return nil
 }
 
 // Define adds constraints to the ACIR programme

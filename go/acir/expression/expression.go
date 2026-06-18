@@ -1,9 +1,9 @@
 package expression
 
 import (
-	"encoding/binary"
 	"encoding/json"
-	"io"
+	"fmt"
+	"sunspot/go/acir/msgpackutil"
 	"sunspot/go/acir/opcodes"
 	shr "sunspot/go/acir/shared"
 
@@ -25,47 +25,43 @@ func (e *Expression[T, E]) Define(
 	return nil
 }
 
-func (e *Expression[T, E]) UnmarshalReader(r io.Reader) error {
-	e.Constant = shr.MakeNonNil(e.Constant) // Ensure Constant is non-nil
-
-	// Read the number of MulTerms
-	var numMulTerms uint64
-	if err := binary.Read(r, binary.LittleEndian, &numMulTerms); err != nil {
-		return err
-	}
-
-	// Initialize the MulTerms slice with the read size
-	e.MulTerms = make([]MulTerm[T], numMulTerms)
-	// Unmarshal each MulTerm
-	for i := uint64(0); i < numMulTerms; i++ {
-		if err := e.MulTerms[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	// Read the number of LinearCombinations
-	var numLinearCombinations uint64
-	if err := binary.Read(r, binary.LittleEndian, &numLinearCombinations); err != nil {
-		return err
-	}
-	// Initialize the LinearCombinations slice with the read size
-	e.LinearCombinations = make([]LinearCombination[T], numLinearCombinations)
-
-	// Unmarshal each LinearCombination
-	for i := uint64(0); i < numLinearCombinations; i++ {
-		if err := e.LinearCombinations[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-
-	// Unmarshal the Constant value
-	if err := e.Constant.UnmarshalReader(r); err != nil {
-		return err
-	}
-
-	return nil
+func (e *Expression[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	e.Constant = shr.MakeNonNil(e.Constant)
+	return msgpackutil.ReadStruct(r, e.decode)
 }
 
+func (e *Expression[T, E]) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+		n, err := r.ReadArrayLen()
+		if err != nil {
+			return err
+		}
+		e.MulTerms = make([]MulTerm[T], n)
+		for i := 0; i < n; i++ {
+			if err := e.MulTerms[i].UnmarshalReader(r); err != nil {
+				return err
+			}
+		}
+		return nil
+	case 1:
+		n, err := r.ReadArrayLen()
+		if err != nil {
+			return err
+		}
+		e.LinearCombinations = make([]LinearCombination[T], n)
+		for i := 0; i < n; i++ {
+			if err := e.LinearCombinations[i].UnmarshalReader(r); err != nil {
+				return err
+			}
+		}
+		return nil
+	case 2:
+		return e.Constant.UnmarshalReader(r)
+	default:
+		return fmt.Errorf("expression: unknown field tag %d", tag)
+	}
+}
 func (e *Expression[T, E]) Equals(other opcodes.Opcode[E]) bool {
 	value, ok := other.(*Expression[T, E])
 	if !ok {
@@ -104,7 +100,6 @@ func (e *Expression[T, E]) Calculate(api frontend.API, witnesses map[shr.Witness
 
 	return sum
 }
-
 
 func (e *Expression[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap := make(map[string]interface{})

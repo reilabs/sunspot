@@ -1,102 +1,92 @@
 package opcodes
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 )
 
 type OpcodeLocation struct {
-	Kind         OpcodeLocationKind
 	ACIRAddress  *uint64
 	ACIRIndex    *uint64
 	BrilligIndex *uint64
 }
 
-type OpcodeLocationKind uint32
-
-const (
-	ACIROpcodeLocationKindACIR OpcodeLocationKind = iota
-	ACIROpcodeLocationKindBrillig
-)
-
 func (o OpcodeLocation) MarshalJSON() ([]byte, error) {
 	fieldsMap := make(map[string]interface{})
-	fieldsMap["Kind"] = o.Kind
 
-	switch o.Kind {
-	case ACIROpcodeLocationKindACIR:
-		if o.ACIRAddress != nil {
-			fieldsMap["ACIRAddress"] = *o.ACIRAddress
-		} else {
-			fieldsMap["ACIRAddress"] = nil
-		}
-	case ACIROpcodeLocationKindBrillig:
-		if o.ACIRIndex != nil {
-			fieldsMap["ACIRIndex"] = *o.ACIRIndex
-		} else {
-			fieldsMap["ACIRIndex"] = nil
-		}
-		if o.BrilligIndex != nil {
-			fieldsMap["BrilligIndex"] = *o.BrilligIndex
-		} else {
-			fieldsMap["BrilligIndex"] = nil
-		}
-	default:
-		return nil, fmt.Errorf("unknown OpcodeLocation Kind: %d", o.Kind)
+	if o.ACIRAddress != nil {
+		fieldsMap["ACIRAddress"] = *o.ACIRAddress
+	} else if o.ACIRIndex != nil {
+		fieldsMap["ACIRIndex"] = *o.ACIRIndex
+	} else if o.BrilligIndex != nil {
+		fieldsMap["BrilligIndex"] = *o.BrilligIndex
+	} else {
+		return nil, fmt.Errorf("unknown OpcodeLocation Kind")
 	}
-
 	return json.Marshal(fieldsMap)
 }
 
-func (o *OpcodeLocation) UnmarshalReader(r io.Reader) error {
-	if err := binary.Read(r, binary.LittleEndian, &o.Kind); err != nil {
-		return err
-	}
+// On the wire OpcodeLocation is an int-keyed single-entry fixmap whose tag
+// selects the variant (0=Acir(usize), 1=Brillig{acir_index, brillig_index}).
+// The Brillig payload itself is a tagged struct (or positional 2-array under
+// EncodingStrategy::Array, which is the active strategy for non-Program
+// types) — see acvm-repo/acir/src/circuit/mod.rs in noir.
+func (o *OpcodeLocation) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadEnum(r, o.decode)
+}
 
-	switch o.Kind {
-	case ACIROpcodeLocationKindACIR:
+func (o *OpcodeLocation) decode(tag int, r *msgpackutil.Reader) error {
+	switch tag {
+	case 0:
+
+		v, err := r.ReadUint()
+		if err != nil {
+			return err
+		}
 		o.ACIRAddress = new(uint64)
-		if err := binary.Read(r, binary.LittleEndian, o.ACIRAddress); err != nil {
-			return err
-		}
-	case ACIROpcodeLocationKindBrillig:
+		*o.ACIRAddress = v
+		return nil
+	case 1:
 		o.ACIRIndex = new(uint64)
-		if err := binary.Read(r, binary.LittleEndian, o.ACIRIndex); err != nil {
-			return err
-		}
-
 		o.BrilligIndex = new(uint64)
-		if err := binary.Read(r, binary.LittleEndian, o.BrilligIndex); err != nil {
-			return err
-		}
+		return msgpackutil.ReadStruct(r, func(fieldTag int, r *msgpackutil.Reader) error {
+			switch fieldTag {
+			case 0:
+				v, err := r.ReadUint()
+				if err != nil {
+					return err
+				}
+				*o.ACIRIndex = v
+				return nil
+			case 1:
+				v, err := r.ReadUint()
+				if err != nil {
+					return err
+				}
+				*o.BrilligIndex = v
+				return nil
+			default:
+				return fmt.Errorf("OpcodeLocation.Brillig: unknown field tag %d", fieldTag)
+			}
+		})
 	default:
-		return fmt.Errorf("unknown OpcodeLocation Kind: %d", o.Kind)
+		return fmt.Errorf("OpcodeLocation: unknown variant tag %d", tag)
 	}
-
-	return nil
 }
 
 func (o *OpcodeLocation) Equals(other *OpcodeLocation) bool {
-	if o.Kind != other.Kind {
+	return uint64PtrEquals(o.ACIRAddress, other.ACIRAddress) &&
+		uint64PtrEquals(o.ACIRIndex, other.ACIRIndex) &&
+		uint64PtrEquals(o.BrilligIndex, other.BrilligIndex)
+}
+
+func uint64PtrEquals(a, b *uint64) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
 		return false
 	}
-
-	switch o.Kind {
-	case ACIROpcodeLocationKindACIR:
-		if o.ACIRAddress == nil || other.ACIRAddress == nil {
-			return o.ACIRAddress == other.ACIRAddress
-		}
-		return *o.ACIRAddress == *other.ACIRAddress
-
-	case ACIROpcodeLocationKindBrillig:
-		if o.ACIRIndex == nil || other.ACIRIndex == nil || o.BrilligIndex == nil || other.BrilligIndex == nil {
-			return o.ACIRIndex == other.ACIRIndex && o.BrilligIndex == other.BrilligIndex
-		}
-		return *o.ACIRIndex == *other.ACIRIndex && *o.BrilligIndex == *other.BrilligIndex
-
-	default:
-		return false
-	}
+	return *a == *b
 }

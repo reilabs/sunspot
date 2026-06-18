@@ -2,6 +2,7 @@ package blackboxfunc
 
 import (
 	"os"
+	"sunspot/go/acir/msgpackutil"
 	shr "sunspot/go/acir/shared"
 	"sunspot/go/bn254"
 	"testing"
@@ -17,34 +18,23 @@ func TestAndUnmarshalReader(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
-	kind := shr.ParseThrough32bits(t, file)
-	if kind != 1 {
-		t.Fatalf("The kind of error code should have been 0, was %d", kind)
-	}
-	blackBoxFuncCall := BlackBoxFuncCall[T, E]{function: &And[T, E]{}}
-	if err := blackBoxFuncCall.UnmarshalReader(file); err != nil {
+	var bbf BlackBoxFuncCall[T, E]
+	if err := bbf.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
 		t.Fatalf("Failed to unmarshal BlackBoxFuncCall: %v", err)
 	}
 
 	expectedWitnessLhs := shr.Witness(1234)
 	expectedWitnessRhs := shr.Witness(2345)
-	expectedFunctionCall := BlackBoxFuncCall[T, E]{
+	expected := BlackBoxFuncCall[T, E]{
 		function: &And[T, E]{
-			Lhs: FunctionInput[T]{
-				FunctionInputKind: ACIRFunctionInputKindWitness,
-				Witness:           &expectedWitnessLhs,
-			},
-			Rhs: FunctionInput[T]{
-				FunctionInputKind: ACIRFunctionInputKindWitness,
-				Witness:           &expectedWitnessRhs,
-			},
+			Lhs:    FunctionInput[T]{Witness: &expectedWitnessLhs},
+			Rhs:    FunctionInput[T]{Witness: &expectedWitnessRhs},
 			Output: shr.Witness(3456),
 			nBits:  64,
 		},
 	}
-
-	if !blackBoxFuncCall.Equals(expectedFunctionCall) {
-		t.Errorf("Expected BlackBoxFuncCall to be %v, got %v", expectedFunctionCall, blackBoxFuncCall)
+	if !bbf.Equals(&expected) {
+		t.Errorf("Expected BlackBoxFuncCall to be %+v, got %+v", expected, bbf)
 	}
 
 	defer file.Close()

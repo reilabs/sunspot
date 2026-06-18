@@ -1,10 +1,9 @@
 package blackboxfunc
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io"
+	"sunspot/go/acir/msgpackutil"
 	"sunspot/go/acir/opcodes"
 	shr "sunspot/go/acir/shared"
 
@@ -13,9 +12,9 @@ import (
 )
 
 type BlackBoxFunction[E constraint.Element] interface {
-	UnmarshalReader(r io.Reader) error
 	Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error
 	Equals(other BlackBoxFunction[E]) bool
+	decode(tag int, r *msgpackutil.Reader) error
 }
 
 // Struct that implements the Opcode interface
@@ -29,7 +28,7 @@ func (b BlackBoxFuncCall[T, E]) Define(api frontend.Builder[E], witnesses map[sh
 }
 
 func (b BlackBoxFuncCall[T, E]) Equals(other opcodes.Opcode[E]) bool {
-	bbf, ok := other.(BlackBoxFuncCall[T, E])
+	bbf, ok := other.(*BlackBoxFuncCall[T, E])
 	if !ok {
 		return false
 	}
@@ -42,53 +41,55 @@ func (b BlackBoxFuncCall[T, E]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(stringMap)
 }
 
-func (b BlackBoxFuncCall[T, E]) UnmarshalReader(r io.Reader) error {
-	return b.function.UnmarshalReader(r)
+// UnmarshalReader reads the enum: dispatches on variant tag, allocates the
+// concrete payload type, and delegates payload decoding.
+func (b *BlackBoxFuncCall[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
+	return msgpackutil.ReadEnum(r, b.decodeBlackBoxFunction)
 }
 
-func NewBlackBoxFunction[T shr.ACIRField, E constraint.Element](r io.Reader) (*BlackBoxFuncCall[T, E], error) {
-	var kind uint32
-	if err := binary.Read(r, binary.LittleEndian, &kind); err != nil {
-		return nil, err
+func (b *BlackBoxFuncCall[T, E]) decodeBlackBoxFunction(tag int, r *msgpackutil.Reader) error {
+	fn, err := newBlackBoxFunction[T, E](tag)
+	if err != nil {
+		return err
 	}
-	switch kind {
+	if err := msgpackutil.ReadStruct(r, fn.decode); err != nil {
+		return fmt.Errorf("black-box variant %d: %w", tag, err)
+	}
+	b.function = fn
+	return nil
+}
+
+func newBlackBoxFunction[T shr.ACIRField, E constraint.Element](tag int) (BlackBoxFunction[E], error) {
+	switch tag {
 	case 0:
-		return &BlackBoxFuncCall[T, E]{&AES128Encrypt[T, E]{}}, nil
+		return &AES128Encrypt[T, E]{}, nil
 	case 1:
-		return &BlackBoxFuncCall[T, E]{&And[T, E]{}}, nil
+		return &And[T, E]{}, nil
 	case 2:
-		return &BlackBoxFuncCall[T, E]{&Xor[T, E]{}}, nil
+		return &Xor[T, E]{}, nil
 	case 3:
-		return &BlackBoxFuncCall[T, E]{&Range[T, E]{}}, nil
+		return &Range[T, E]{}, nil
 	case 4:
-		return &BlackBoxFuncCall[T, E]{&Blake2s[T, E]{}}, nil
+		return &Blake2s[T, E]{}, nil
 	case 5:
-		return &BlackBoxFuncCall[T, E]{&Blake3[T, E]{}}, nil
+		return &Blake3[T, E]{}, nil
 	case 6:
-		return &BlackBoxFuncCall[T, E]{&ECDSASECP256K1[T, E]{}}, nil
+		return &ECDSASECP256K1[T, E]{}, nil
 	case 7:
-		return &BlackBoxFuncCall[T, E]{&ECDSASECP256R1[T, E]{}}, nil
+		return &ECDSASECP256R1[T, E]{}, nil
 	case 8:
-		return &BlackBoxFuncCall[T, E]{&MultiScalarMul[T, E]{}}, nil
+		return &MultiScalarMul[T, E]{}, nil
 	case 9:
-		return &BlackBoxFuncCall[T, E]{&EmbeddedCurveAdd[T, E]{}}, nil
+		return &EmbeddedCurveAdd[T, E]{}, nil
 	case 10:
-		return &BlackBoxFuncCall[T, E]{&Keccakf1600[T, E]{}}, nil
+		return &Keccakf1600[T, E]{}, nil
 	case 11:
-		return &BlackBoxFuncCall[T, E]{&RecursiveAggregation[T, E]{}}, nil
+		return &RecursiveAggregation[T, E]{}, nil
 	case 12:
-		return &BlackBoxFuncCall[T, E]{&Poseidon2Permutation[T, E]{}}, nil
+		return &Poseidon2Permutation[T, E]{}, nil
 	case 13:
-		return &BlackBoxFuncCall[T, E]{&SHA256Compression[T, E]{}}, nil
+		return &SHA256Compression[T, E]{}, nil
 	default:
-		return nil, fmt.Errorf("blackbox opcode %d not yet implemented", kind)
+		return nil, fmt.Errorf("blackbox variant %d not implemented", tag)
 	}
-}
-
-type BlackBoxFuncKindError struct {
-	Code uint32
-}
-
-func (e BlackBoxFuncKindError) Error() string {
-	return "unknown black box function kind"
 }

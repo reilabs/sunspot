@@ -5,5 +5,5 @@ authors = [""]
 
 [dependencies]
 date = { tag = "v0.5.6", git = "https://github.com/madztheo/noir-date.git" }
-expiry = { tag="main", git = "https://github.com/reilabs/zk_passport_circuits", directory = "src/noir/lib/data-check/expiry" }
-utils = { tag="main", git = "https://github.com/reilabs/zk_passport_circuits", directory = "src/noir/lib/utils" }
+expiry = { tag="main", git = "https://github.com/zkpassport/circuits", directory = "src/noir/lib/data-check/expiry" }
+utils = { tag="main", git = "https://github.com/zkpassport/circuits", directory = "src/noir/lib/utils" }
