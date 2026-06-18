@@ -21,41 +21,6 @@ on:
       - "!**/readme.md"
 
 env:
-  NOIR_PROJECTS: |
-    noir-samples/expressions/sum_a_b
-    noir-samples/expressions/square_equation
-    noir-samples/expressions/linear_equation
-    noir-samples/expressions/rock_paper_scissors
-    noir-samples/expressions/polynomial
-    noir-samples/expressions/lcchecker
-    noir-samples/expressions/unused_witness
-    noir-samples/black_box_functions/range
-    noir-samples/black_box_functions/keccak_f1600
-    noir-samples/black_box_functions/and
-    noir-samples/black_box_functions/xor
-    noir-samples/black_box_functions/sha256_compression
-    noir-samples/black_box_functions/sha256_hash
-    noir-samples/black_box_functions/blake2s
-    noir-samples/black_box_functions/blake3
-    noir-samples/black_box_functions/embedded_curve_add
-    noir-samples/black_box_functions/multiscalar_multiplication
-    noir-samples/black_box_functions/poseidon2
-    noir-samples/black_box_functions/ecdsa_secp256r1
-    noir-samples/black_box_functions/ecdsa_secp256k1_failing
-    noir-samples/black_box_functions/ecdsa_secp256k1
-    noir-samples/black_box_functions/aes128encrypt
-    noir-samples/black_box_functions/recursive_aggregation
-    noir-samples/memory
-    noir-samples/circuit_calls/all_witnesses_used
-    noir-samples/circuit_calls/public_witnesses_callee
-    noir-samples/circuit_calls/unused_witness
-    noir-samples/real_world/provekit_basic
-    noir-samples/zk_passport/exclusion_check
-    noir-samples/zk_passport/inclusion_check
-    noir-samples/zk_passport/age
-    noir-samples/zk_passport/expiry
-    noir-samples/zk_passport/sanctions
-
   SUNSPOT_PROJECTS: |
     noir-samples/expressions/sum_a_b
     noir-samples/black_box_functions/keccak_f1600
@@ -73,17 +38,10 @@ jobs:
 
       - uses: noir-lang/noirup@v0.1.2
         with:
-          toolchain: v1.0.0-beta.18
+          toolchain: v1.0.0-beta.22
 
       - name: Build & execute Noir projects
-        run: |
-          for project in $NOIR_PROJECTS; do
-            echo "▶️ Noir: $project"
-            cd "$project"
-            nargo compile
-            nargo execute
-            cd - > /dev/null
-          done
+        run: scripts/regen_test_artifacts.sh
 
       - name: Upload Noir targets
         uses: actions/upload-artifact@v4

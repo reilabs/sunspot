@@ -1,6 +1,8 @@
 package acir
 
 import (
+	"reflect"
+	"strings"
 	"sunspot/go/bn254"
 	"testing"
 
@@ -273,14 +275,27 @@ func TestZKPassporSanctionsCheck(t *testing.T) {
 }
 
 // Helper function for testing files,
-// Provide circuit and witness path and compile to r1cs, proves and verifies in groth16
+// Provide circuit and witness path and compile to r1cs, proves and verifies in groth16.
+// Parses the same ACIR in both noir serialization formats (default and tagged) and
+// asserts the parsed structures match, then runs the gnark workflow on one of them.
 func testProveAndVerify(t *testing.T, acirPath string, witnessPath string) {
 	type E = constraint.U64
-	acir, err := LoadACIR[*bn254.BN254Field, E](acirPath)
-
+	defaultACIR, err := LoadACIR[*bn254.BN254Field, E](acirPath)
 	if err != nil {
-		t.Fatalf("Failed to load ACIR: %v", err)
+		t.Fatalf("Failed to load default-format ACIR: %v", err)
 	}
+
+	taggedPath := strings.TrimSuffix(acirPath, ".json") + ".tagged.json"
+	taggedACIR, err := LoadACIR[*bn254.BN254Field, E](taggedPath)
+	if err != nil {
+		t.Fatalf("Failed to load tagged-format ACIR: %v", err)
+	}
+
+	if !reflect.DeepEqual(defaultACIR, taggedACIR) {
+		t.Fatalf("default and tagged ACIR parses diverged for %s vs %s", acirPath, taggedPath)
+	}
+
+	acir := taggedACIR
 
 	ccs, err := acir.Compile()
 	if err != nil {
