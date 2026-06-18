@@ -6,23 +6,30 @@ import (
 	"sunspot/go/acir/msgpackutil"
 )
 
+type OpcodeLocationKind uint8
+
+const (
+	OpcodeLocationAcir OpcodeLocationKind = iota
+	OpcodeLocationBrillig
+)
+
 type OpcodeLocation struct {
-	ACIRAddress  *uint64
-	ACIRIndex    *uint64
-	BrilligIndex *uint64
+	Kind         OpcodeLocationKind
+	ACIRAddress  uint64 // Acir variant
+	ACIRIndex    uint64 // Brillig variant
+	BrilligIndex uint64 // Brillig variant
 }
 
 func (o OpcodeLocation) MarshalJSON() ([]byte, error) {
 	fieldsMap := make(map[string]interface{})
-
-	if o.ACIRAddress != nil {
-		fieldsMap["ACIRAddress"] = *o.ACIRAddress
-	} else if o.ACIRIndex != nil {
-		fieldsMap["ACIRIndex"] = *o.ACIRIndex
-	} else if o.BrilligIndex != nil {
-		fieldsMap["BrilligIndex"] = *o.BrilligIndex
-	} else {
-		return nil, fmt.Errorf("unknown OpcodeLocation Kind")
+	switch o.Kind {
+	case OpcodeLocationAcir:
+		fieldsMap["ACIRAddress"] = o.ACIRAddress
+	case OpcodeLocationBrillig:
+		fieldsMap["ACIRIndex"] = o.ACIRIndex
+		fieldsMap["BrilligIndex"] = o.BrilligIndex
+	default:
+		return nil, fmt.Errorf("unknown OpcodeLocation Kind: %d", o.Kind)
 	}
 	return json.Marshal(fieldsMap)
 }
@@ -39,17 +46,15 @@ func (o *OpcodeLocation) UnmarshalReader(r *msgpackutil.Reader) error {
 func (o *OpcodeLocation) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
 	switch f.Tag {
 	case 0:
-
 		v, err := r.ReadUint()
 		if err != nil {
 			return err
 		}
-		o.ACIRAddress = new(uint64)
-		*o.ACIRAddress = v
+		o.Kind = OpcodeLocationAcir
+		o.ACIRAddress = v
 		return nil
 	case 1:
-		o.ACIRIndex = new(uint64)
-		o.BrilligIndex = new(uint64)
+		o.Kind = OpcodeLocationBrillig
 		return msgpackutil.ReadStruct(r, opcodeLocationBrilligSchema, func(fld msgpackutil.Field, r *msgpackutil.Reader) error {
 			switch fld.Tag {
 			case 0:
@@ -57,14 +62,14 @@ func (o *OpcodeLocation) decode(f msgpackutil.Field, r *msgpackutil.Reader) erro
 				if err != nil {
 					return err
 				}
-				*o.ACIRIndex = v
+				o.ACIRIndex = v
 				return nil
 			case 1:
 				v, err := r.ReadUint()
 				if err != nil {
 					return err
 				}
-				*o.BrilligIndex = v
+				o.BrilligIndex = v
 				return nil
 			default:
 				return fmt.Errorf("OpcodeLocation.Brillig: unknown field %s", fld)
@@ -83,19 +88,3 @@ var opcodeLocationSchema = msgpackutil.NewSchema(map[string]int{
 var opcodeLocationBrilligSchema = msgpackutil.NewSchema(map[string]int{
 	"acir_index": 0, "brillig_index": 1,
 })
-
-func (o *OpcodeLocation) Equals(other *OpcodeLocation) bool {
-	return uint64PtrEquals(o.ACIRAddress, other.ACIRAddress) &&
-		uint64PtrEquals(o.ACIRIndex, other.ACIRIndex) &&
-		uint64PtrEquals(o.BrilligIndex, other.BrilligIndex)
-}
-
-func uint64PtrEquals(a, b *uint64) bool {
-	if a == nil && b == nil {
-		return true
-	}
-	if a == nil || b == nil {
-		return false
-	}
-	return *a == *b
-}

@@ -11,6 +11,7 @@ func TestOpcodeLocationUnmarshalReaderACIR(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
+	defer file.Close()
 
 	var opcode OpcodeLocation
 	if err := opcode.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
@@ -18,16 +19,13 @@ func TestOpcodeLocationUnmarshalReaderACIR(t *testing.T) {
 	}
 
 	expectedOpcode := OpcodeLocation{
-		ACIRAddress: new(uint64),
+		Kind:        OpcodeLocationAcir,
+		ACIRAddress: 1234,
 	}
 
-	*expectedOpcode.ACIRAddress = 1234
-
-	if !opcode.Equals(&expectedOpcode) {
+	if opcode != expectedOpcode {
 		t.Errorf("Expected opcode to be %v, got %v", expectedOpcode, opcode)
 	}
-
-	defer file.Close()
 }
 
 func TestOpcodeLocationUnmarshalReaderBrillig(t *testing.T) {
@@ -35,6 +33,7 @@ func TestOpcodeLocationUnmarshalReaderBrillig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to open file: %v", err)
 	}
+	defer file.Close()
 
 	var opcode OpcodeLocation
 	if err := opcode.UnmarshalReader(msgpackutil.NewReader(file)); err != nil {
@@ -42,16 +41,12 @@ func TestOpcodeLocationUnmarshalReaderBrillig(t *testing.T) {
 	}
 
 	expectedOpcode := OpcodeLocation{
-		ACIRIndex:    new(uint64),
-		BrilligIndex: new(uint64),
+		Kind:         OpcodeLocationBrillig,
+		ACIRIndex:    5678,
+		BrilligIndex: 1234,
 	}
 
-	*expectedOpcode.ACIRIndex = 5678
-	*expectedOpcode.BrilligIndex = 1234
-
-	if !opcode.Equals(&expectedOpcode) {
+	if opcode != expectedOpcode {
 		t.Errorf("Expected opcode to be %v, got %v", expectedOpcode, opcode)
 	}
-
-	defer file.Close()
 }
