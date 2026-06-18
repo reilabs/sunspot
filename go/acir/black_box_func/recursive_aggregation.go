@@ -23,14 +23,14 @@ type RecursiveAggregation[T shr.ACIRField, E constraint.Element] struct {
 	predicate       FunctionInput[T]
 }
 
-func (a *RecursiveAggregation[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *RecursiveAggregation[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
-		return readFunctionInputVec(r, &a.VerificationKey)
+		return msgpackutil.ReadVec(r, &a.VerificationKey)
 	case 1:
-		return readFunctionInputVec(r, &a.Proof)
+		return msgpackutil.ReadVec(r, &a.Proof)
 	case 2:
-		return readFunctionInputVec(r, &a.PublicInputs)
+		return msgpackutil.ReadVec(r, &a.PublicInputs)
 	case 3:
 		return a.KeyHash.UnmarshalReader(r)
 	case 4:
@@ -43,7 +43,7 @@ func (a *RecursiveAggregation[T, E]) decode(tag int, r *msgpackutil.Reader) erro
 	case 5:
 		return a.predicate.UnmarshalReader(r)
 	default:
-		return fmt.Errorf("RecursiveAggregation: unknown field tag %d", tag)
+		return fmt.Errorf("RecursiveAggregation: unknown field %s", f)
 	}
 }
 
@@ -344,3 +344,5 @@ func VariableTo64BitLimbs[T shr.ACIRField](
 	}
 	return out, nil
 }
+
+func (*RecursiveAggregation[T, E]) SerdeName() string { return "RecursiveAggregation" }

@@ -17,11 +17,11 @@ type FunctionInput[T shr.ACIRField] struct {
 }
 
 func (f *FunctionInput[T]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadEnum(r, f.decode)
+	return msgpackutil.ReadEnum(r, functionInputSchema, f.decode)
 }
 
-func (f *FunctionInput[T]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (f *FunctionInput[T]) decode(field msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch field.Tag {
 	case 0:
 		var constant T
 		constant = shr.MakeNonNil(constant)
@@ -40,9 +40,13 @@ func (f *FunctionInput[T]) decode(tag int, r *msgpackutil.Reader) error {
 		f.ConstantInput = nil
 		return nil
 	default:
-		return fmt.Errorf("invalid ACIR function input kind (can be either Constant or Witness) - received %d", tag)
+		return fmt.Errorf("invalid ACIR function input kind (can be either Constant or Witness) - received %v", field)
 	}
 }
+
+var functionInputSchema = msgpackutil.NewSchema(map[string]int{
+	"Constant": 0, "Witness": 1,
+})
 
 func (f *FunctionInput[T]) Equals(other *FunctionInput[T]) bool {
 	if f.IsWitness() != other.IsWitness() {

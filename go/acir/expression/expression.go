@@ -27,41 +27,28 @@ func (e *Expression[T, E]) Define(
 
 func (e *Expression[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
 	e.Constant = shr.MakeNonNil(e.Constant)
-	return msgpackutil.ReadStruct(r, e.decode)
+	return msgpackutil.ReadStruct(r, expressionSchema, e.decode)
 }
 
-func (e *Expression[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (e *Expression[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
-		e.MulTerms = make([]MulTerm[T], n)
-		for i := 0; i < n; i++ {
-			if err := e.MulTerms[i].UnmarshalReader(r); err != nil {
-				return err
-			}
-		}
-		return nil
+		return msgpackutil.ReadVec(r, &e.MulTerms)
 	case 1:
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
-		e.LinearCombinations = make([]LinearCombination[T], n)
-		for i := 0; i < n; i++ {
-			if err := e.LinearCombinations[i].UnmarshalReader(r); err != nil {
-				return err
-			}
-		}
-		return nil
+		return msgpackutil.ReadVec(r, &e.LinearCombinations)
 	case 2:
 		return e.Constant.UnmarshalReader(r)
 	default:
-		return fmt.Errorf("expression: unknown field tag %d", tag)
+		return fmt.Errorf("Expression: unknown field %s", f)
 	}
 }
+
+var expressionSchema = msgpackutil.NewSchema(map[string]int{
+	"mul_terms":           0,
+	"linear_combinations": 1,
+	"q_c":                 2,
+})
+
 func (e *Expression[T, E]) Equals(other opcodes.Opcode[E]) bool {
 	value, ok := other.(*Expression[T, E])
 	if !ok {
@@ -106,3 +93,5 @@ func (e *Expression[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap["assert_zero"] = e
 	return json.Marshal(stringMap)
 }
+
+func (*Expression[T, E]) SerdeName() string { return "AssertZero" }

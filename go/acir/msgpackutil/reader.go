@@ -1,10 +1,10 @@
 // Package msgpackutil implements just enough of MessagePack to decode
-// values emitted by Noir's `msgpack_tagged` serializer.
+// values emitted by any of noir's three ACIR serialization formats:
+// `Msgpack` (string-keyed fixmap), `MsgpackCompact` (positional fixarray),
+// and `MsgpackTagged` (int-keyed fixmap or positional fixarray per-type).
 //
-// The serializer can write a struct as either an int-keyed fixmap (the
-// "Tagged" strategy) or a positional fixarray (the "Array" strategy),
-// chosen per-type. Decoders consume whichever shape is on the wire by
-// peeking the first byte — see [ReadStruct].
+// Decoders consume whichever shape is on the wire by peeking the first
+// byte — see [ReadStruct].
 package msgpackutil
 
 import (
@@ -16,17 +16,18 @@ import (
 )
 
 // Reader is a peekable byte stream backed by a bufio.Reader. Every
-// MsgpackTagged decode routine takes a *Reader.
+// decode routine takes a *Reader.
 // Also tracks maximum read witness values via embedded [witnessTracker]
 type Reader struct {
 	r *bufio.Reader
 	witnessTracker
 }
 
+// NewReader wraps r as a Reader. Callers consuming a noir wire stream are
+// responsible for reading and validating the `acir::serialization::Format`
+// envelope byte themselves before constructing the Reader; this constructor
+// only buffers the underlying stream.
 func NewReader(r io.Reader) *Reader {
-	if br, ok := r.(*bufio.Reader); ok {
-		return &Reader{r: br}
-	}
 	return &Reader{r: bufio.NewReader(r)}
 }
 
@@ -55,8 +56,8 @@ func (r *Reader) ReadNil() error {
 	if err != nil {
 		return err
 	}
-	if b != 0xc0 {
-		return fmt.Errorf("msgpack: expected nil (0xc0), got 0x%02x", b)
+	if b != markerNil {
+		return fmt.Errorf("msgpack: expected nil (0x%02x), got 0x%02x", markerNil, b)
 	}
 	return nil
 }
@@ -68,9 +69,9 @@ func (r *Reader) ReadBool() (bool, error) {
 		return false, err
 	}
 	switch b {
-	case 0xc2:
+	case markerFalse:
 		return false, nil
-	case 0xc3:
+	case markerTrue:
 		return true, nil
 	default:
 		return false, fmt.Errorf("msgpack: expected bool, got 0x%02x", b)
@@ -86,30 +87,30 @@ func (r *Reader) ReadUint() (uint64, error) {
 		return 0, err
 	}
 	switch {
-	case b <= 0x7f:
+	case b <= markerPosFixintMax:
 		return uint64(b), nil
-	case b == 0xcc:
+	case b == markerUint8:
 		v, err := r.readByte()
 		return uint64(v), err
-	case b == 0xcd:
+	case b == markerUint16:
 		buf, err := r.readN(2)
 		if err != nil {
 			return 0, err
 		}
 		return uint64(binary.BigEndian.Uint16(buf)), nil
-	case b == 0xce:
+	case b == markerUint32:
 		buf, err := r.readN(4)
 		if err != nil {
 			return 0, err
 		}
 		return uint64(binary.BigEndian.Uint32(buf)), nil
-	case b == 0xcf:
+	case b == markerUint64:
 		buf, err := r.readN(8)
 		if err != nil {
 			return 0, err
 		}
 		return binary.BigEndian.Uint64(buf), nil
-	case b == 0xd0:
+	case b == markerInt8:
 		v, err := r.readByte()
 		if err != nil {
 			return 0, err
@@ -118,7 +119,7 @@ func (r *Reader) ReadUint() (uint64, error) {
 			return 0, fmt.Errorf("msgpack: negative int where uint expected")
 		}
 		return uint64(int8(v)), nil
-	case b == 0xd1:
+	case b == markerInt16:
 		buf, err := r.readN(2)
 		if err != nil {
 			return 0, err
@@ -128,7 +129,7 @@ func (r *Reader) ReadUint() (uint64, error) {
 			return 0, fmt.Errorf("msgpack: negative int where uint expected")
 		}
 		return uint64(v), nil
-	case b == 0xd2:
+	case b == markerInt32:
 		buf, err := r.readN(4)
 		if err != nil {
 			return 0, err
@@ -138,7 +139,7 @@ func (r *Reader) ReadUint() (uint64, error) {
 			return 0, fmt.Errorf("msgpack: negative int where uint expected")
 		}
 		return uint64(v), nil
-	case b == 0xd3:
+	case b == markerInt64:
 		buf, err := r.readN(8)
 		if err != nil {
 			return 0, err
@@ -172,47 +173,47 @@ func (r *Reader) ReadInt() (int64, error) {
 		return 0, err
 	}
 	switch {
-	case b <= 0x7f:
+	case b <= markerPosFixintMax:
 		return int64(b), nil
-	case b >= 0xe0:
+	case b >= markerNegFixintLow:
 		return int64(int8(b)), nil
-	case b == 0xcc:
+	case b == markerUint8:
 		v, err := r.readByte()
 		return int64(v), err
-	case b == 0xcd:
+	case b == markerUint16:
 		buf, err := r.readN(2)
 		if err != nil {
 			return 0, err
 		}
 		return int64(binary.BigEndian.Uint16(buf)), nil
-	case b == 0xce:
+	case b == markerUint32:
 		buf, err := r.readN(4)
 		if err != nil {
 			return 0, err
 		}
 		return int64(binary.BigEndian.Uint32(buf)), nil
-	case b == 0xcf:
+	case b == markerUint64:
 		buf, err := r.readN(8)
 		if err != nil {
 			return 0, err
 		}
 		return int64(binary.BigEndian.Uint64(buf)), nil
-	case b == 0xd0:
+	case b == markerInt8:
 		v, err := r.readByte()
 		return int64(int8(v)), err
-	case b == 0xd1:
+	case b == markerInt16:
 		buf, err := r.readN(2)
 		if err != nil {
 			return 0, err
 		}
 		return int64(int16(binary.BigEndian.Uint16(buf))), nil
-	case b == 0xd2:
+	case b == markerInt32:
 		buf, err := r.readN(4)
 		if err != nil {
 			return 0, err
 		}
 		return int64(int32(binary.BigEndian.Uint32(buf))), nil
-	case b == 0xd3:
+	case b == markerInt64:
 		buf, err := r.readN(8)
 		if err != nil {
 			return 0, err
@@ -230,13 +231,13 @@ func (r *Reader) ReadFloat64() (float64, error) {
 		return 0, err
 	}
 	switch b {
-	case 0xca:
+	case markerFloat32:
 		buf, err := r.readN(4)
 		if err != nil {
 			return 0, err
 		}
 		return float64(math.Float32frombits(binary.BigEndian.Uint32(buf))), nil
-	case 0xcb:
+	case markerFloat64:
 		buf, err := r.readN(8)
 		if err != nil {
 			return 0, err
@@ -266,18 +267,18 @@ func (r *Reader) readStringLen() (int, error) {
 		return 0, err
 	}
 	switch {
-	case b >= 0xa0 && b <= 0xbf:
-		return int(b & 0x1f), nil
-	case b == 0xd9:
+	case b >= markerFixstrLow && b <= markerFixstrHigh:
+		return int(b & markerFixstrLenMask), nil
+	case b == markerStr8:
 		v, err := r.readByte()
 		return int(v), err
-	case b == 0xda:
+	case b == markerStr16:
 		buf, err := r.readN(2)
 		if err != nil {
 			return 0, err
 		}
 		return int(binary.BigEndian.Uint16(buf)), nil
-	case b == 0xdb:
+	case b == markerStr32:
 		buf, err := r.readN(4)
 		if err != nil {
 			return 0, err
@@ -296,19 +297,19 @@ func (r *Reader) ReadBytes() ([]byte, error) {
 	}
 	var n int
 	switch b {
-	case 0xc4:
+	case markerBin8:
 		v, err := r.readByte()
 		if err != nil {
 			return nil, err
 		}
 		n = int(v)
-	case 0xc5:
+	case markerBin16:
 		buf, err := r.readN(2)
 		if err != nil {
 			return nil, err
 		}
 		n = int(binary.BigEndian.Uint16(buf))
-	case 0xc6:
+	case markerBin32:
 		buf, err := r.readN(4)
 		if err != nil {
 			return nil, err
@@ -327,15 +328,15 @@ func (r *Reader) ReadArrayLen() (int, error) {
 		return 0, err
 	}
 	switch {
-	case b >= 0x90 && b <= 0x9f:
-		return int(b & 0x0f), nil
-	case b == 0xdc:
+	case b >= markerFixarrayLow && b <= markerFixarrayHigh:
+		return int(b & markerFixContainerLenMask), nil
+	case b == markerArray16:
 		buf, err := r.readN(2)
 		if err != nil {
 			return 0, err
 		}
 		return int(binary.BigEndian.Uint16(buf)), nil
-	case b == 0xdd:
+	case b == markerArray32:
 		buf, err := r.readN(4)
 		if err != nil {
 			return 0, err
@@ -353,15 +354,15 @@ func (r *Reader) ReadMapLen() (int, error) {
 		return 0, err
 	}
 	switch {
-	case b >= 0x80 && b <= 0x8f:
-		return int(b & 0x0f), nil
-	case b == 0xde:
+	case b >= markerFixmapLow && b <= markerFixmapHigh:
+		return int(b & markerFixContainerLenMask), nil
+	case b == markerMap16:
 		buf, err := r.readN(2)
 		if err != nil {
 			return 0, err
 		}
 		return int(binary.BigEndian.Uint16(buf)), nil
-	case b == 0xdf:
+	case b == markerMap32:
 		buf, err := r.readN(4)
 		if err != nil {
 			return 0, err
@@ -380,16 +381,16 @@ func (r *Reader) SkipValue() error {
 		return err
 	}
 	switch {
-	case b == 0xc0, b == 0xc2, b == 0xc3:
+	case b == markerNil, b == markerFalse, b == markerTrue:
 		_, err = r.readByte()
 		return err
-	case b <= 0x7f, b >= 0xe0:
+	case b <= markerPosFixintMax, b >= markerNegFixintLow:
 		_, err = r.readByte()
 		return err
-	case b >= 0xa0 && b <= 0xbf:
+	case b >= markerFixstrLow && b <= markerFixstrHigh:
 		_, err = r.ReadString()
 		return err
-	case b >= 0x90 && b <= 0x9f, b == 0xdc, b == 0xdd:
+	case b >= markerFixarrayLow && b <= markerFixarrayHigh, b == markerArray16, b == markerArray32:
 		n, err := r.ReadArrayLen()
 		if err != nil {
 			return err
@@ -400,7 +401,7 @@ func (r *Reader) SkipValue() error {
 			}
 		}
 		return nil
-	case b >= 0x80 && b <= 0x8f, b == 0xde, b == 0xdf:
+	case b >= markerFixmapLow && b <= markerFixmapHigh, b == markerMap16, b == markerMap32:
 		n, err := r.ReadMapLen()
 		if err != nil {
 			return err
@@ -411,19 +412,19 @@ func (r *Reader) SkipValue() error {
 			}
 		}
 		return nil
-	case b == 0xc4, b == 0xc5, b == 0xc6:
+	case b == markerBin8, b == markerBin16, b == markerBin32:
 		_, err = r.ReadBytes()
 		return err
-	case b == 0xca, b == 0xcb:
+	case b == markerFloat32, b == markerFloat64:
 		_, err = r.ReadFloat64()
 		return err
-	case b >= 0xcc && b <= 0xcf:
+	case b == markerUint8, b == markerUint16, b == markerUint32, b == markerUint64:
 		_, err = r.ReadUint()
 		return err
-	case b >= 0xd0 && b <= 0xd3:
+	case b == markerInt8, b == markerInt16, b == markerInt32, b == markerInt64:
 		_, err = r.ReadInt()
 		return err
-	case b == 0xd9, b == 0xda, b == 0xdb:
+	case b == markerStr8, b == markerStr16, b == markerStr32:
 		_, err = r.ReadString()
 		return err
 	default:

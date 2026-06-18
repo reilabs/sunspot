@@ -17,16 +17,16 @@ type SHA256Compression[T shr.ACIRField, E constraint.Element] struct {
 	Outputs    [8]shr.Witness
 }
 
-func (a *SHA256Compression[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *SHA256Compression[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
-		return readFunctionInputArray(r, a.Inputs[:])
+		return msgpackutil.ReadArrayInto(r, a.Inputs[:])
 	case 1:
-		return readFunctionInputArray(r, a.HashValues[:])
+		return msgpackutil.ReadArrayInto(r, a.HashValues[:])
 	case 2:
-		return shr.ReadWitnessArray(r, a.Outputs[:])
+		return msgpackutil.ReadArrayInto(r, a.Outputs[:])
 	default:
-		return fmt.Errorf("Sha256Compression: unknown field tag %d", tag)
+		return fmt.Errorf("SHA256Compression: unknown field %s", f)
 	}
 }
 
@@ -87,3 +87,5 @@ func (a *SHA256Compression[T, E]) Define(api frontend.Builder[E], witnesses map[
 
 	return nil
 }
+
+func (*SHA256Compression[T, E]) SerdeName() string { return "Sha256Compression" }

@@ -17,8 +17,8 @@ type And[T shr.ACIRField, E constraint.Element] struct {
 	Output shr.Witness
 }
 
-func (a *And[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *And[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		return a.Lhs.UnmarshalReader(r)
 	case 1:
@@ -36,7 +36,7 @@ func (a *And[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 	case 3:
 		return a.Output.UnmarshalReader(r)
 	default:
-		return fmt.Errorf("AND: unknown field tag %d", tag)
+		return fmt.Errorf("And: unknown field %s", f)
 	}
 }
 
@@ -52,3 +52,5 @@ func (a *And[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]fr
 	}
 	return defineBitwise(api, uapi, witnesses, a.Lhs, a.Rhs, a.Output, int(a.nBits), uapi.And)
 }
+
+func (*And[T, E]) SerdeName() string { return "AND" }

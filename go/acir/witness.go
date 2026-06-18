@@ -1,9 +1,7 @@
 package acir
 
 import (
-	"bytes"
 	"compress/gzip"
-	"io"
 	"math/big"
 	"os"
 	hdr "sunspot/go/acir/header"
@@ -49,29 +47,21 @@ func LoadWitnessStackFromFile[T shr.ACIRField](filePath string, modulus *big.Int
 	}
 	defer gz.Close()
 
-	raw, err := io.ReadAll(gz)
-	if err != nil {
-		return WitnessStack[T]{}, fmt.Errorf("failed to read witness file: %w", err)
+	if err := msgpackutil.ConsumeFormatByte(gz); err != nil {
+		return WitnessStack[T]{}, fmt.Errorf("witness: %w", err)
 	}
-	if len(raw) == 0 {
-		return WitnessStack[T]{}, fmt.Errorf("witness file is empty")
-	}
-	if raw[0] != SerializationFormatMsgpackTagged {
-		return WitnessStack[T]{}, fmt.Errorf("unsupported witness format byte 0x%02x: only msgpack-tagged (0x%02x) is supported", raw[0], SerializationFormatMsgpackTagged)
-	}
-	r := msgpackutil.NewReader(bytes.NewReader(raw[1:]))
+	r := msgpackutil.NewReader(gz)
 
 	var witnesses WitnessStack[T]
-	err = msgpackutil.ReadStruct(r, witnesses.decode)
-	if err != nil {
+	if err := msgpackutil.ReadStruct(r, witnessStackSchema, witnesses.decode); err != nil {
 		return WitnessStack[T]{}, err
 	}
 	return witnesses, nil
 }
 
-func (witnesses *WitnessStack[T]) decode(tag int, r *msgpackutil.Reader) error {
-	if tag != 0 {
-		return r.SkipValue()
+func (witnesses *WitnessStack[T]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	if f.Tag != 0 {
+		return fmt.Errorf("WitnessStack: unknown field %s", f)
 	}
 	n, err := r.ReadArrayLen()
 	if err != nil {
@@ -90,12 +80,12 @@ func (witnesses *WitnessStack[T]) decode(tag int, r *msgpackutil.Reader) error {
 
 func readStackItem[T shr.ACIRField](r *msgpackutil.Reader) (StackItem[T], error) {
 	var stackItem StackItem[T]
-	err := msgpackutil.ReadStruct(r, stackItem.decode)
+	err := msgpackutil.ReadStruct(r, stackItemSchema, stackItem.decode)
 	return stackItem, err
 }
 
-func (stackItem *StackItem[T]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (stackItem *StackItem[T]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		v, err := r.ReadUint()
 		if err != nil {
@@ -104,11 +94,15 @@ func (stackItem *StackItem[T]) decode(tag int, r *msgpackutil.Reader) error {
 		stackItem.CircuitIndex = uint32(v)
 		return nil
 	case 1:
-		return readWitnessMap[T](r, &stackItem.WitnessMap)
+		return readWitnessMap(r, &stackItem.WitnessMap)
 	default:
-		return r.SkipValue()
+		return fmt.Errorf("StackItem: unknown field %s", f)
 	}
 }
+
+// Schemas for witness-stack types (noir acvm-repo/acir/src/native_types/witness_stack.rs).
+var witnessStackSchema = msgpackutil.NewSchema(map[string]int{"stack": 0})
+var stackItemSchema = msgpackutil.NewSchema(map[string]int{"index": 0, "witness": 1})
 
 // WitnessMap is a single-field tuple struct wrapping BTreeMap<Witness, F>,
 // which serializes as a msgpack `fixmap` of int-keyed entries.

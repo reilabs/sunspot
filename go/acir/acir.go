@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/big"
 	"os"
 	"strconv"
@@ -20,11 +19,6 @@ import (
 	"github.com/consensys/gnark/frontend/cs/r1cs"
 	"github.com/consensys/gnark/frontend/schema"
 )
-
-// SerializationFormatMsgpackTagged is the leading byte the noir
-// `acir::serialization::Format` enum emits for the tagged MessagePack
-// wire format used since beta.22.
-const SerializationFormatMsgpackTagged byte = 4
 
 // Struct representation of an ACIR programme
 type ACIR[T shr.ACIRField, E constraint.Element] struct {
@@ -137,17 +131,10 @@ func decodeProgramBytecode(bytecode string) (*msgpackutil.Reader, error) {
 		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
 	}
 	defer gz.Close()
-	raw, err := io.ReadAll(gz)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read gzipped bytecode: %w", err)
+	if err := msgpackutil.ConsumeFormatByte(gz); err != nil {
+		return nil, err
 	}
-	if len(raw) == 0 {
-		return nil, fmt.Errorf("decompressed bytecode is empty")
-	}
-	if raw[0] != SerializationFormatMsgpackTagged {
-		return nil, fmt.Errorf("unsupported ACIR serialization format: only msgpack-tagged is supported")
-	}
-	return msgpackutil.NewReader(bytes.NewReader(raw[1:])), nil
+	return msgpackutil.NewReader(gz), nil
 }
 
 func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {

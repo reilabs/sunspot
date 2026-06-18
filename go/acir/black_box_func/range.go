@@ -15,8 +15,8 @@ type Range[T shr.ACIRField, E constraint.Element] struct {
 	nBits uint32
 }
 
-func (a *Range[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *Range[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		return a.Input.UnmarshalReader(r)
 	case 1:
@@ -27,7 +27,7 @@ func (a *Range[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 		a.nBits = n
 		return nil
 	default:
-		return fmt.Errorf("RANGE: unknown field tag %d", tag)
+		return fmt.Errorf("Range: unknown field %s", f)
 	}
 }
 
@@ -46,3 +46,5 @@ func (a Range[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]f
 	rangechecker.Check(input, int(a.nBits))
 	return nil
 }
+
+func (*Range[T, E]) SerdeName() string { return "RANGE" }

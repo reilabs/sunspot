@@ -15,11 +15,11 @@ type AssertionPayload[T shr.ACIRField, E constraint.Element] struct {
 
 // AssertionPayload fields: 0=error_selector (u64), 1=payload (Vec<ExpressionOrMemory>).
 func (a *AssertionPayload[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadStruct(r, a.decode)
+	return msgpackutil.ReadStruct(r, assertionPayloadSchema, a.decode)
 }
 
-func (a *AssertionPayload[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *AssertionPayload[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		v, err := r.ReadUint()
 		if err != nil {
@@ -28,18 +28,12 @@ func (a *AssertionPayload[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 		a.ErrorSelector = v
 		return nil
 	case 1:
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
-		a.Payload = make([]ExpressionOrMemory[T, E], n)
-		for i := 0; i < n; i++ {
-			if err := a.Payload[i].UnmarshalReader(r); err != nil {
-				return err
-			}
-		}
-		return nil
+		return msgpackutil.ReadVec(r, &a.Payload)
 	default:
-		return fmt.Errorf("AssertionPayload: unknown field tag %d", tag)
+		return fmt.Errorf("AssertionPayload: unknown field %s", f)
 	}
 }
+
+var assertionPayloadSchema = msgpackutil.NewSchema(map[string]int{
+	"error_selector": 0, "payload": 1,
+})

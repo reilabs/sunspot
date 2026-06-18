@@ -16,27 +16,17 @@ type BrilligInputs[T shr.ACIRField, E constraint.Element] struct {
 }
 
 func (inputs *BrilligInputs[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadEnum(r, inputs.decode)
+	return msgpackutil.ReadEnum(r, brilligInputsSchema, inputs.decode)
 }
 
-func (inputs *BrilligInputs[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (inputs *BrilligInputs[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		inputs.Single = new(exp.Expression[T, E])
 		return inputs.Single.UnmarshalReader(r)
 	case 1:
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
 		inputs.Array = new([]exp.Expression[T, E])
-		*inputs.Array = make([]exp.Expression[T, E], n)
-		for i := 0; i < n; i++ {
-			if err := (*inputs.Array)[i].UnmarshalReader(r); err != nil {
-				return err
-			}
-		}
-		return nil
+		return msgpackutil.ReadVec(r, inputs.Array)
 	case 2:
 		v, err := r.ReadUint()
 		if err != nil {
@@ -46,6 +36,10 @@ func (inputs *BrilligInputs[T, E]) decode(tag int, r *msgpackutil.Reader) error 
 		*inputs.BlockID = uint32(v)
 		return nil
 	default:
-		return fmt.Errorf("unknown BrilligInputsKind: %d", tag)
+		return fmt.Errorf("unknown BrilligInputsKind: %v", f)
 	}
 }
+
+var brilligInputsSchema = msgpackutil.NewSchema(map[string]int{
+	"Single": 0, "Array": 1, "MemoryArray": 2,
+})

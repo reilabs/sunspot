@@ -28,14 +28,14 @@ type Blake3[T shr.ACIRField, E constraint.Element] struct {
 	Outputs [32]shr.Witness
 }
 
-func (a *Blake3[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *Blake3[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
-		return readFunctionInputVec(r, &a.Inputs)
+		return msgpackutil.ReadVec(r, &a.Inputs)
 	case 1:
-		return shr.ReadWitnessArray(r, a.Outputs[:])
+		return msgpackutil.ReadArrayInto(r, a.Outputs[:])
 	default:
-		return fmt.Errorf("Blake3: unknown field tag %d", tag)
+		return fmt.Errorf("Blake3: unknown field %s", f)
 	}
 }
 
@@ -369,3 +369,5 @@ func padTo16Words(data []uints.U32) [16]uints.U32 {
 	}
 	return padded
 }
+
+func (*Blake3[T, E]) SerdeName() string { return "Blake3" }

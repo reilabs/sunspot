@@ -13,29 +13,22 @@ type BrilligOutputs struct {
 
 // BrilligOutputs: 0 = Simple(Witness), 1 = Array(Vec<Witness>).
 func (b *BrilligOutputs) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadEnum(r, b.decode)
+	return msgpackutil.ReadEnum(r, brilligOutputsSchema, b.decode)
 }
 
-func (b *BrilligOutputs) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (b *BrilligOutputs) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		b.Single = new(shr.Witness)
 		return b.Single.UnmarshalReader(r)
 	case 1:
-
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
 		b.Array = new([]shr.Witness)
-		*b.Array = make([]shr.Witness, n)
-		for i := 0; i < n; i++ {
-			if err := (*b.Array)[i].UnmarshalReader(r); err != nil {
-				return err
-			}
-		}
-		return nil
+		return msgpackutil.ReadVec(r, b.Array)
 	default:
-		return fmt.Errorf("unknown BrilligOutputsKind: %d", tag)
+		return fmt.Errorf("unknown BrilligOutputsKind: %v", f)
 	}
 }
+
+var brilligOutputsSchema = msgpackutil.NewSchema(map[string]int{
+	"Simple": 0, "Array": 1,
+})

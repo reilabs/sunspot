@@ -17,8 +17,8 @@ type Xor[T shr.ACIRField, E constraint.Element] struct {
 	nBits  uint32
 }
 
-func (a *Xor[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *Xor[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		return a.Lhs.UnmarshalReader(r)
 	case 1:
@@ -36,7 +36,7 @@ func (a *Xor[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 	case 3:
 		return a.Output.UnmarshalReader(r)
 	default:
-		return fmt.Errorf("XOR: unknown field tag %d", tag)
+		return fmt.Errorf("Xor: unknown field %s", f)
 	}
 }
 
@@ -56,3 +56,5 @@ func (a *Xor[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witness]fr
 	}
 	return defineBitwise(api, uapi, witnesses, a.Lhs, a.Rhs, a.Output, int(a.nBits), uapi.Xor)
 }
+
+func (*Xor[T, E]) SerdeName() string { return "XOR" }

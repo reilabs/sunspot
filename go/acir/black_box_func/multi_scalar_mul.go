@@ -18,12 +18,12 @@ type MultiScalarMul[T shr.ACIRField, E constraint.Element] struct {
 	Outputs   [2]shr.Witness
 }
 
-func (a *MultiScalarMul[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *MultiScalarMul[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
-		return readFunctionInputVec(r, &a.Points)
+		return msgpackutil.ReadVec(r, &a.Points)
 	case 1:
-		return readFunctionInputVec(r, &a.Scalars)
+		return msgpackutil.ReadVec(r, &a.Scalars)
 	case 2:
 		return a.predicate.UnmarshalReader(r)
 	case 3:
@@ -39,7 +39,7 @@ func (a *MultiScalarMul[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 		}
 		return a.Outputs[1].UnmarshalReader(r)
 	default:
-		return fmt.Errorf("MultiScalarMul: unknown field tag %d", tag)
+		return fmt.Errorf("MultiScalarMul: unknown field %s", f)
 	}
 }
 
@@ -114,3 +114,5 @@ func (a *MultiScalarMul[T, E]) Define(api frontend.Builder[E], witnesses map[shr
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.Y, output.Y)))
 	return nil
 }
+
+func (*MultiScalarMul[T, E]) SerdeName() string { return "MultiScalarMul" }

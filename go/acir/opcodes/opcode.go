@@ -9,6 +9,7 @@ import (
 )
 
 type Opcode[E constraint.Element] interface {
+	msgpackutil.EnumVariant
 	UnmarshalReader(r *msgpackutil.Reader) error
 	Equals(other Opcode[E]) bool
 	Define(api frontend.Builder[E], witnesses map[shr.Witness]frontend.Variable) error

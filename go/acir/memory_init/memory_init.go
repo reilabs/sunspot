@@ -21,11 +21,11 @@ type MemoryInit[T shr.ACIRField, E constraint.Element] struct {
 // On the wire MemoryInit's payload is a 3-tagged-field struct: 0=block_id (BlockId, transparent u32),
 // 1=init (Vec<Witness>), 2=block_type (enum). We ignore block_type in this backend
 func (m *MemoryInit[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadStruct(r, m.decode)
+	return msgpackutil.ReadStruct(r, memoryInitSchema, m.decode)
 }
 
-func (m *MemoryInit[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (m *MemoryInit[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		v, err := r.ReadU32()
 		if err != nil {
@@ -34,14 +34,18 @@ func (m *MemoryInit[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 		m.BlockID = v
 		return nil
 	case 1:
-		return shr.ReadWitnessVec(r, &m.Init)
+		return msgpackutil.ReadVec(r, &m.Init)
 	case 2:
 		// tag 2 encodes the blocktype, which for this backend is irrelevant
 		return r.SkipValue()
 	default:
-		return fmt.Errorf("memory_init: unknown field tag %d", tag)
+		return fmt.Errorf("MemoryInit: unknown field %s", f)
 	}
 }
+
+var memoryInitSchema = msgpackutil.NewSchema(map[string]int{
+	"block_id": 0, "init": 1, "block_type": 2,
+})
 
 func (m *MemoryInit[T, E]) Equals(other ops.Opcode[E]) bool {
 	value, ok := other.(*MemoryInit[T, E])
@@ -73,3 +77,5 @@ func (m *MemoryInit[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap["assert_zero"] = m
 	return json.Marshal(stringMap)
 }
+
+func (*MemoryInit[T, E]) SerdeName() string { return "MemoryInit" }

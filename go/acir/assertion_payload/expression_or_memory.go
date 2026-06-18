@@ -17,11 +17,11 @@ type ExpressionOrMemory[T shr.ACIRField, E constraint.Element] struct {
 
 // ExpressionOrMemory: 0=Expression(Expression<F>), 1=Memory(BlockId).
 func (e *ExpressionOrMemory[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadEnum(r, e.decode)
+	return msgpackutil.ReadEnum(r, expressionOrMemorySchema, e.decode)
 }
 
-func (e *ExpressionOrMemory[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (e *ExpressionOrMemory[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		e.Expression = new(exp.Expression[T, E])
 		return e.Expression.UnmarshalReader(r)
@@ -34,6 +34,10 @@ func (e *ExpressionOrMemory[T, E]) decode(tag int, r *msgpackutil.Reader) error 
 		*e.BlockId = uint32(v)
 		return nil
 	default:
-		return fmt.Errorf("unknown ExpressionOrMemoryKind: %d", tag)
+		return fmt.Errorf("unknown ExpressionOrMemoryKind: %v", f)
 	}
 }
+
+var expressionOrMemorySchema = msgpackutil.NewSchema(map[string]int{
+	"Expression": 0, "Memory": 1,
+})

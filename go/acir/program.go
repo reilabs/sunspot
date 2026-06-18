@@ -19,11 +19,11 @@ type Program[T shr.ACIRField, E constraint.Element] struct {
 }
 
 func (p *Program[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadStruct(r, p.decode)
+	return msgpackutil.ReadStruct(r, programSchema, p.decode)
 }
 
-func (p *Program[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (p *Program[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		n, err := r.ReadArrayLen()
 		if err != nil {
@@ -36,11 +36,19 @@ func (p *Program[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 			}
 		}
 		return nil
-	default:
-		// Skip all other values i.e. skip unconstrained functions
+	case 1:
+		// skip unconstrained functions
 		return r.SkipValue()
+	default:
+		return fmt.Errorf("Program: unknown field: %v", f)
 	}
 }
+
+// Program serde field schema (noir acvm-repo/acir/src/circuit/mod.rs).
+var programSchema = msgpackutil.NewSchema(map[string]int{
+	"functions":               0,
+	"unconstrained_functions": 1,
+})
 
 // Define adds constraints to the ACIR programme
 func (p *Program[T, E]) Define(

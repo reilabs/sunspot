@@ -15,14 +15,14 @@ type Poseidon2Permutation[T shr.ACIRField, E constraint.Element] struct {
 	Outputs []shr.Witness
 }
 
-func (a *Poseidon2Permutation[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *Poseidon2Permutation[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
-		return readFunctionInputVec(r, &a.Inputs)
+		return msgpackutil.ReadVec(r, &a.Inputs)
 	case 1:
-		return shr.ReadWitnessVec(r, &a.Outputs)
+		return msgpackutil.ReadVec(r, &a.Outputs)
 	default:
-		return fmt.Errorf("Poseidon2Permutation: unknown field tag %d", tag)
+		return fmt.Errorf("Poseidon2Permutation: unknown field %s", f)
 	}
 }
 
@@ -65,3 +65,5 @@ func (a *Poseidon2Permutation[T, E]) Define(api frontend.Builder[E], witnesses m
 	}
 	return nil
 }
+
+func (*Poseidon2Permutation[T, E]) SerdeName() string { return "Poseidon2Permutation" }

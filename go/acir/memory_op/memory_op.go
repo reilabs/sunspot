@@ -25,11 +25,11 @@ type MemoryOp[T shr.ACIRField, E constraint.Element] struct {
 // three tagged fields: 0=operation (bool), 1=index (Witness), 2=value
 // (Witness). With EncodingStrategy::Array both are positional fixarrays.
 func (m *MemoryOp[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadStruct(r, m.decode)
+	return msgpackutil.ReadStruct(r, memoryOpOuterSchema, m.decode)
 }
 
-func (m *MemoryOp[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (m *MemoryOp[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		v, err := r.ReadUint()
 		if err != nil {
@@ -38,8 +38,8 @@ func (m *MemoryOp[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 		m.BlockID = uint32(v)
 		return nil
 	case 1:
-		return msgpackutil.ReadStruct(r, func(fieldTag int, r *msgpackutil.Reader) error {
-			switch fieldTag {
+		return msgpackutil.ReadStruct(r, memOpInnerSchema, func(fld msgpackutil.Field, r *msgpackutil.Reader) error {
+			switch fld.Tag {
 			case 0:
 				var err error
 				m.IsWrite, err = r.ReadBool()
@@ -49,13 +49,23 @@ func (m *MemoryOp[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 			case 2:
 				return m.Value.UnmarshalReader(r)
 			default:
-				return fmt.Errorf("mem_op: unknown field tag %d", fieldTag)
+				return fmt.Errorf("MemOp: unknown field %s", fld)
 			}
 		})
 	default:
-		return fmt.Errorf("memory_op: unknown field tag %d", tag)
+		return fmt.Errorf("MemoryOp: unknown field %s", f)
 	}
 }
+
+// MemoryOp opcode payload: 0=block_id, 1=op (MemOp).
+var memoryOpOuterSchema = msgpackutil.NewSchema(map[string]int{
+	"block_id": 0, "op": 1,
+})
+
+// MemOp inner struct: 0=operation (serde renamed "read"), 1=index, 2=value.
+var memOpInnerSchema = msgpackutil.NewSchema(map[string]int{
+	"read": 0, "index": 1, "value": 2,
+})
 
 func (m *MemoryOp[T, E]) Equals(other ops.Opcode[E]) bool {
 	o, ok := other.(*MemoryOp[T, E])
@@ -96,3 +106,5 @@ func (o MemoryOp[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap["memory_op"] = o
 	return json.Marshal(stringMap)
 }
+
+func (*MemoryOp[T, E]) SerdeName() string { return "MemoryOp" }

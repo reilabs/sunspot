@@ -1,7 +1,6 @@
 package shared
 
 import (
-	"fmt"
 	"sunspot/go/acir/msgpackutil"
 
 	"github.com/google/btree"
@@ -20,39 +19,6 @@ func (w *Witness) UnmarshalReader(r *msgpackutil.Reader) error {
 	}
 	*w = Witness(v)
 	r.ObserveWitness(v)
-	return nil
-}
-
-// ReadWitnessVec reads a fixarray of Witness values into a new slice.
-func ReadWitnessVec(r *msgpackutil.Reader, out *[]Witness) error {
-	n, err := r.ReadArrayLen()
-	if err != nil {
-		return err
-	}
-	*out = make([]Witness, n)
-	for i := 0; i < n; i++ {
-		if err := (*out)[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// ReadWitnessArray reads a fixarray of Witness values into a caller-provided
-// fixed-size backing array.
-func ReadWitnessArray(r *msgpackutil.Reader, out []Witness) error {
-	n, err := r.ReadArrayLen()
-	if err != nil {
-		return err
-	}
-	if n != len(out) {
-		return fmt.Errorf("expected fixed-size Witness array of %d, got %d", len(out), n)
-	}
-	for i := 0; i < n; i++ {
-		if err := out[i].UnmarshalReader(r); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 

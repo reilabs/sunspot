@@ -17,12 +17,12 @@ type EmbeddedCurveAdd[T shr.ACIRField, E constraint.Element] struct {
 	Outputs   [2]shr.Witness
 }
 
-func (a *EmbeddedCurveAdd[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *EmbeddedCurveAdd[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
-		return readFunctionInputArray(r, a.Input1[:])
+		return msgpackutil.ReadArrayInto(r, a.Input1[:])
 	case 1:
-		return readFunctionInputArray(r, a.Input2[:])
+		return msgpackutil.ReadArrayInto(r, a.Input2[:])
 	case 2:
 		return a.predicate.UnmarshalReader(r)
 	case 3:
@@ -38,7 +38,7 @@ func (a *EmbeddedCurveAdd[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 		}
 		return a.Outputs[1].UnmarshalReader(r)
 	default:
-		return fmt.Errorf("EmbeddedCurveAdd: unknown field tag %d", tag)
+		return fmt.Errorf("EmbeddedCurveAdd: unknown field %s", f)
 	}
 }
 
@@ -87,3 +87,5 @@ func (a *EmbeddedCurveAdd[T, E]) Define(api frontend.Builder[E], witnesses map[s
 	api.AssertIsEqual(frontend.Variable(0), api.Mul(pred, api.Sub(constrained_output.Y, output.Y)))
 	return nil
 }
+
+func (*EmbeddedCurveAdd[T, E]) SerdeName() string { return "EmbeddedCurveAdd" }

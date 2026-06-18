@@ -23,22 +23,22 @@ type ECDSASECP256K1[T shr.ACIRField, E constraint.Element] struct {
 	Output        shr.Witness
 }
 
-func (a *ECDSASECP256K1[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *ECDSASECP256K1[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
-		return readFunctionInputArray(r, a.PublicKeyX[:])
+		return msgpackutil.ReadArrayInto(r, a.PublicKeyX[:])
 	case 1:
-		return readFunctionInputArray(r, a.PublicKeyY[:])
+		return msgpackutil.ReadArrayInto(r, a.PublicKeyY[:])
 	case 2:
-		return readFunctionInputArray(r, a.Signature[:])
+		return msgpackutil.ReadArrayInto(r, a.Signature[:])
 	case 3:
-		return readFunctionInputArray(r, a.HashedMessage[:])
+		return msgpackutil.ReadArrayInto(r, a.HashedMessage[:])
 	case 4:
 		return a.predicate.UnmarshalReader(r)
 	case 5:
 		return a.Output.UnmarshalReader(r)
 	default:
-		return fmt.Errorf("EcdsaSecp256k1: unknown field tag %d", tag)
+		return fmt.Errorf("ECDSASECP256K1: unknown field %s", f)
 	}
 }
 
@@ -181,3 +181,5 @@ func BytesTo64BitLimbs[T shr.ACIRField](
 	}
 	return out, nil
 }
+
+func (*ECDSASECP256K1[T, E]) SerdeName() string { return "EcdsaSecp256k1" }

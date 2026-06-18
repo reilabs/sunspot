@@ -20,11 +20,11 @@ type Call[T shr.ACIRField, E constraint.Element] struct {
 }
 
 func (c *Call[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadStruct(r, c.decode)
+	return msgpackutil.ReadStruct(r, callSchema, c.decode)
 }
 
-func (c *Call[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (c *Call[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		v, err := r.ReadUint()
 		if err != nil {
@@ -33,35 +33,19 @@ func (c *Call[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 		c.ID = uint32(v)
 		return nil
 	case 1:
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
-		c.Inputs = make([]shr.Witness, n)
-		for i := 0; i < n; i++ {
-			if err := c.Inputs[i].UnmarshalReader(r); err != nil {
-				return err
-			}
-		}
-		return nil
+		return msgpackutil.ReadVec(r, &c.Inputs)
 	case 2:
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
-		c.Outputs = make([]shr.Witness, n)
-		for i := 0; i < n; i++ {
-			if err := c.Outputs[i].UnmarshalReader(r); err != nil {
-				return err
-			}
-		}
-		return nil
+		return msgpackutil.ReadVec(r, &c.Outputs)
 	case 3:
 		return c.Predicate.UnmarshalReader(r)
 	default:
-		return fmt.Errorf("call: unknown field tag %d", tag)
+		return fmt.Errorf("Call: unknown field %s", f)
 	}
 }
+
+var callSchema = msgpackutil.NewSchema(map[string]int{
+	"id": 0, "inputs": 1, "outputs": 2, "predicate": 3,
+})
 func (c *Call[T, E]) Equals(other ops.Opcode[E]) bool {
 	value, ok := other.(*Call[T, E])
 	if !ok || c.ID != value.ID {
@@ -96,3 +80,5 @@ func (c *Call[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap["circuit_call"] = c
 	return json.Marshal(stringMap)
 }
+
+func (*Call[T, E]) SerdeName() string { return "Call" }

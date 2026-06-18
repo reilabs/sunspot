@@ -19,18 +19,18 @@ type AES128Encrypt[T shr.ACIRField, E constraint.Element] struct {
 	Outputs []shr.Witness
 }
 
-func (a *AES128Encrypt[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (a *AES128Encrypt[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
-		return readFunctionInputVec(r, &a.Inputs)
+		return msgpackutil.ReadVec(r, &a.Inputs)
 	case 1:
-		return readFunctionInputArray(r, a.Iv[:])
+		return msgpackutil.ReadArrayInto(r, a.Iv[:])
 	case 2:
-		return readFunctionInputArray(r, a.Key[:])
+		return msgpackutil.ReadArrayInto(r, a.Key[:])
 	case 3:
-		return shr.ReadWitnessVec(r, &a.Outputs)
+		return msgpackutil.ReadVec(r, &a.Outputs)
 	default:
-		return fmt.Errorf("aes128encrypt: unknown field tag %d", tag)
+		return fmt.Errorf("AES128Encrypt: unknown field %s", f)
 	}
 }
 
@@ -365,3 +365,5 @@ func pad(input []uints.U8) []uints.U8 {
 	}
 	return v
 }
+
+func (*AES128Encrypt[T, E]) SerdeName() string { return "AES128Encrypt" }

@@ -20,11 +20,11 @@ type BrilligCall[T shr.ACIRField, E constraint.Element] struct {
 }
 
 func (b *BrilligCall[T, E]) UnmarshalReader(r *msgpackutil.Reader) error {
-	return msgpackutil.ReadStruct(r, b.decode)
+	return msgpackutil.ReadStruct(r, brilligCallSchema, b.decode)
 }
 
-func (b *BrilligCall[T, E]) decode(tag int, r *msgpackutil.Reader) error {
-	switch tag {
+func (b *BrilligCall[T, E]) decode(f msgpackutil.Field, r *msgpackutil.Reader) error {
+	switch f.Tag {
 	case 0:
 		v, err := r.ReadUint()
 		if err != nil {
@@ -33,35 +33,19 @@ func (b *BrilligCall[T, E]) decode(tag int, r *msgpackutil.Reader) error {
 		b.ID = uint32(v)
 		return nil
 	case 1:
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
-		b.Inputs = make([]BrilligInputs[T, E], n)
-		for i := 0; i < n; i++ {
-			if err := b.Inputs[i].UnmarshalReader(r); err != nil {
-				return err
-			}
-		}
-		return nil
+		return msgpackutil.ReadVec(r, &b.Inputs)
 	case 2:
-		n, err := r.ReadArrayLen()
-		if err != nil {
-			return err
-		}
-		b.Outputs = make([]BrilligOutputs, n)
-		for i := 0; i < n; i++ {
-			if err := b.Outputs[i].UnmarshalReader(r); err != nil {
-				return err
-			}
-		}
-		return nil
+		return msgpackutil.ReadVec(r, &b.Outputs)
 	case 3:
 		return b.Predicate.UnmarshalReader(r)
 	default:
-		return fmt.Errorf("brillig_call: unknown field tag %d", tag)
+		return fmt.Errorf("BrilligCall: unknown field %s", f)
 	}
 }
+
+var brilligCallSchema = msgpackutil.NewSchema(map[string]int{
+	"id": 0, "inputs": 1, "outputs": 2, "predicate": 3,
+})
 func (o *BrilligCall[T, E]) Equals(other ops.Opcode[E]) bool {
 	// Function exists for purposes of satisfying trait bound
 	// Trait function only used in tests that are not exercised on this type
@@ -77,3 +61,5 @@ func (o *BrilligCall[T, E]) MarshalJSON() ([]byte, error) {
 	stringMap["brillig_call"] = o
 	return json.Marshal(stringMap)
 }
+
+func (*BrilligCall[T, E]) SerdeName() string { return "BrilligCall" }
