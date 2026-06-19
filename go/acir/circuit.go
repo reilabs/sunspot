@@ -20,7 +20,7 @@ import (
 
 type Circuit[T shr.ACIRField, E constraint.Element] struct {
 	CircuitName         string
-	CurrentWitnessIndex uint32          `json:"current_witness_index"`
+	CurrentWitnessIndex uint32
 	Opcodes             []ops.Opcode[E] `json:"opcodes"`            // Opcodes in the circuit
 	PrivateParameters   btree.BTree     `json:"private_parameters"` // Witnesses
 	PublicParameters    btree.BTree     `json:"public_parameters"`  // Witnesses
