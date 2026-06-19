@@ -3,7 +3,7 @@ package shared
 import (
 	"math/big"
 	"reflect"
-	"sunspot/go/acir/msgpackutil"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
 
 	"github.com/consensys/gnark/frontend"
 )

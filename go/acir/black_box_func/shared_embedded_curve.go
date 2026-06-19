@@ -2,8 +2,8 @@ package blackboxfunc
 
 import (
 	"math/big"
-	shr "sunspot/go/acir/shared"
-	grumpkin "sunspot/go/sw-grumpkin"
+	shr "github.com/reilabs/sunspot/go/acir/shared"
+	grumpkin "github.com/reilabs/sunspot/go/sw-grumpkin"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/constraint"

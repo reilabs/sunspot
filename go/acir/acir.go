@@ -9,9 +9,9 @@ import (
 	"math/big"
 	"os"
 	"strconv"
-	hdr "sunspot/go/acir/header"
-	"sunspot/go/acir/msgpackutil"
-	shr "sunspot/go/acir/shared"
+	hdr "github.com/reilabs/sunspot/go/acir/header"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
+	shr "github.com/reilabs/sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/constraint"

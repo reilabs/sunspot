@@ -1,9 +1,9 @@
 package brillig_call
 
 import (
-	exp "sunspot/go/acir/expression"
-	"sunspot/go/acir/msgpackutil"
-	shr "sunspot/go/acir/shared"
+	exp "github.com/reilabs/sunspot/go/acir/expression"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
+	shr "github.com/reilabs/sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 )

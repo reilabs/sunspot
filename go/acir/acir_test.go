@@ -3,7 +3,7 @@ package acir
 import (
 	"reflect"
 	"strings"
-	"sunspot/go/bn254"
+	"github.com/reilabs/sunspot/go/bn254"
 	"testing"
 
 	"github.com/consensys/gnark/constraint"

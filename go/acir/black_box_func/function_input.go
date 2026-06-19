@@ -2,8 +2,8 @@ package blackboxfunc
 
 import (
 	"fmt"
-	"sunspot/go/acir/msgpackutil"
-	shr "sunspot/go/acir/shared"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
+	shr "github.com/reilabs/sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/frontend"
 )

@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sunspot/go/acir"
+	"github.com/reilabs/sunspot/go/acir"
 
 	"github.com/spf13/cobra"
 )

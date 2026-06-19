@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"sunspot/go/acir"
-	"sunspot/go/bn254"
+	"github.com/reilabs/sunspot/go/acir"
+	"github.com/reilabs/sunspot/go/bn254"
 
 	"github.com/consensys/gnark-crypto/ecc"
 	ecc_bn254 "github.com/consensys/gnark-crypto/ecc/bn254"

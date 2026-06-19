@@ -2,7 +2,7 @@ package bn254
 
 import (
 	"os"
-	"sunspot/go/acir/msgpackutil"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
 	"testing"
 )
 

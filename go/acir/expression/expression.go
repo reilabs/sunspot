@@ -2,9 +2,9 @@ package expression
 
 import (
 	"encoding/json"
-	"sunspot/go/acir/msgpackutil"
-	"sunspot/go/acir/opcodes"
-	shr "sunspot/go/acir/shared"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
+	"github.com/reilabs/sunspot/go/acir/opcodes"
+	shr "github.com/reilabs/sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"

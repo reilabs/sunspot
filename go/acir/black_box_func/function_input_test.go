@@ -3,9 +3,9 @@ package blackboxfunc
 import (
 	"math/big"
 	"os"
-	"sunspot/go/acir/msgpackutil"
-	shr "sunspot/go/acir/shared"
-	"sunspot/go/bn254"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
+	shr "github.com/reilabs/sunspot/go/acir/shared"
+	"github.com/reilabs/sunspot/go/bn254"
 	"testing"
 )
 

@@ -1,7 +1,7 @@
 package shared
 
 import (
-	"sunspot/go/acir/msgpackutil"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
 	"testing"
 )
 

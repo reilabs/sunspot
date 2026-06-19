@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sunspot/go/cmd"
+	"github.com/reilabs/sunspot/go/cmd"
 )
 
 func main() {

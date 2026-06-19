@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	shr "sunspot/go/acir/shared"
+	shr "github.com/reilabs/sunspot/go/acir/shared"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/constraint/solver"

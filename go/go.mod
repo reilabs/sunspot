@@ -1,4 +1,4 @@
-module sunspot/go
+module github.com/reilabs/sunspot/go
 
 go 1.24.2
 

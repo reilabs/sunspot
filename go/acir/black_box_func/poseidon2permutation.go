@@ -1,9 +1,9 @@
 package blackboxfunc
 
 import (
-	"sunspot/go/acir/msgpackutil"
-	shr "sunspot/go/acir/shared"
-	"sunspot/go/poseidon2"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
+	shr "github.com/reilabs/sunspot/go/acir/shared"
+	"github.com/reilabs/sunspot/go/poseidon2"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"

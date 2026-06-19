@@ -2,10 +2,10 @@ package call
 
 import (
 	"os"
-	exp "sunspot/go/acir/expression"
-	"sunspot/go/acir/msgpackutil"
-	shr "sunspot/go/acir/shared"
-	"sunspot/go/bn254"
+	exp "github.com/reilabs/sunspot/go/acir/expression"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
+	shr "github.com/reilabs/sunspot/go/acir/shared"
+	"github.com/reilabs/sunspot/go/bn254"
 	"testing"
 
 	"github.com/consensys/gnark/constraint"

@@ -4,9 +4,9 @@ import (
 	"compress/gzip"
 	"math/big"
 	"os"
-	hdr "sunspot/go/acir/header"
-	"sunspot/go/acir/msgpackutil"
-	shr "sunspot/go/acir/shared"
+	hdr "github.com/reilabs/sunspot/go/acir/header"
+	"github.com/reilabs/sunspot/go/acir/msgpackutil"
+	shr "github.com/reilabs/sunspot/go/acir/shared"
 
 	"fmt"
 
