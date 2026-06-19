@@ -1,0 +1,19 @@
+source "https://rubygems.org"
+
+gem "jekyll", "~> 4.3"
+gem "just-the-docs"
+
+group :jekyll_plugins do
+  gem "jekyll-remote-theme"
+  gem "jekyll-seo-tag"
+end
+
+# Ruby 3.4 removed these from the default gem set; Jekyll's deps still need them.
+gem "csv"
+gem "base64"
+gem "bigdecimal"
+gem "logger"
+
+# Windows / JRuby
+gem "tzinfo-data", platforms: [:mingw, :x64_mingw, :mswin, :jruby]
+gem "wdm", "~> 0.1", platforms: [:mingw, :x64_mingw, :mswin]
