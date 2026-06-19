@@ -1,0 +1,52 @@
+version: 2
+
+project_name: sunspot
+
+before:
+  hooks:
+    - sh -c "cd go && go mod tidy"
+
+builds:
+  - id: sunspot
+    dir: go
+    main: ./cmd/sunspot
+    binary: sunspot
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+
+archives:
+  - id: sunspot
+    ids:
+      - sunspot
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats:
+      - tar.gz
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
+  draft: true
+  prerelease: auto
