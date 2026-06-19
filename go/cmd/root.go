@@ -3,10 +3,11 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"github.com/reilabs/sunspot/go/bn254"
 
 	"github.com/consensys/gnark/constraint"
 	"github.com/spf13/cobra"
+	"github.com/reilabs/sunspot/go/bn254"
+	"github.com/reilabs/sunspot/go/trustedsetup"
 )
 
 type E = constraint.U64
@@ -29,6 +30,7 @@ func init() {
 	// Add subcommands here
 	rootCmd.AddCommand(compileCmd)
 	rootCmd.AddCommand(setupCmd)
+	rootCmd.AddCommand(trustedsetup.Cmd)
 	rootCmd.AddCommand(proveCmd)
 	rootCmd.AddCommand(verifyCmd)
 	rootCmd.AddCommand(deployCmd)
