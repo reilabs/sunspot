@@ -39,9 +39,13 @@ node_modules
 
 generated_vk.rs
 
+# goreleaser output
+dist/
+
 # Jekyll (docs/)
 docs/_site/
 docs/.jekyll-cache/
 docs/.jekyll-metadata
 docs/vendor/
 docs/.sass-cache/
+
