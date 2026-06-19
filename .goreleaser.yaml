@@ -33,6 +33,22 @@ archives:
       - LICENSE
       - README.md
 
+nfpms:
+  - id: sunspot
+    package_name: sunspot
+    ids:
+      - sunspot
+    vendor: Reilabs
+    homepage: https://github.com/reilabs/sunspot
+    maintainer: Reilabs <hello@reilabs.io>
+    description: |-
+      Sunspot provides tools to prove and verify Noir circuits on Solana.
+    license: Apache-2.0
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
+
 checksum:
   name_template: "checksums.txt"
 
