@@ -38,3 +38,6 @@ node_modules
 *.pw
 
 generated_vk.rs
+
+# goreleaser output
+dist/
