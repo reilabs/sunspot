@@ -43,7 +43,9 @@ sunspot compile my_circuit.json
 
 # Generate a proving and verifying key
 # ⚠️ THIS IS UNSAFE!
-# ⚠️ IT PERFORMS GNARK TRUSTED SETUP WITH NO MITIGATION FOR CRYPTOGRAPHIC TOXIC WATE!
+# ⚠️ IT PERFORMS GNARK TRUSTED SETUP WITH NO MITIGATION FOR CRYPTOGRAPHIC TOXIC WASTE!
+# For a safe setup, use the Gnark setup tool with the compiled .ccs file:
+#   https://github.com/reilabs/trusted-setup
 sunspot setup my_circuit.ccs
 
 # Create a Groth16 proof

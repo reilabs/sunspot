@@ -41,6 +41,7 @@ sunspot compile my_circuit.json
 
 {: .warning }
 `setup` performs a gnark trusted setup with **no mitigation for cryptographic toxic waste**.
+For a safe setup, use the [Gnark setup tool](https://github.com/reilabs/trusted-setup) with the compiled `.ccs` file instead.
 
 ```bash
 sunspot setup my_circuit.ccs
