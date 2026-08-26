@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"math/big"
 	"os"
+
 	hdr "github.com/reilabs/sunspot/go/acir/header"
 	"github.com/reilabs/sunspot/go/acir/msgpackutil"
 	shr "github.com/reilabs/sunspot/go/acir/shared"
@@ -11,14 +12,14 @@ import (
 	"fmt"
 
 	"github.com/consensys/gnark/backend/witness"
+	"github.com/google/btree"
 	"github.com/rs/zerolog/log"
-	"github.com/tidwall/btree"
 )
 
 // StackItem pairs a circuit's witness map with the function it corresponds to.
 type StackItem[T shr.ACIRField] struct {
 	CircuitIndex uint32
-	WitnessMap   btree.Map[shr.Witness, T]
+	WitnessMap   map[shr.Witness]T
 }
 
 // WitnessStack stores witnesses from `nargo execute` in postorder based on circuit calls.
@@ -94,11 +95,12 @@ func readStackItem[T shr.ACIRField](r *msgpackutil.Reader) (StackItem[T], error)
 
 // WitnessMap is a single-field tuple struct wrapping BTreeMap<Witness, F>,
 // which serializes as a msgpack `fixmap` of int-keyed entries.
-func readWitnessMap[T shr.ACIRField](r *msgpackutil.Reader, dst *btree.Map[shr.Witness, T]) error {
+func readWitnessMap[T shr.ACIRField](r *msgpackutil.Reader, dst *map[shr.Witness]T) error {
 	n, err := r.ReadMapLen()
 	if err != nil {
 		return err
 	}
+	*dst = make(map[shr.Witness]T, n)
 	for i := 0; i < n; i++ {
 		var w shr.Witness
 		if err := w.UnmarshalReader(r); err != nil {
@@ -109,7 +111,7 @@ func readWitnessMap[T shr.ACIRField](r *msgpackutil.Reader, dst *btree.Map[shr.W
 		if err := value.UnmarshalReader(r); err != nil {
 			return err
 		}
-		dst.Set(w, value)
+		(*dst)[w] = value
 	}
 	return nil
 }
@@ -129,17 +131,21 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 		return nil, fmt.Errorf("failed to create new witness: %w", err)
 	}
 
-	params := acir.ABI.Params()
+	if len(witnessStack) == 0 {
+		return nil, fmt.Errorf("witness stack in %s is empty", fileName)
+	}
+
+	publicWitnesses := acir.PublicWitnesses()
+	publicSlots := make(map[shr.Witness]struct{}, len(publicWitnesses))
+	for _, pub := range publicWitnesses {
+		publicSlots[pub.MainIndex] = struct{}{}
+	}
+
 	values := make(chan any)
 
 	// Calculate the number of private and public variables
-	countPublic := 0
+	countPublic := len(publicWitnesses)
 	countPrivate := 0
-	for _, param := range params {
-		if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-			countPublic++
-		}
-	}
 
 	// Drive the count from the constraint system (one variable per slot in
 	// 0..=CurrentWitnessIndex of every circuit) rather than the witness file,
@@ -153,39 +159,31 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 
 	go func() {
 		// Add the public variables to the beginning of the witness vector.
-		for index, param := range params {
-			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-				outerStackItem := witnessStack[len(witnessStack)-1]
-				if value, ok := outerStackItem.WitnessMap.Get(shr.Witness(index)); ok {
-					values <- value.ToFrontendVariable()
-				} else {
-					log.Warn().Msgf("Public parameter %s not found in outermost circuit witness map", param.Name)
-				}
-
+		outerStackItem := witnessStack[len(witnessStack)-1]
+		for _, pub := range publicWitnesses {
+			value, ok := outerStackItem.WitnessMap[pub.MainIndex]
+			if !ok {
+				log.Warn().Msgf("Public witness %s (slot %d) not found in outermost circuit witness map", pub.Name, pub.MainIndex)
+				values <- 0
+				continue
 			}
+			values <- value.ToFrontendVariable()
 		}
 		for i := 0; i < len(witnessStack); i++ {
 			stackItem := witnessStack[i]
 			c := &acir.Program.Functions[stackItem.CircuitIndex]
 			for j := uint32(0); j <= c.CurrentWitnessIndex; j++ {
 				witnessKey := shr.Witness(j)
-				skipKey := false
 				// For the outermost circuit, we skip the witness values
 				// that have already been added as part of the public variables
 				if i == len(witnessStack)-1 {
-					for index, param := range params {
-						if witnessKey == shr.Witness(index) && param.Visibility == hdr.ACIRParameterVisibilityPublic {
-							skipKey = true
-							break
-						}
+					if _, isPublic := publicSlots[witnessKey]; isPublic {
+						continue
 					}
-				}
-				if skipKey {
-					continue
 				}
 				// Slots not present in the witness file are filled with zero, matching
 				// barretenberg's witness_map_to_witness_vector behavior.
-				witnessValue, ok := stackItem.WitnessMap.Get(witnessKey)
+				witnessValue, ok := stackItem.WitnessMap[witnessKey]
 				if !ok {
 					values <- 0
 					continue
@@ -202,4 +200,52 @@ func (acir *ACIR[T, E]) GetWitness(fileName string, field *big.Int) (witness.Wit
 		return nil, fmt.Errorf("failed to fill witness: %w", err)
 	}
 	return witness, nil
+}
+
+// PublicWitness names a witness slot of the main circuit that must be allocated as a public gnark variable.
+type PublicWitness struct {
+	MainIndex shr.Witness
+	Name      string
+}
+
+// PublicWitnesses returns the main circuit's public witness slots in the order gnark expects.
+func (a *ACIR[T, E]) PublicWitnesses() []PublicWitness {
+	if len(a.Program.Functions) == 0 {
+		return nil
+	}
+	main := &a.Program.Functions[0]
+
+	publicParameters := sortedWitnesses(&main.PublicParameters)
+
+	var returnValues []shr.Witness
+	if a.ABI.ReturnType != nil && a.ABI.ReturnType.Visibility == hdr.ACIRParameterVisibilityPublic {
+		returnValues = sortedWitnesses(&main.ReturnValues)
+	}
+
+	params := a.ABI.Params()
+	returns := a.ABI.Returns()
+
+	publicWitnesses := make([]PublicWitness, 0, len(publicParameters)+len(returnValues))
+	for _, w := range publicParameters {
+		publicWitnesses = append(publicWitnesses, PublicWitness{MainIndex: w, Name: params[w].Name})
+	}
+	for i, w := range returnValues {
+		publicWitnesses = append(publicWitnesses, PublicWitness{MainIndex: w, Name: returns[i].Name})
+	}
+
+	return publicWitnesses
+}
+
+// sortedWitnesses flattens one of the ACIR bytecode's witness sets into a sorted slice.
+func sortedWitnesses(tree *btree.BTree) []shr.Witness {
+	witnesses := make([]shr.Witness, 0, tree.Len())
+	tree.Ascend(func(item btree.Item) bool {
+		w, ok := item.(shr.Witness)
+		if !ok {
+			return false
+		}
+		witnesses = append(witnesses, w)
+		return true
+	})
+	return witnesses
 }

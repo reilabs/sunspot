@@ -27,11 +27,27 @@ func (a *ACIRABI) Params() []ParamInfo {
 	return ret
 }
 
+// Returns flattens the ABI's return type into a list of scalar outputs.
+func (a *ACIRABI) Returns() []ParamInfo {
+	if a.ReturnType == nil {
+		return nil
+	}
+	return flattenParam(a.ReturnType.Visibility, "return", a.ReturnType.Type)
+}
+
 // flattenParam recursively flattens any ACIR parameter (scalar, array, or struct)
 func flattenParam(vis ACIRParameterVisibility, name string, typ ACIRParameterType) []ParamInfo {
 	var result []ParamInfo
 
 	switch typ.Kind {
+	case ACIRParameterKindString:
+		if typ.Length == nil {
+			return []ParamInfo{{Visibility: vis, Name: name}}
+		}
+		for i := 0; i < *typ.Length; i++ {
+			result = append(result, ParamInfo{Visibility: vis, Name: fmt.Sprintf("%s[%d]", name, i)})
+		}
+
 	case ACIRParameterKindArray:
 		if typ.ArrayType == nil || typ.Length == nil {
 			return []ParamInfo{{Visibility: vis, Name: name}}
