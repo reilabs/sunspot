@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"os"
 	"strconv"
+
 	hdr "github.com/reilabs/sunspot/go/acir/header"
 	"github.com/reilabs/sunspot/go/acir/msgpackutil"
 	shr "github.com/reilabs/sunspot/go/acir/shared"
@@ -156,18 +157,15 @@ func (a *ACIR[T, E]) Compile() (constraint.ConstraintSystemGeneric[E], error) {
 
 		witnessMap := make(map[shr.Witness]frontend.Variable, totalSlots)
 
-		// Gnark expects public witnesses to be added before private ones. Noir's
-		// public params occupy the first slots of the main circuit (i.e. starting
-		// at mainStart, which sits after every transitively-called subcircuit).
-		for index, param := range a.ABI.Params() {
-			if param.Visibility == hdr.ACIRParameterVisibilityPublic {
-				witnessMap[shr.Witness(uint32(index)+mainStart)] = builder.PublicVariable(
-					schema.LeafInfo{
-						FullName:   func() string { return param.Name },
-						Visibility: schema.Public,
-					},
-				)
-			}
+		// Gnark expects public witnesses to be added before private ones, so every
+		// public slot is allocated here.
+		for _, pub := range a.PublicWitnesses() {
+			witnessMap[shr.Witness(uint32(pub.MainIndex)+mainStart)] = builder.PublicVariable(
+				schema.LeafInfo{
+					FullName:   func() string { return pub.Name },
+					Visibility: schema.Public,
+				},
+			)
 		}
 
 		// Allocate a private variable for every remaining slot. We don't inspect

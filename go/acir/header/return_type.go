@@ -1,6 +1,6 @@
 package header
 
 type ACIRReturnType struct {
-	Type       ACIRParameterType       `json:"type"`
+	Type       ACIRParameterType       `json:"abi_type"`
 	Visibility ACIRParameterVisibility `json:"visibility"`
 }
