@@ -2,6 +2,7 @@ package memory_op
 
 import (
 	"encoding/json"
+
 	"github.com/reilabs/sunspot/go/acir/msgpackutil"
 	ops "github.com/reilabs/sunspot/go/acir/opcodes"
 	shr "github.com/reilabs/sunspot/go/acir/shared"
@@ -69,11 +70,15 @@ func (o *MemoryOp[T, E]) Define(api frontend.Builder[E], witnesses map[shr.Witne
 		newTable := logderivlookup.New(api)
 		// dummy insertion to find the length of the table
 		tableLen := (*table).Insert(0)
+		var writtenSlots frontend.Variable = 0
 		for i := 0; i < tableLen; i++ {
 			isWritable := api.IsZero(api.Sub(indexVar, frontend.Variable(i)))
 			updated := api.Select(isWritable, valueVar, (*table).Lookup(i)[0])
 			newTable.Insert(updated)
+			writtenSlots = api.Add(writtenSlots, isWritable)
 		}
+		// Assert exactly one slot has beeen written
+		api.AssertIsEqual(writtenSlots, 1)
 		o.Memory[o.BlockID] = &newTable
 		return nil
 	} else {
