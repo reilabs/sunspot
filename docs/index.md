@@ -15,8 +15,8 @@ Prove and verify [Noir](https://noir-lang.org) circuits using Groth16.
 
 ---
 
-{: .warning }
-Sunspot has not been audited. It is provided as-is with no guarantees of safety or reliability.
+{: .note }
+Sunspot has been audited by [HashCloak](https://hashcloak.com). See the [audit report](https://github.com/reilabs/sunspot/blob/main/audits/2026_09_hashcloak_audit_report.pdf).
 Requires **Noir 1.0.0-beta.22**.
 
 ## What is Sunspot?
