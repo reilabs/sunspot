@@ -6,7 +6,11 @@
 
 ## Security
 
-**Sunspot has not been audited yet and is provided as-is. We make no guarantees to its safety or reliability.**
+Sunspot was audited by [HashCloak](https://hashcloak.com) between April and September 2026. All findings have been resolved.
+
+- [Audit report](audits/2026_09_hashcloak_audit_report.pdf)
+- [HashCloak case study](https://hashcloak.com/case-studies/sunspot-security-audit-case-study)
+
 
 To report security vulnerabilities, please use the `Security` tab on this repository.
 
